@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">BattMan</string>
+    <string name="subtitle">Le gestionnaire de batterie</string>
+    <string name="refresh_now">Actualiser</string>
+    <string name="auto_interval">Auto (%1$d s)</string>
+    <string name="auto_off">Auto désactivé</string>
+    <string name="auto_1_sec">Auto (1 s)</string>
+    <string name="auto_3_sec">Auto (3 s)</string>
+    <string name="auto_6_sec">Auto (6 s)</string>
+
+    <string name="level">Niveau</string>
+    <string name="cycle">Cycles</string>
+    <string name="state">État</string>
+    <string name="health">Santé</string>
+    <string name="technology">Technologie</string>
+    <string name="voltage">Tension</string>
+    <string name="temperature">Température</string>
+    <string name="energy_counter">Énergie restante</string>
+    <string name="charge_counter">Charge restante</string>
+    <string name="current_now">Courant instantané</string>
+    <string name="current_average">Courant moyen</string>
+    <string name="battery_plugged">Alimentation</string>
+    <string name="battery_saver">Économiseur</string>
+    <string name="thermal_status">État thermique</string>
+    <string name="battery_present">Batterie présente</string>
+    <string name="battery_low">Batterie faible</string>
+    <string name="charging_status">État de charge</string>
+
+    <string name="charging">En charge</string>
+    <string name="discharging">En décharge</string>
+    <string name="full">Pleine</string>
+    <string name="not_charging">Sans charge</string>
+    <string name="unknown">Inconnu</string>
+    <string name="undefined">Indéfini</string>
+    <string name="good">Bonne</string>
+    <string name="overheated">Surchauffe</string>
+    <string name="dead">Hors service</string>
+    <string name="over_voltage">Surtension</string>
+    <string name="cold">Froide</string>
+    <string name="failure">Défaillance</string>
+    <string name="unavailable">Non présent</string>
+    <string name="activated">Activé</string>
+    <string name="deactivated">Désactivé</string>
+    <string name="unsupported">Non support</string>
+    <string name="on_battery">Batterie</string>
+    <string name="ac_charger">Secteur</string>
+    <string name="usb_power">Prise USB</string>
+    <string name="wireless">Sans fil</string>
+    <string name="powered">Alimenté</string>
+</resources>

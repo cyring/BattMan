@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">BattMan</string>
+    <string name="subtitle">The Battery Manager</string>
+    <string name="refresh_now">Refresh now</string>
+    <string name="auto_interval">Auto (%1$d sec)</string>
+    <string name="auto_off">Auto Off</string>
+    <string name="auto_1_sec">Auto (1 s)</string>
+    <string name="auto_3_sec">Auto (3 s)</string>
+    <string name="auto_6_sec">Auto (6 s)</string>
+
+    <string name="level">Level</string>
+    <string name="cycle">Cycle</string>
+    <string name="state">State</string>
+    <string name="health">Health</string>
+    <string name="technology">Technology</string>
+    <string name="voltage">Voltage</string>
+    <string name="temperature">Temperature</string>
+    <string name="energy_counter">Energy counter</string>
+    <string name="charge_counter">Charge counter</string>
+    <string name="current_now">Current now</string>
+    <string name="current_average">Current average</string>
+    <string name="battery_plugged">Power source</string>
+    <string name="battery_saver">Battery saver</string>
+    <string name="thermal_status">Thermal status</string>
+    <string name="battery_present">Battery present</string>
+    <string name="battery_low">Battery low</string>
+    <string name="charging_status">Charging status</string>
+
+    <string name="charging">Charging</string>
+    <string name="discharging">Discharging</string>
+    <string name="full">Full</string>
+    <string name="not_charging">Not charging</string>
+    <string name="unknown">Unknown</string>
+    <string name="undefined">Undefined</string>
+    <string name="good">Good</string>
+    <string name="overheated">Overheated</string>
+    <string name="dead">Dead</string>
+    <string name="over_voltage">Over-voltage</string>
+    <string name="cold">Cold</string>
+    <string name="failure">Failure</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="activated">Activated</string>
+    <string name="deactivated">Deactivated</string>
+    <string name="unsupported">Unsupported</string>
+    <string name="on_battery">On battery</string>
+    <string name="ac_charger">AC charger</string>
+    <string name="usb_power">USB power</string>
+    <string name="wireless">Wireless</string>
+    <string name="powered">Powered</string>
+</resources>
