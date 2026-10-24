@@ -24,7 +24,6 @@
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>
     <string name="battery_low">Battery low</string>
-    <string name="charging_status">Charging status</string>
 
     <string name="charging">Charging</string>
     <string name="discharging">Discharging</string>
@@ -47,4 +46,15 @@
     <string name="usb_power">USB power</string>
     <string name="wireless">Wireless</string>
     <string name="powered">Powered</string>
+
+    <string name="none">None</string>
+    <string name="light">Light</string>
+    <string name="moderate">Moderate</string>
+    <string name="severe">Severe</string>
+    <string name="critical">Critical</string>
+    <string name="emergency">Emergency</string>
+    <string name="shutdown">Shutdown</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

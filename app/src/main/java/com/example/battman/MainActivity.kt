@@ -40,7 +40,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.delay
@@ -90,7 +89,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
-                            .padding(4.dp)
+                            .padding(8.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.app_name),
@@ -131,10 +130,10 @@ class MainActivity : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(12.dp)
+                                .height(16.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = RoundedCornerShape(6.dp)
+                                    shape = RoundedCornerShape(8.dp)
                                 )
                         ) {
                             Box(
@@ -191,7 +190,6 @@ class MainActivity : ComponentActivity() {
                                         ExposedDropdownMenuAnchorType.PrimaryNotEditable
                                     )
                                 ) {
-                                    //val refreshText = (refreshTime / 1000).toString()
                                     Text(
                                         if (autoRefresh) {
                                             stringResource(R.string.auto_interval, refreshTime / 1000)
@@ -347,9 +345,11 @@ private fun readBatteryInfo(context: Context): String {
         BatteryManager.EXTRA_TECHNOLOGY
     ) ?: "Unknown"
 
-    val extraCharging = extra(BatteryManager.EXTRA_CHARGING_STATUS)
-
-    val lowBatteryState = extra(BatteryManager.EXTRA_BATTERY_LOW)
+    val lowBatteryState = if (intent.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, false) == true) {
+        context.getString(R.string.yes)
+    } else {
+        context.getString(R.string.no)
+    }
 
     val batteryPlugged = when (extra(BatteryManager.EXTRA_PLUGGED)) {
         0 -> context.getString(R.string.on_battery)
@@ -359,7 +359,11 @@ private fun readBatteryInfo(context: Context): String {
         else -> context.getString(R.string.powered)
     }
 
-    val batteryPresent = extra(BatteryManager.EXTRA_PRESENT)
+    val batteryPresent = if (intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true) {
+        context.getString(R.string.yes)
+    } else {
+        context.getString(R.string.no)
+    }
 
     val technology = if ("$extraTech" == "Unknown") {
         "${Build.MANUFACTURER}"
@@ -379,14 +383,14 @@ private fun readBatteryInfo(context: Context): String {
 
     val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
         when (powerManager.currentThermalStatus) {
-            android.os.PowerManager.THERMAL_STATUS_NONE -> "None"
-            android.os.PowerManager.THERMAL_STATUS_LIGHT -> "Light"
-            android.os.PowerManager.THERMAL_STATUS_MODERATE -> "Moderate"
-            android.os.PowerManager.THERMAL_STATUS_SEVERE -> "Severe"
-            android.os.PowerManager.THERMAL_STATUS_CRITICAL -> "Critical"
-            android.os.PowerManager.THERMAL_STATUS_EMERGENCY -> "Emergency"
-            android.os.PowerManager.THERMAL_STATUS_SHUTDOWN -> "Shutdown"
-            else -> "Unknown"
+            android.os.PowerManager.THERMAL_STATUS_NONE -> context.getString(R.string.none)
+            android.os.PowerManager.THERMAL_STATUS_LIGHT -> context.getString(R.string.light)
+            android.os.PowerManager.THERMAL_STATUS_MODERATE -> context.getString(R.string.moderate)
+            android.os.PowerManager.THERMAL_STATUS_SEVERE -> context.getString(R.string.severe)
+            android.os.PowerManager.THERMAL_STATUS_CRITICAL -> context.getString(R.string.critical)
+            android.os.PowerManager.THERMAL_STATUS_EMERGENCY -> context.getString(R.string.emergency)
+            android.os.PowerManager.THERMAL_STATUS_SHUTDOWN -> context.getString(R.string.shutdown)
+            else -> context.getString(R.string.undefined)
         }
     } else {
         context.getString(R.string.unsupported)
@@ -420,27 +424,27 @@ private fun readBatteryInfo(context: Context): String {
         BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
     )
 
+    val spacing = 19
     return """
-        ${context.getString(R.string.level).padEnd(20)}$batteryPercent%
-        ${context.getString(R.string.cycle).padEnd(20)}$cycle
-        ${context.getString(R.string.state).padEnd(20)}$status
-        ${context.getString(R.string.health).padEnd(20)}$health
-        ${context.getString(R.string.technology).padEnd(20)}$technology
+        ${context.getString(R.string.level).padEnd(spacing)}$batteryPercent%
+        ${context.getString(R.string.cycle).padEnd(spacing)}$cycle
+        ${context.getString(R.string.state).padEnd(spacing)}$status
+        ${context.getString(R.string.health).padEnd(spacing)}$health
+        ${context.getString(R.string.technology).padEnd(spacing)}$technology
 
-        ${"Tension".padEnd(20)}$voltage
-        ${context.getString(R.string.temperature).padEnd(20)}$tempFormat
-        ${context.getString(R.string.energy_counter).padEnd(20)}$energyCounter
-        ${context.getString(R.string.charge_counter).padEnd(20)}$chargeCounter µAh
-        ${context.getString(R.string.current_now).padEnd(20)}$currentNow µA
-        ${context.getString(R.string.current_average).padEnd(20)}$currentAverage µA
+        ${context.getString(R.string.voltage).padEnd(spacing)}$voltage
+        ${context.getString(R.string.temperature).padEnd(spacing)}$tempFormat
+        ${context.getString(R.string.energy_counter).padEnd(spacing)}$energyCounter
+        ${context.getString(R.string.charge_counter).padEnd(spacing)}$chargeCounter µAh
+        ${context.getString(R.string.current_now).padEnd(spacing)}$currentNow µA
+        ${context.getString(R.string.current_average).padEnd(spacing)}$currentAverage µA
 
-        ${context.getString(R.string.battery_plugged).padEnd(20)}$batteryPlugged
-        ${context.getString(R.string.battery_saver).padEnd(20)}$batterySaver
+        ${context.getString(R.string.battery_plugged).padEnd(spacing)}$batteryPlugged
+        ${context.getString(R.string.battery_saver).padEnd(spacing)}$batterySaver
 
-        ${context.getString(R.string.thermal_status).padEnd(20)}$thermalStatus
-        ${context.getString(R.string.battery_present).padEnd(20)}$batteryPresent
-        ${context.getString(R.string.battery_low).padEnd(20)}$lowBatteryState
-        ${context.getString(R.string.charging_status).padEnd(20)}$extraCharging
+        ${context.getString(R.string.thermal_status).padEnd(spacing)}$thermalStatus
+        ${context.getString(R.string.battery_present).padEnd(spacing)}$batteryPresent
+        ${context.getString(R.string.battery_low).padEnd(spacing)}$lowBatteryState
     """.trimIndent()
 }
 
