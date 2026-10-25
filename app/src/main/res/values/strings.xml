@@ -4,9 +4,9 @@
     <string name="refresh_now">Refresh now</string>
     <string name="auto_interval">Auto (%1$d sec)</string>
     <string name="auto_off">Auto Off</string>
-    <string name="auto_1_sec">Auto (1 s)</string>
-    <string name="auto_3_sec">Auto (3 s)</string>
-    <string name="auto_6_sec">Auto (6 s)</string>
+    <string name="auto_1_sec">Auto (1 sec)</string>
+    <string name="auto_3_sec">Auto (3 sec)</string>
+    <string name="auto_6_sec">Auto (6 sec)</string>
 
     <string name="level">Level</string>
     <string name="cycle">Cycle</string>
@@ -21,6 +21,7 @@
     <string name="current_average">Current average</string>
     <string name="battery_plugged">Power source</string>
     <string name="battery_saver">Battery saver</string>
+    <string name="time_remaining">Time to full</string>
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>
     <string name="battery_low">Battery low</string>
@@ -43,8 +44,9 @@
     <string name="unsupported">Unsupported</string>
     <string name="on_battery">On battery</string>
     <string name="ac_charger">AC charger</string>
-    <string name="usb_power">USB power</string>
+    <string name="usb_plug">USB plug</string>
     <string name="wireless">Wireless</string>
+    <string name="dock">Dock</string>
     <string name="powered">Powered</string>
 
     <string name="none">None</string>
@@ -57,4 +59,16 @@
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
+
+    <plurals name="hours">
+        <item quantity="one">%d hr</item>
+        <item quantity="other">%d hr</item>
+    </plurals>
+
+    <plurals name="minutes">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d min</item>
+    </plurals>
+
+    <string name="duration_format">%1$s, %2$s</string>
 </resources>

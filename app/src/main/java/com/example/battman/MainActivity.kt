@@ -42,11 +42,21 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.delay
 import com.example.battman.ui.theme.BattManTheme
 import java.util.Locale
 
 public var batteryPercent = 100
+
+private data class BatteryReportRow(
+    val label: String,
+    val value: String
+)
+
+private var lineHeight: Dp = 16.dp
+
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +92,11 @@ class MainActivity : ComponentActivity() {
             }
 
             BattManTheme {
+                val reportTextStyle = MaterialTheme.typography.labelSmall
+                lineHeight = with(LocalDensity.current) {
+                    reportTextStyle.lineHeight.toDp()
+                }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
@@ -89,7 +104,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
-                            .padding(8.dp)
+                            .padding(16.dp,0.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.app_name),
@@ -106,7 +121,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.outline
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(lineHeight * 0.25f))
 
                         Text(
                             text = buildAnnotatedString {
@@ -146,7 +161,7 @@ class MainActivity : ComponentActivity() {
                                     )
                             )
                         }
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(lineHeight * 0.75f))
 
                         Column(
                             modifier = Modifier
@@ -154,14 +169,9 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                                 .verticalScroll(rememberScrollState())
                         ) {
-                            Text(
-                                text = report,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                )
-                            )
+                            BatteryReport(rows = report)
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(lineHeight * 0.75f))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -175,7 +185,7 @@ class MainActivity : ComponentActivity() {
                                     report = readBatteryInfo(this@MainActivity)
                                 }
                             ) {
-                                Text(stringResource(R.string.refresh_now))
+                                Text(stringResource(R.string.refresh_now), softWrap = false)
                             }
 
                             var menuExpanded by remember { mutableStateOf(false) }
@@ -195,7 +205,8 @@ class MainActivity : ComponentActivity() {
                                             stringResource(R.string.auto_interval, refreshTime / 1000)
                                         } else {
                                             stringResource(R.string.auto_off)
-                                        }
+                                        },
+                                        softWrap = false
                                     )
                                 }
 
@@ -204,7 +215,7 @@ class MainActivity : ComponentActivity() {
                                     onDismissRequest = { menuExpanded = false }
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text("Auto (1 s)") },
+                                        text = { Text("Auto (1 sec)", softWrap = false) },
                                         onClick = {
                                             autoRefresh = true
                                             refreshTime = 1000L
@@ -219,7 +230,7 @@ class MainActivity : ComponentActivity() {
                                     )
 
                                     DropdownMenuItem(
-                                        text = { Text("Auto (3 s)") },
+                                        text = { Text("Auto (3 sec)", softWrap = false) },
                                         onClick = {
                                             autoRefresh = true
                                             refreshTime = 3000L
@@ -234,7 +245,7 @@ class MainActivity : ComponentActivity() {
                                     )
 
                                     DropdownMenuItem(
-                                        text = { Text("Auto (6 s)") },
+                                        text = { Text("Auto (6 sec)", softWrap = false) },
                                         onClick = {
                                             autoRefresh = true
                                             refreshTime = 6000L
@@ -249,7 +260,7 @@ class MainActivity : ComponentActivity() {
                                     )
 
                                     DropdownMenuItem(
-                                        text = { Text("Auto Off") },
+                                        text = { Text("Auto Off", softWrap = false) },
                                         onClick = {
                                             autoRefresh = false
 
@@ -263,17 +274,17 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(lineHeight * 0.75f))
 
                         Text(
                             text = sysInfo,
+                            softWrap = false,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                             ),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Spacer(Modifier.height(8.dp))
                     }
                 }
             }
@@ -281,12 +292,58 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private fun readBatteryInfo(context: Context): String {
+@Composable
+private fun BatteryReport(rows: List<BatteryReportRow>) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        rows.forEach { row ->
+
+            if (row.label.isEmpty() && row.value.isEmpty()) {
+                Spacer(modifier = Modifier.height(lineHeight))
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = row.label,
+                        modifier = Modifier.weight(1.5f),
+                        maxLines = 1,
+                        softWrap = false,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    )
+
+                    Text(
+                        text = row.value,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Start,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
     val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
     @Suppress("DEPRECATION")
     val intent = context.registerReceiver(null, filter)
-        ?: return "No available information"
+        ?: return listOf(
+            BatteryReportRow(
+                context.getString(R.string.unavailable),
+                ""
+            )
+        )
 
     val manager = context.getSystemService(
         Context.BATTERY_SERVICE
@@ -353,9 +410,10 @@ private fun readBatteryInfo(context: Context): String {
 
     val batteryPlugged = when (extra(BatteryManager.EXTRA_PLUGGED)) {
         0 -> context.getString(R.string.on_battery)
-        1 -> context.getString(R.string.ac_charger)
-        2 -> context.getString(R.string.usb_power)
-        4 -> context.getString(R.string.wireless)
+        BatteryManager.BATTERY_PLUGGED_AC -> context.getString(R.string.ac_charger)
+        BatteryManager.BATTERY_PLUGGED_USB -> context.getString(R.string.usb_plug)
+        BatteryManager.BATTERY_PLUGGED_WIRELESS -> context.getString(R.string.wireless)
+        BatteryManager.BATTERY_PLUGGED_DOCK -> context.getString(R.string.dock)
         else -> context.getString(R.string.powered)
     }
 
@@ -424,28 +482,68 @@ private fun readBatteryInfo(context: Context): String {
         BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
     )
 
-    val spacing = 19
-    return """
-        ${context.getString(R.string.level).padEnd(spacing)}$batteryPercent%
-        ${context.getString(R.string.cycle).padEnd(spacing)}$cycle
-        ${context.getString(R.string.state).padEnd(spacing)}$status
-        ${context.getString(R.string.health).padEnd(spacing)}$health
-        ${context.getString(R.string.technology).padEnd(spacing)}$technology
+    val milliseconds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        manager.computeChargeTimeRemaining()
+    } else {
+        -1L
+    }
+    val timeRemaining = if (milliseconds < 0L) {
+        context.getString(R.string.unavailable)
+    } else {
+        val totalMinutes = (milliseconds + 59_999L) / 60_000L
+        val hours = (totalMinutes / 60).toInt()
+        val minutes = (totalMinutes % 60).toInt()
 
-        ${context.getString(R.string.voltage).padEnd(spacing)}$voltage
-        ${context.getString(R.string.temperature).padEnd(spacing)}$tempFormat
-        ${context.getString(R.string.energy_counter).padEnd(spacing)}$energyCounter
-        ${context.getString(R.string.charge_counter).padEnd(spacing)}$chargeCounter µAh
-        ${context.getString(R.string.current_now).padEnd(spacing)}$currentNow µA
-        ${context.getString(R.string.current_average).padEnd(spacing)}$currentAverage µA
+        val hoursText = context.resources.getQuantityString(
+            R.plurals.hours,
+            hours,
+            hours
+        )
+        val minutesText = context.resources.getQuantityString(
+            R.plurals.minutes,
+            minutes,
+            minutes
+        )
+        when {
+            hours > 0 && minutes > 0 ->
+                context.getString(R.string.duration_format, hoursText, minutesText)
 
-        ${context.getString(R.string.battery_plugged).padEnd(spacing)}$batteryPlugged
-        ${context.getString(R.string.battery_saver).padEnd(spacing)}$batterySaver
+            hours > 0 -> hoursText
+            else -> minutesText
+        }
+    }
 
-        ${context.getString(R.string.thermal_status).padEnd(spacing)}$thermalStatus
-        ${context.getString(R.string.battery_present).padEnd(spacing)}$batteryPresent
-        ${context.getString(R.string.battery_low).padEnd(spacing)}$lowBatteryState
-    """.trimIndent()
+    fun row(labelId: Int, value: String) =
+        BatteryReportRow(context.getString(labelId), value)
+
+    return listOf(
+        row(R.string.level, "$batteryPercent%"),
+        row(R.string.cycle, cycle.toString()),
+        row(R.string.state, status),
+        row(R.string.health, health),
+        row(R.string.technology, technology),
+
+        BatteryReportRow("", ""),
+
+        row(R.string.voltage, voltage),
+        row(R.string.temperature, tempFormat),
+        row(R.string.energy_counter, energyCounter),
+        row(R.string.charge_counter, "$chargeCounter µAh"),
+        row(R.string.current_now, "$currentNow µA"),
+        row(R.string.current_average, "$currentAverage µA"),
+
+        BatteryReportRow("", ""),
+
+        row(R.string.battery_plugged, batteryPlugged),
+        row(R.string.battery_saver, batterySaver),
+        row(R.string.time_remaining, timeRemaining),
+
+        BatteryReportRow("", ""),
+
+        row(R.string.thermal_status, thermalStatus),
+        row(R.string.battery_present, batteryPresent),
+        row(R.string.battery_low, lowBatteryState)
+    )
 }
 
 private fun readSystemInfo(context: Context): String {
