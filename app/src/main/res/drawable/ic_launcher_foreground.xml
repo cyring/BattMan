@@ -1,30 +1,41 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <!-- Bat (the animal) silhouette scaled smaller to prevent home screen masking crop -->
+    <path
+        android:fillColor="#1A1A2E"
+        android:pathData="M54,30 C52,30 50,31 49,32 L48,28 C46,31 44,32 42,34 C35,32 28,30 22,33 L21,33 C26,38 31,41 35,46 L34,48 C40,54 46,60 54,72 C62,60 68,54 74,48 L73,46 C77,41 82,38 87,33 L86,33 C80,30 73,32 66,34 C64,32 62,31 60,28 L59,32 C58,31 56,30 54,30 Z"/>
+
+    <!-- Bat glowing eyes -->
     <path
         android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:pathData="M50.5,33.5 C50.5,34 50.1,34.4 49.6,34.4 C49.1,34.4 48.7,34 48.7,33.5 C48.7,33 49.1,32.6 49.6,32.6 C50.1,32.6 50.5,33 50.5,33.5 Z M59.3,33.5 C59.3,34 58.9,34.4 58.4,34.4 C57.9,34.4 57.5,34 57.5,33.5 C57.5,33 57.9,32.6 58.4,32.6 C58.9,32.6 59.3,33 59.3,33.5 Z"/>
+
+    <!-- Sleek Thin Battery Outline (Width reduced by 1/4) -->
+    <!-- Battery Tip Solid White & Outline -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M62,48 h4 v5 h-4 z"/>
+    <!-- Battery Main Body Solid White Interior -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M58,53 h12 a3,3 0 0,1 3,3 v16 a3,3 0 0,1 -3,3 h-12 a3,3 0 0,1 -3,-3 v-16 a3,3 0 0,1 3,-3 z"/>
+    <!-- Battery Main Body Outline Stroke -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M58,53 h12 a3,3 0 0,1 3,3 v16 a3,3 0 0,1 -3,3 h-12 a3,3 0 0,1 -3,-3 v-16 a3,3 0 0,1 3,-3 z"/>
+    <!-- Battery Green Charge Level (Full inner width matching new slimmer proportions) -->
+    <path
+        android:fillColor="#3DDC84"
+        android:pathData="M57,62 h14 v10 a2,2 0 0,1 -2,2 h-10 a2,2 0 0,1 -2,-2 v-10 z"/>
 </vector>

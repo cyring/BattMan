@@ -1,4 +1,4 @@
-package com.example.battman
+package fr.cyring.battman
 
 import android.content.Context
 import android.content.Intent
@@ -14,10 +14,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,6 +48,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -44,9 +56,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import kotlinx.coroutines.delay
-import com.example.battman.ui.theme.BattManTheme
+import kotlinx.coroutines.launch
+import fr.cyring.battman.R
+import fr.cyring.battman.ui.theme.BattManTheme
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 public var batteryPercent = 100
 
@@ -73,7 +89,7 @@ class MainActivity : ComponentActivity() {
             }
 
             var refreshTime by remember {
-                mutableStateOf(prefs.getLong("refreshTime", 3000L))
+                mutableLongStateOf(prefs.getLong("refreshTime", 3000L))
             }
 
             var report by remember {
@@ -82,7 +98,7 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(autoRefresh, refreshTime) {
                 while (autoRefresh) {
-                    delay(refreshTime)
+                    delay(refreshTime.milliseconds)
                     report = readBatteryInfo(this@MainActivity)
                 }
             }
@@ -97,194 +113,205 @@ class MainActivity : ComponentActivity() {
                     reportTextStyle.lineHeight.toDp()
                 }
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .padding(16.dp,0.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.headlineMedium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val coroutineScope = rememberCoroutineScope()
 
-                        Text(
-                            text = stringResource(R.string.subtitle),
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                        Spacer(modifier = Modifier.height(lineHeight * 0.25f))
-
-                        Text(
-                            text = buildAnnotatedString {
-                                append(batteryPercent.toString())
-                                withStyle(style = SpanStyle(fontSize = 24.sp)) {
-                                    append("%")
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet {
+                            Text(
+                                text = stringResource(R.string.auto_refresh_settings),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                            HorizontalDivider()
+                            NavigationDrawerItem(
+                                label = { Text(stringResource(R.string.auto_off)) },
+                                selected = !autoRefresh,
+                                onClick = {
+                                    autoRefresh = false
+                                    prefs.edit().putBoolean("autoRefresh", false).apply()
+                                    coroutineScope.launch { drawerState.close() }
                                 }
-                            },
-                            style = MaterialTheme.typography.displayLarge,
-                            textAlign = TextAlign.Right,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(end = 16.dp),
-                            color = if (batteryPercent > 10) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            }
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(16.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(batteryPercent / 100f)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = RoundedCornerShape(6.dp)
-                                    )
+                            )
+                            NavigationDrawerItem(
+                                label = { Text(stringResource(R.string.auto_1_sec)) },
+                                selected = autoRefresh && refreshTime == 1000L,
+                                onClick = {
+                                    autoRefresh = true
+                                    refreshTime = 1000L
+                                    prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 1000L).apply()
+                                    coroutineScope.launch { drawerState.close() }
+                                }
+                            )
+                            NavigationDrawerItem(
+                                label = { Text(stringResource(R.string.auto_3_sec)) },
+                                selected = autoRefresh && refreshTime == 3000L,
+                                onClick = {
+                                    autoRefresh = true
+                                    refreshTime = 3000L
+                                    prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 3000L).apply()
+                                    coroutineScope.launch { drawerState.close() }
+                                }
+                            )
+                            NavigationDrawerItem(
+                                label = { Text(stringResource(R.string.auto_6_sec)) },
+                                selected = autoRefresh && refreshTime == 6000L,
+                                onClick = {
+                                    autoRefresh = true
+                                    refreshTime = 6000L
+                                    prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 6000L).apply()
+                                    coroutineScope.launch { drawerState.close() }
+                                }
+                            )
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.fillMaxHeight(0.85f))
+                            HorizontalDivider()
+                            Text(
+                                "(C) 2026 CYRIL COURTIAT",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(16.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(lineHeight * 0.75f))
-
+                    }
+                ) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize()
+                    ) { innerPadding ->
                         Column(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                                .verticalScroll(rememberScrollState())
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .padding(16.dp, 0.dp)
                         ) {
-                            BatteryReport(rows = report)
-                        }
-                        Spacer(modifier = Modifier.height(lineHeight * 0.75f))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(
-                                32.dp,
-                                Alignment.CenterHorizontally
-                            )
-                        ) {
-                            Button(
-                                onClick = {
-                                    report = readBatteryInfo(this@MainActivity)
-                                }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(stringResource(R.string.refresh_now), softWrap = false)
-                            }
-
-                            var menuExpanded by remember { mutableStateOf(false) }
-
-                            ExposedDropdownMenuBox(
-                                expanded = menuExpanded,
-                                onExpandedChange = { menuExpanded = it }
-                            ) {
-                                Button(
-                                    onClick = { menuExpanded = true },
-                                    modifier = Modifier.menuAnchor(
-                                        ExposedDropdownMenuAnchorType.PrimaryNotEditable
+                                IconButton(
+                                    onClick = {
+                                        coroutineScope.launch { drawerState.open() }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Menu,
+                                        contentDescription = "Menu",
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
+                                }
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        if (autoRefresh) {
-                                            stringResource(R.string.auto_interval, refreshTime / 1000)
-                                        } else {
-                                            stringResource(R.string.auto_off)
-                                        },
-                                        softWrap = false
+                                        text = stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.subtitle),
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        autoSize = TextAutoSize.StepBased(
+                                            maxFontSize = MaterialTheme.typography.headlineSmall.fontSize
+                                        ),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = MaterialTheme.colorScheme.outline
                                     )
                                 }
+                                Spacer(modifier = Modifier.padding(24.dp))
+                            }
+                            Spacer(modifier = Modifier.height(lineHeight * 0.25f))
 
-                                ExposedDropdownMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }
+                            Text(
+                                text = buildAnnotatedString {
+                                    append(batteryPercent.toString())
+                                    withStyle(style = SpanStyle(fontSize = 24.sp)) {
+                                        append("%")
+                                    }
+                                },
+                                style = MaterialTheme.typography.displayLarge,
+                                textAlign = TextAlign.Right,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(end = 16.dp),
+                                color = if (batteryPercent > 10) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.error
+                                }
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(lineHeight)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(batteryPercent / 100f)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+
+                            var isRefreshing by remember { mutableStateOf(false) }
+
+                            PullToRefreshBox(
+                                isRefreshing = isRefreshing,
+                                onRefresh = {
+                                    isRefreshing = true
+                                    coroutineScope.launch {
+                                        report = readBatteryInfo(this@MainActivity)
+                                        isRefreshing = false
+                                    }
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState())
                                 ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Auto (1 sec)", softWrap = false) },
-                                        onClick = {
-                                            autoRefresh = true
-                                            refreshTime = 1000L
-
-                                            prefs.edit()
-                                                .putBoolean("autoRefresh", true)
-                                                .putLong("refreshTime", refreshTime)
-                                                .apply()
-
-                                            menuExpanded = false
-                                        }
-                                    )
-
-                                    DropdownMenuItem(
-                                        text = { Text("Auto (3 sec)", softWrap = false) },
-                                        onClick = {
-                                            autoRefresh = true
-                                            refreshTime = 3000L
-
-                                            prefs.edit()
-                                                .putBoolean("autoRefresh", true)
-                                                .putLong("refreshTime", refreshTime)
-                                                .apply()
-
-                                            menuExpanded = false
-                                        }
-                                    )
-
-                                    DropdownMenuItem(
-                                        text = { Text("Auto (6 sec)", softWrap = false) },
-                                        onClick = {
-                                            autoRefresh = true
-                                            refreshTime = 6000L
-
-                                            prefs.edit()
-                                                .putBoolean("autoRefresh", true)
-                                                .putLong("refreshTime", refreshTime)
-                                                .apply()
-
-                                            menuExpanded = false
-                                        }
-                                    )
-
-                                    DropdownMenuItem(
-                                        text = { Text("Auto Off", softWrap = false) },
-                                        onClick = {
-                                            autoRefresh = false
-
-                                            prefs.edit()
-                                                .putBoolean("autoRefresh", false)
-                                                .apply()
-
-                                            menuExpanded = false
-                                        }
-                                    )
+                                    BatteryReport(rows = report)
                                 }
                             }
-                        }
-                        Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
 
-                        Text(
-                            text = sysInfo,
-                            softWrap = false,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            ),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            // Quarter-width centered separator line
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                HorizontalDivider(
+                                    modifier = Modifier.fillMaxWidth(0.25f),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+
+                            Text(
+                                text = sysInfo,
+                                softWrap = false,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }

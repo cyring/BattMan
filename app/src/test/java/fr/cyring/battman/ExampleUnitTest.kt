@@ -1,4 +1,4 @@
-package com.example.battman
+package fr.cyring.battman
 
 import org.junit.Test
 

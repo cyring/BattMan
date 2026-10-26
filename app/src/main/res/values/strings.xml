@@ -1,12 +1,11 @@
 <resources>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
-    <string name="refresh_now">Refresh now</string>
-    <string name="auto_interval">Auto (%1$d sec)</string>
+
     <string name="auto_off">Auto Off</string>
-    <string name="auto_1_sec">Auto (1 sec)</string>
-    <string name="auto_3_sec">Auto (3 sec)</string>
-    <string name="auto_6_sec">Auto (6 sec)</string>
+    <string name="auto_1_sec">1 second</string>
+    <string name="auto_3_sec">3 seconds</string>
+    <string name="auto_6_sec">6 seconds</string>
 
     <string name="level">Level</string>
     <string name="cycle">Cycle</string>
@@ -71,4 +70,5 @@
     </plurals>
 
     <string name="duration_format">%1$s, %2$s</string>
+    <string name="auto_refresh_settings">Auto-Refresh Settings</string>
 </resources>

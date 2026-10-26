@@ -1,4 +1,4 @@
-package com.example.battman.ui.theme
+package fr.cyring.battman.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

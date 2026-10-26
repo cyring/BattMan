@@ -1,4 +1,4 @@
-package com.example.battman.ui.theme
+package fr.cyring.battman.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
