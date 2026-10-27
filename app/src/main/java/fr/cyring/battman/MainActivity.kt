@@ -25,7 +25,9 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -147,55 +149,131 @@ class MainActivity : ComponentActivity() {
                             Text(
                                 text = stringResource(R.string.auto_refresh_settings),
                                 style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                             )
                             HorizontalDivider()
-                            NavigationDrawerItem(
-                                label = { Text(stringResource(R.string.auto_off)) },
-                                selected = !autoRefresh,
-                                onClick = {
-                                    autoRefresh = false
-                                    prefs.edit().putBoolean("autoRefresh", false).apply()
-                                    coroutineScope.launch { drawerState.close() }
-                                }
-                            )
-                            NavigationDrawerItem(
-                                label = { Text(stringResource(R.string.auto_1_sec)) },
-                                selected = autoRefresh && refreshTime == 1000L,
-                                onClick = {
-                                    autoRefresh = true
-                                    refreshTime = 1000L
-                                    prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 1000L).apply()
-                                    coroutineScope.launch { drawerState.close() }
-                                }
-                            )
-                            NavigationDrawerItem(
-                                label = { Text(stringResource(R.string.auto_3_sec)) },
-                                selected = autoRefresh && refreshTime == 3000L,
-                                onClick = {
-                                    autoRefresh = true
-                                    refreshTime = 3000L
-                                    prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 3000L).apply()
-                                    coroutineScope.launch { drawerState.close() }
-                                }
-                            )
-                            NavigationDrawerItem(
-                                label = { Text(stringResource(R.string.auto_6_sec)) },
-                                selected = autoRefresh && refreshTime == 6000L,
-                                onClick = {
-                                    autoRefresh = true
-                                    refreshTime = 6000L
-                                    prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 6000L).apply()
-                                    coroutineScope.launch { drawerState.close() }
-                                }
-                            )
+
+                            // Auto Off row with Switch
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        autoRefresh = false
+                                        prefs.edit().putBoolean("autoRefresh", false).apply()
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.auto_off),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Switch(
+                                    checked = !autoRefresh,
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            autoRefresh = false
+                                            prefs.edit().putBoolean("autoRefresh", false).apply()
+                                        }
+                                    }
+                                )
+                            }
+
+                            // 1 second row with Switch
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        autoRefresh = true
+                                        refreshTime = 1000L
+                                        prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 1000L).apply()
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.auto_1_sec),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Switch(
+                                    checked = autoRefresh && refreshTime == 1000L,
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            autoRefresh = true
+                                            refreshTime = 1000L
+                                            prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 1000L).apply()
+                                        }
+                                    }
+                                )
+                            }
+
+                            // 3 seconds row with Switch
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        autoRefresh = true
+                                        refreshTime = 3000L
+                                        prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 3000L).apply()
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.auto_3_sec),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Switch(
+                                    checked = autoRefresh && refreshTime == 3000L,
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            autoRefresh = true
+                                            refreshTime = 3000L
+                                            prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 3000L).apply()
+                                        }
+                                    }
+                                )
+                            }
+
+                            // 6 seconds row with Switch
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        autoRefresh = true
+                                        refreshTime = 6000L
+                                        prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 6000L).apply()
+                                    }
+                                    .padding(horizontal = 24.dp, vertical = 8.dp),
+
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.auto_6_sec),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Switch(
+                                    checked = autoRefresh && refreshTime == 6000L,
+                                    onCheckedChange = { checked ->
+                                        if (checked) {
+                                            autoRefresh = true
+                                            refreshTime = 6000L
+                                            prefs.edit().putBoolean("autoRefresh", true).putLong("refreshTime", 6000L).apply()
+                                        }
+                                    }
+                                )
+                            }
                             HorizontalDivider()
-                            Spacer(modifier = Modifier.fillMaxHeight(0.8f))
+                            Spacer(modifier = Modifier.fillMaxHeight(0.7f))
                             HorizontalDivider()
                             Text(
                                 "Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT",
                                 style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                             )
                         }
                     }
