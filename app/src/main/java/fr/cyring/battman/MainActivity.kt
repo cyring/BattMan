@@ -32,13 +32,9 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,7 +52,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import fr.cyring.battman.R
@@ -120,6 +115,35 @@ class MainActivity : ComponentActivity() {
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.9f)
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        coroutineScope.launch { drawerState.close() }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Menu,
+                                        contentDescription = "MenuClose",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+
                             Text(
                                 text = stringResource(R.string.auto_refresh_settings),
                                 style = MaterialTheme.typography.titleMedium,
@@ -166,10 +190,10 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             HorizontalDivider()
-                            Spacer(modifier = Modifier.fillMaxHeight(0.85f))
+                            Spacer(modifier = Modifier.fillMaxHeight(0.8f))
                             HorizontalDivider()
                             Text(
-                                "(C) 2026 CYRIL COURTIAT",
+                                "Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT",
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(16.dp)
                             )
@@ -196,7 +220,7 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Menu,
-                                        contentDescription = "Menu",
+                                        contentDescription = "MenuOpen",
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
