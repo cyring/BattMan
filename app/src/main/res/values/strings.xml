@@ -58,6 +58,10 @@
 
     <string name="brightness">Brightness</string>
     <string name="adaptive">Adaptive</string>
+    <string name="mode_night">Dark theme</string>
+    <string name="touchscreen">Touch screen</string>
+    <string name="finger">Finger</string>
+    <string name="notouch">Non-touch</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>

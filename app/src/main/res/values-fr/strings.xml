@@ -58,6 +58,11 @@
 
     <string name="brightness">Luminosité</string>
     <string name="adaptive">Adaptative</string>
+    <string name="mode_night">Thème sombre</string>
+    <string name="touchscreen">Écran tactile</string>
+    <string name="finger">Tactile</string>
+    <string name="notouch">Non tactile</string>
+
     <string name="yes">Oui</string>
     <string name="no">Non</string>
 

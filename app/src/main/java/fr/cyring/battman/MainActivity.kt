@@ -4,11 +4,14 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.provider.Settings.System.getInt
+import android.text.method.Touch
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -50,6 +53,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.DisplayMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -648,18 +652,23 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
 
     data class DisplayInfo(
         val brightness: Int,
-        val adaptive: Boolean
+        val adaptive: Boolean,
+        val nightState: Boolean,
+        val touchKind: Int
     )
 
     fun readDisplayInfo(ctx: Context): DisplayInfo {
         val resolver = ctx.contentResolver
+        val sysConf = Resources.getSystem().configuration
         return DisplayInfo(
             brightness = getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1),
             adaptive = getInt(
                 resolver,
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
                 Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-            ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+            ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
+            nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
+            sysConf.touchscreen
         )
     }
 
@@ -667,6 +676,13 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
 
     val brightnessLevel = if (display.brightness >= 0) display.brightness.toString() else context.getString(R.string.unknown)
     val adaptiveMode = context.getString(if (display.adaptive) R.string.yes else R.string.no)
+    val nightMode = context.getString(if (display.nightState) R.string.yes else R.string.no)
+    val touchScreen = when (display.touchKind) {
+        Configuration.TOUCHSCREEN_FINGER -> context.getString(R.string.finger)
+        Configuration.TOUCHSCREEN_NOTOUCH -> context.getString(R.string.notouch)
+        Configuration.TOUCHSCREEN_UNDEFINED -> context.getString(R.string.undefined)
+        else -> context.getString(R.string.unknown)
+    }
 
     fun row(labelId: Int, value: String) =
         BatteryReportRow(context.getString(labelId), value)
@@ -702,7 +718,9 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         BatteryReportRow("",""),
 
         row(R.string.brightness, brightnessLevel),
-        row(R.string.adaptive, adaptiveMode)
+        row(R.string.adaptive, adaptiveMode),
+        row(R.string.mode_night, nightMode),
+        row(R.string.touchscreen, touchScreen)
     )
 }
 
