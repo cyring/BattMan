@@ -56,6 +56,9 @@
     <string name="emergency">Emergency</string>
     <string name="shutdown">Shutdown</string>
 
+    <string name="brightness">Brightness</string>
+    <string name="adaptive">Adaptive</string>
+
     <string name="yes">Yes</string>
     <string name="no">No</string>
 

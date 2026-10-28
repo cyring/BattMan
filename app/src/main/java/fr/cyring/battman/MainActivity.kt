@@ -1,11 +1,14 @@
 package fr.cyring.battman
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.provider.Settings.System.getInt
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -47,6 +50,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -362,7 +366,7 @@ class MainActivity : ComponentActivity() {
                                         color = if (batteryPercent > 10) {
                                             MaterialTheme.colorScheme.primary
                                         } else {
-                                            MaterialTheme.colorScheme.error
+                                            Color.Red
                                         }
                                     )
 
@@ -642,6 +646,28 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         }
     }
 
+    data class DisplayInfo(
+        val brightness: Int,
+        val adaptive: Boolean
+    )
+
+    fun readDisplayInfo(ctx: Context): DisplayInfo {
+        val resolver = ctx.contentResolver
+        return DisplayInfo(
+            brightness = getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1),
+            adaptive = getInt(
+                resolver,
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+        )
+    }
+
+    val display: DisplayInfo = readDisplayInfo(context)
+
+    val brightnessLevel = if (display.brightness >= 0) display.brightness.toString() else context.getString(R.string.unknown)
+    val adaptiveMode = context.getString(if (display.adaptive) R.string.yes else R.string.no)
+
     fun row(labelId: Int, value: String) =
         BatteryReportRow(context.getString(labelId), value)
 
@@ -671,7 +697,12 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
 
         row(R.string.thermal_status, thermalStatus),
         row(R.string.battery_present, batteryPresent),
-        row(R.string.battery_low, lowBatteryState)
+        row(R.string.battery_low, lowBatteryState),
+
+        BatteryReportRow("",""),
+
+        row(R.string.brightness, brightnessLevel),
+        row(R.string.adaptive, adaptiveMode)
     )
 }
 

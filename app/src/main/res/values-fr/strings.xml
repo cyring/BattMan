@@ -56,6 +56,8 @@
     <string name="emergency">Urgence</string>
     <string name="shutdown">Arrêt</string>
 
+    <string name="brightness">Luminosité</string>
+    <string name="adaptive">Adaptative</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
 
