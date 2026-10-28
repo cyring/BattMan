@@ -4,9 +4,15 @@
 # For more details, see
 #   https://d.android.com/r/tools/r8/keep-rules
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep Kotlin standard library classes from being stripped/obfuscated
+-keep class kotlin.** { *; }
+-dontwarn kotlin.**
+
+# Keep Coroutines
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
+
+# Keep Lifecycle, Startup & EmojiCompat to prevent IllegalAccessError
+-keep class androidx.lifecycle.** { *; }
+-keep class androidx.startup.** { *; }
+-keep class androidx.emoji2.** { *; }

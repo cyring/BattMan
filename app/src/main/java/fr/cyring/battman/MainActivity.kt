@@ -65,6 +65,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import fr.cyring.battman.BuildConfig
 import fr.cyring.battman.R
 import fr.cyring.battman.ui.theme.BattManTheme
 import java.util.Locale
