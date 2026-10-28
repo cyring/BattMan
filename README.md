@@ -1,2 +1,3 @@
-![alt text](.assets/BattMan_20261023-235156.png "English")
-![alt text](.assets/BattMan_20261023-235234.png "French")
+![alt text](.assets/BattMan 20261028-164032.png "English")
+![alt text](.assets/BattMan 20261028-163841.png "French")
+![alt text](.assets/BattMan 20261028-164008.png "Menu")
