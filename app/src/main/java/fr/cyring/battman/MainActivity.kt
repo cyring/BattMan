@@ -54,6 +54,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.DisplayMode
+import androidx.compose.ui.FrameRateCategory
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -654,7 +655,8 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         val brightness: Int,
         val adaptive: Boolean,
         val nightState: Boolean,
-        val touchKind: Int
+        val touchKind: Int,
+        val refreshRate: Float
     )
 
     fun readDisplayInfo(ctx: Context): DisplayInfo {
@@ -668,7 +670,8 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
                 Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
             nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
-            sysConf.touchscreen
+            sysConf.touchscreen,
+            refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ctx.display.refreshRate?: 0f else 0f
         )
     }
 
@@ -683,6 +686,7 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         Configuration.TOUCHSCREEN_UNDEFINED -> context.getString(R.string.undefined)
         else -> context.getString(R.string.unknown)
     }
+    val smoothDisplay = if (display.refreshRate == 0f) context.getString(R.string.unsupported) else display.refreshRate.toInt().toString() + " Hz"
 
     fun row(labelId: Int, value: String) =
         BatteryReportRow(context.getString(labelId), value)
@@ -717,10 +721,11 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
 
         BatteryReportRow("",""),
 
-        row(R.string.brightness, brightnessLevel),
+        row(R.string.brightness, "${brightnessLevel}/255"),
         row(R.string.adaptive, adaptiveMode),
         row(R.string.mode_night, nightMode),
-        row(R.string.touchscreen, touchScreen)
+        row(R.string.touchscreen, touchScreen),
+        row(R.string.refresh_rate,smoothDisplay)
     )
 }
 

@@ -40,7 +40,7 @@
     <string name="unavailable">Indisponible</string>
     <string name="activated">Activé</string>
     <string name="deactivated">Désactivé</string>
-    <string name="unsupported">Non support</string>
+    <string name="unsupported">Sans support</string>
     <string name="on_battery">Batterie</string>
     <string name="ac_charger">Secteur</string>
     <string name="usb_plug">Prise USB</string>
@@ -62,6 +62,7 @@
     <string name="touchscreen">Écran tactile</string>
     <string name="finger">Tactile</string>
     <string name="notouch">Non tactile</string>
+    <string name="refresh_rate">Écran fluide</string>
 
     <string name="yes">Oui</string>
     <string name="no">Non</string>

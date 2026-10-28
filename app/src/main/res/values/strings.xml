@@ -62,6 +62,7 @@
     <string name="touchscreen">Touch screen</string>
     <string name="finger">Finger</string>
     <string name="notouch">Non-touch</string>
+    <string name="refresh_rate">Smooth display</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
