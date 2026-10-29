@@ -19,7 +19,7 @@
     <string name="current_now">Courant actuel</string>
     <string name="current_average">Courant moyen</string>
     <string name="battery_plugged">Alimentation</string>
-    <string name="battery_saver">Économiseur</string>
+    <string name="battery_saver">Économ. batterie</string>
     <string name="time_remaining">Temps de charge</string>
     <string name="thermal_status">État thermique</string>
     <string name="battery_present">Batterie présente</string>
@@ -63,9 +63,14 @@
     <string name="finger">Tactile</string>
     <string name="notouch">Non tactile</string>
     <string name="refresh_rate">Écran fluide</string>
+    <string name="screen_timeout">Extinction</string>
+    <string name="screen_saver">Économ. écran</string>
+    <string name="screen_off">Chronomètre</string>
 
     <string name="yes">Oui</string>
     <string name="no">Non</string>
+    <string name="never">Jamais</string>
+    <string name="waiting">En attente</string>
 
     <plurals name="hours">
         <item quantity="one">%d h</item>

@@ -63,9 +63,14 @@
     <string name="finger">Finger</string>
     <string name="notouch">Non-touch</string>
     <string name="refresh_rate">Smooth display</string>
+    <string name="screen_timeout">Screen timeout</string>
+    <string name="screen_saver">Screen Saver</string>
+    <string name="screen_off">Stopwatch</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="never">Never</string>
+    <string name="waiting">Waiting</string>
 
     <plurals name="hours">
         <item quantity="one">%d hr</item>
@@ -78,5 +83,6 @@
     </plurals>
 
     <string name="duration_format">%1$s, %2$s</string>
+    <string name="millisec_format" translatable="false">%1$d s %2$03d ms</string>
     <string name="auto_refresh_settings">Auto-Refresh Settings</string>
 </resources>

@@ -9,6 +9,8 @@ import android.content.res.Resources
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.os.SystemClock
 import android.provider.Settings
 import android.provider.Settings.System.getInt
 import android.text.method.Touch
@@ -472,6 +474,13 @@ private fun BatteryReport(rows: List<BatteryReportRow>) {
     }
 }
 
+data class TimeTracker(
+    var screenOffStartedAt: Long? = null,
+    var lastScreenOffDurationMs: Long? = null
+)
+
+private val timeTracker = TimeTracker()
+
 private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
     val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -621,15 +630,8 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
     )
 
-    val milliseconds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        manager.computeChargeTimeRemaining()
-    } else {
-        -1L
-    }
-    val timeRemaining = if (milliseconds < 0L) {
-        context.getString(R.string.unavailable)
-    } else {
-        val totalMinutes = (milliseconds + 59_999L) / 60_000L
+    fun to_HM(ms: Long): String {
+        val totalMinutes = (ms + 59_999L) / 60_000L
         val hours = (totalMinutes / 60).toInt()
         val minutes = (totalMinutes % 60).toInt()
 
@@ -643,7 +645,7 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
             minutes,
             minutes
         )
-        when {
+        return when {
             hours > 0 && minutes > 0 ->
                 context.getString(R.string.duration_format, hoursText, minutesText)
 
@@ -652,17 +654,38 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         }
     }
 
+    fun to_MS(ms: Long?): String {
+        val durationMs = ms ?: 0
+        val seconds = durationMs / 1_000
+        val milliseconds = durationMs % 1_000
+        return context.getString(R.string.millisec_format, seconds, milliseconds)
+    }
+
+    val milliseconds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        manager.computeChargeTimeRemaining()
+    } else {
+        -1L
+    }
+    val timeRemaining = if (milliseconds < 0L) {
+        context.getString(R.string.unavailable)
+    } else {
+        to_HM(milliseconds)
+    }
+
     data class DisplayInfo(
         val brightness: Int,
         val adaptive: Boolean,
         val nightState: Boolean,
         val touchKind: Int,
-        val refreshRate: Float
+        val refreshRate: Float,
+        val screenTimeoutMs: Long,
+        val screenSaverEnabled: Boolean?
     )
 
     fun readDisplayInfo(ctx: Context): DisplayInfo {
         val resolver = ctx.contentResolver
         val sysConf = Resources.getSystem().configuration
+
         return DisplayInfo(
             brightness = getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1),
             adaptive = getInt(
@@ -671,8 +694,17 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
                 Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
             nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
-            sysConf.touchscreen,
-            refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ctx.display.refreshRate?: 0f else 0f
+            touchKind = sysConf.touchscreen,
+            refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ctx.display.refreshRate?: 0f else 0f,
+            screenTimeoutMs = Settings.System.getLong(resolver, Settings.System.SCREEN_OFF_TIMEOUT, -1L),
+            screenSaverEnabled = try {
+                Settings.Secure.getInt(
+                    context.contentResolver,
+                    "screensaver_enabled"
+                ) != 0
+            } catch (_: Settings.SettingNotFoundException) {
+                null
+            }
         )
     }
 
@@ -688,6 +720,36 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         else -> context.getString(R.string.unknown)
     }
     val smoothDisplay = if (display.refreshRate == 0f) context.getString(R.string.unsupported) else display.refreshRate.toInt().toString() + " Hz"
+    val screenTimeout = when {
+        display.screenTimeoutMs < 0L -> context.getString(R.string.unknown)
+        display.screenTimeoutMs == Int.MAX_VALUE.toLong() ->
+            context.getString(R.string.never)
+        else -> to_MS(display.screenTimeoutMs)
+    }
+    val screenSaver = if (display.screenSaverEnabled == true) context.getString(R.string.activated) else context.getString(R.string.deactivated)
+
+    fun updateInteractiveState(powerManager: PowerManager) {
+        val now = SystemClock.elapsedRealtime()
+
+        if (!powerManager.isInteractive) {
+            if (timeTracker.screenOffStartedAt == null) {
+                timeTracker.screenOffStartedAt = now
+            }
+        } else {
+            timeTracker.screenOffStartedAt?.let { startedAt ->
+                timeTracker.lastScreenOffDurationMs = now - startedAt
+                timeTracker.screenOffStartedAt = null
+            }
+        }
+    }
+
+    updateInteractiveState(context.getSystemService(Context.POWER_SERVICE) as PowerManager)
+
+    val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == null) {
+        "<${context.getString(R.string.waiting)}>"
+    } else {
+        to_MS(timeTracker.lastScreenOffDurationMs)
+    }
 
     fun row(labelId: Int, value: String) =
         BatteryReportRow(context.getString(labelId), value)
@@ -726,7 +788,10 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         row(R.string.adaptive, adaptiveMode),
         row(R.string.mode_night, nightMode),
         row(R.string.touchscreen, touchScreen),
-        row(R.string.refresh_rate,smoothDisplay)
+        row(R.string.refresh_rate,smoothDisplay),
+        row(R.string.screen_timeout, screenTimeout),
+        row(R.string.screen_saver, screenSaver),
+        row(R.string.screen_off, lastScreenOffDurationMs)
     )
 }
 
