@@ -1,6 +1,5 @@
 package fr.cyring.battman
 
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -10,10 +9,8 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
-import android.os.SystemClock
 import android.provider.Settings
 import android.provider.Settings.System.getInt
-import android.text.method.Touch
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -30,7 +27,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
@@ -42,7 +38,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.text.style.TextAlign
@@ -55,8 +50,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material3.DisplayMode
-import androidx.compose.ui.FrameRateCategory
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -80,13 +73,39 @@ private data class BatteryReportRow(
     val value: String
 )
 
-private var lineHeight: Dp = 16.dp
-
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
+    private lateinit var powerManager: PowerManager
+
+    private var lineHeight: Dp = 16.dp
+
+    data class TimeTracker(
+        var screenOffStartedAt: Long = 0L,
+        var lastScreenOffDurationMs: Long = -1L
+    )
+
+    private val timeTracker = TimeTracker()
+
+    override fun onPause() {
+        super.onPause()
+
+        if (powerManager.isInteractive == false) {
+            timeTracker.screenOffStartedAt = System.currentTimeMillis()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if ((powerManager.isInteractive == true) && (timeTracker.screenOffStartedAt > 0L)) {
+            timeTracker.lastScreenOffDurationMs = System.currentTimeMillis() - timeTracker.screenOffStartedAt
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        powerManager = this@MainActivity.getSystemService(Context.POWER_SERVICE) as PowerManager
 
         setContent {
             val prefs = remember {
@@ -102,18 +121,18 @@ class MainActivity : ComponentActivity() {
             }
 
             var report by remember {
-                mutableStateOf(readBatteryInfo(this@MainActivity))
+                mutableStateOf(readBatteryInfo(this@MainActivity, powerManager, timeTracker))
             }
 
             LaunchedEffect(autoRefresh, refreshTime) {
                 while (autoRefresh) {
                     delay(refreshTime.milliseconds)
-                    report = readBatteryInfo(this@MainActivity)
+                    report = readBatteryInfo(this@MainActivity, powerManager, timeTracker)
                 }
             }
 
             var sysInfo by remember {
-                mutableStateOf(readSystemInfo(this@MainActivity))
+                mutableStateOf(readSystemInfo())
             }
 
             BattManTheme {
@@ -346,7 +365,7 @@ class MainActivity : ComponentActivity() {
                                 onRefresh = {
                                     isRefreshing = true
                                     coroutineScope.launch {
-                                        report = readBatteryInfo(this@MainActivity)
+                                        report = readBatteryInfo(this@MainActivity, powerManager, timeTracker)
                                         isRefreshing = false
                                     }
                                 },
@@ -399,7 +418,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                     Spacer(modifier = Modifier.height(lineHeight * 0.75f))
 
-                                    BatteryReport(rows = report)
+                                    BatteryReport(lineHeight, rows = report)
                                 }
                             }
                             Spacer(modifier = Modifier.height(lineHeight * 0.75f))
@@ -434,7 +453,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun BatteryReport(rows: List<BatteryReportRow>) {
+private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -474,14 +493,9 @@ private fun BatteryReport(rows: List<BatteryReportRow>) {
     }
 }
 
-data class TimeTracker(
-    var screenOffStartedAt: Long? = null,
-    var lastScreenOffDurationMs: Long? = null
-)
-
-private val timeTracker = TimeTracker()
-
-private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
+private fun readBatteryInfo(context: Context, powerManager: PowerManager,
+                            timeTracker: MainActivity.TimeTracker): List<BatteryReportRow>
+{
     val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
     @Suppress("DEPRECATION")
@@ -571,15 +585,11 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         context.getString(R.string.no)
     }
 
-    val technology = if ("$extraTech" == "Unknown") {
+    val technology = if (extraTech == "Unknown") {
         "${Build.MANUFACTURER}"
     } else {
-        "$extraTech"
+        extraTech
     }
-
-    val powerManager = context.getSystemService(
-        Context.POWER_SERVICE
-    ) as android.os.PowerManager
 
     val batterySaver = if (powerManager.isPowerSaveMode == true) {
         context.getString(R.string.activated)
@@ -589,13 +599,13 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
 
     val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
         when (powerManager.currentThermalStatus) {
-            android.os.PowerManager.THERMAL_STATUS_NONE -> context.getString(R.string.none)
-            android.os.PowerManager.THERMAL_STATUS_LIGHT -> context.getString(R.string.light)
-            android.os.PowerManager.THERMAL_STATUS_MODERATE -> context.getString(R.string.moderate)
-            android.os.PowerManager.THERMAL_STATUS_SEVERE -> context.getString(R.string.severe)
-            android.os.PowerManager.THERMAL_STATUS_CRITICAL -> context.getString(R.string.critical)
-            android.os.PowerManager.THERMAL_STATUS_EMERGENCY -> context.getString(R.string.emergency)
-            android.os.PowerManager.THERMAL_STATUS_SHUTDOWN -> context.getString(R.string.shutdown)
+            PowerManager.THERMAL_STATUS_NONE -> context.getString(R.string.none)
+            PowerManager.THERMAL_STATUS_LIGHT -> context.getString(R.string.light)
+            PowerManager.THERMAL_STATUS_MODERATE -> context.getString(R.string.moderate)
+            PowerManager.THERMAL_STATUS_SEVERE -> context.getString(R.string.severe)
+            PowerManager.THERMAL_STATUS_CRITICAL -> context.getString(R.string.critical)
+            PowerManager.THERMAL_STATUS_EMERGENCY -> context.getString(R.string.emergency)
+            PowerManager.THERMAL_STATUS_SHUTDOWN -> context.getString(R.string.shutdown)
             else -> context.getString(R.string.undefined)
         }
     } else {
@@ -630,7 +640,7 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
     )
 
-    fun to_HM(ms: Long): String {
+    fun timeToHM(ms: Long): String {
         val totalMinutes = (ms + 59_999L) / 60_000L
         val hours = (totalMinutes / 60).toInt()
         val minutes = (totalMinutes % 60).toInt()
@@ -654,11 +664,20 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         }
     }
 
-    fun to_MS(ms: Long?): String {
+    fun timeToHMSMS(ms: Long?): String {
         val durationMs = ms ?: 0
-        val seconds = durationMs / 1_000
-        val milliseconds = durationMs % 1_000
-        return context.getString(R.string.millisec_format, seconds, milliseconds)
+        val totalSeconds = durationMs / 1_000
+        val milliseconds = (durationMs % 1_000).toInt()
+        val seconds = (totalSeconds % 60).toInt()
+        val totalMinutes = totalSeconds / 60
+        val minutes = (totalMinutes % 60).toInt()
+        val hours = (totalMinutes / 60).toInt()
+
+        return when {
+            hours > 0 -> context.getString(R.string.duration_h_m_s_format, hours, minutes, seconds)
+            minutes > 0 -> context.getString(R.string.duration_m_s_format, minutes, seconds)
+            else -> context.getString(R.string.duration_ms_format, seconds, milliseconds)
+        }
     }
 
     val milliseconds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -669,7 +688,7 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
     val timeRemaining = if (milliseconds < 0L) {
         context.getString(R.string.unavailable)
     } else {
-        to_HM(milliseconds)
+        timeToHM(milliseconds)
     }
 
     data class DisplayInfo(
@@ -695,7 +714,7 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
             nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
             touchKind = sysConf.touchscreen,
-            refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ctx.display.refreshRate?: 0f else 0f,
+            refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ctx.display.refreshRate else 0f,
             screenTimeoutMs = Settings.System.getLong(resolver, Settings.System.SCREEN_OFF_TIMEOUT, -1L),
             screenSaverEnabled = try {
                 Settings.Secure.getInt(
@@ -724,31 +743,14 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
         display.screenTimeoutMs < 0L -> context.getString(R.string.unknown)
         display.screenTimeoutMs == Int.MAX_VALUE.toLong() ->
             context.getString(R.string.never)
-        else -> to_MS(display.screenTimeoutMs)
+        else -> timeToHMSMS(display.screenTimeoutMs)
     }
     val screenSaver = if (display.screenSaverEnabled == true) context.getString(R.string.activated) else context.getString(R.string.deactivated)
 
-    fun updateInteractiveState(powerManager: PowerManager) {
-        val now = SystemClock.elapsedRealtime()
-
-        if (!powerManager.isInteractive) {
-            if (timeTracker.screenOffStartedAt == null) {
-                timeTracker.screenOffStartedAt = now
-            }
-        } else {
-            timeTracker.screenOffStartedAt?.let { startedAt ->
-                timeTracker.lastScreenOffDurationMs = now - startedAt
-                timeTracker.screenOffStartedAt = null
-            }
-        }
-    }
-
-    updateInteractiveState(context.getSystemService(Context.POWER_SERVICE) as PowerManager)
-
-    val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == null) {
+    val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == -1L) {
         "<${context.getString(R.string.waiting)}>"
     } else {
-        to_MS(timeTracker.lastScreenOffDurationMs)
+        timeToHMSMS(timeTracker.lastScreenOffDurationMs)
     }
 
     fun row(labelId: Int, value: String) =
@@ -795,7 +797,7 @@ private fun readBatteryInfo(context: Context): List<BatteryReportRow> {
     )
 }
 
-private fun readSystemInfo(context: Context): String {
+private fun readSystemInfo(): String {
     return """
         ${Build.MANUFACTURER} ${Build.MODEL} - Android ${Build.VERSION.RELEASE} - API ${Build.VERSION.SDK_INT}
     """.trimIndent()

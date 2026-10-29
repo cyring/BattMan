@@ -83,6 +83,8 @@
     </plurals>
 
     <string name="duration_format">%1$s, %2$s</string>
-    <string name="millisec_format" translatable="false">%1$d s %2$03d ms</string>
+    <string name="duration_ms_format" translatable="false">%1$d s %2$03d ms</string>
+    <string name="duration_m_s_format" translatable="false">%1$d m %2$02d s</string>
+    <string name="duration_h_m_s_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
     <string name="auto_refresh_settings">Auto-Refresh Settings</string>
 </resources>
