@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.provider.Settings.System.getInt
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -66,6 +67,7 @@ import fr.cyring.battman.ui.theme.BattManTheme
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
+const val BATTERY_ALERT_THRESHOLD = 10
 public var batteryPercent = 100
 
 private data class BatteryReportRow(
@@ -84,12 +86,19 @@ class MainActivity : ComponentActivity() {
     )
 
     private val timeTracker = TimeTracker()
+    private val batteryEventReceiver = BatteryEventReceiver()
 
     override fun onPause() {
         super.onPause()
 
-        if (powerManager.isInteractive == false) {
+        if ((powerManager.isInteractive == false) && (timeTracker.screenOffStartedAt == 0L)) {
             timeTracker.screenOffStartedAt = System.currentTimeMillis()
+        }
+
+        try {
+            unregisterReceiver(batteryEventReceiver)
+        } catch (e: Exception) {
+            Toast.makeText(this@MainActivity, "${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -98,7 +107,14 @@ class MainActivity : ComponentActivity() {
 
         if ((powerManager.isInteractive == true) && (timeTracker.screenOffStartedAt > 0L)) {
             timeTracker.lastScreenOffDurationMs = System.currentTimeMillis() - timeTracker.screenOffStartedAt
+            timeTracker.screenOffStartedAt = 0L
         }
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_BATTERY_LOW)
+            addAction(Intent.ACTION_POWER_CONNECTED)
+        }
+        registerReceiver(batteryEventReceiver, filter)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,6 +122,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         powerManager = this@MainActivity.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
 
         setContent {
             val prefs = remember {
@@ -390,7 +412,7 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(end = 16.dp),
-                                        color = if (batteryPercent > 10) {
+                                        color = if (batteryPercent > BATTERY_ALERT_THRESHOLD) {
                                             MaterialTheme.colorScheme.primary
                                         } else {
                                             Color.Red
