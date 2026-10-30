@@ -60,8 +60,6 @@ import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 import fr.cyring.battman.ui.theme.BattManTheme
 
-const val BATTERY_ALERT_THRESHOLD = 10
-
 class MainActivity : ComponentActivity() {
     private val viewModel: BatteryViewModel by viewModels()
     private var lineHeight: Dp = 16.dp

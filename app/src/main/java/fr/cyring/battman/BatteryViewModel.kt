@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
+const val BATTERY_ALERT_THRESHOLD = 10
+
 data class BatteryReportRow(
     val label: String,
     val value: String
@@ -143,11 +145,17 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             }
         }
 
-        val cycle = extra(BatteryManager.EXTRA_CYCLE_COUNT)
+        val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            extra(BatteryManager.EXTRA_CYCLE_COUNT)
+        } else {
+            -1
+        }
         val level = extra(BatteryManager.EXTRA_LEVEL)
         val scale = extra(BatteryManager.EXTRA_SCALE, 100)
 
         updateBatteryLevel(level, scale)
+
+        val cycle = if (count == -1) context.getString(R.string.unavailable) else count.toString()
 
         val status = when (extra(BatteryManager.EXTRA_STATUS)) {
             BatteryManager.BATTERY_STATUS_CHARGING -> context.getString(R.string.charging)
@@ -384,7 +392,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         return listOf(
             row(R.string.level, "$batteryPercent%"),
-            row(R.string.cycle, cycle.toString()),
+            row(R.string.cycle, cycle),
             row(R.string.state, status),
             row(R.string.health, health),
             row(R.string.technology, technology),
