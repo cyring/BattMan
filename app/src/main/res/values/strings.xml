@@ -90,6 +90,6 @@
 
     <string name="battery_alerts_channel_name">Battery Alerts</string>
     <string name="battery_alerts_channel_desc">Alerts when device battery is running low</string>
-    <string name="battman_alert_title">BattMan Alert</string>
-    <string name="battery_low_alert_text">Battery is running low (%1$d%%)\nTime to plug in!</string>
+    <string name="battman_alert_title">Battery is running low</string>
+    <string name="battery_low_alert_text">%1$d%% Time to plug in!</string>
 </resources>

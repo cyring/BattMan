@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.BatteryManager
 import android.os.Build
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -54,14 +55,32 @@ fun showLowBatteryNotification(context: Context, level: Int) {
 }
 
 class BatteryEventReceiver : BroadcastReceiver() {
+    companion object {
+        private var alertShown = false
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
+        fun cancelNotification(context: Context, id: Int) {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(id)
+        }
         when (intent.action) {
-            Intent.ACTION_BATTERY_LOW -> {
-                showLowBatteryNotification(context, BATTERY_ALERT_THRESHOLD)
+            Intent.ACTION_BATTERY_CHANGED -> {
+                val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                BatteryViewModel.updateBatteryLevel(level, scale)
+
+                if (BatteryViewModel.batteryPercent <= BATTERY_ALERT_THRESHOLD) {
+                    showLowBatteryNotification(context, BatteryViewModel.batteryPercent)
+                    alertShown = true
+                } else if (alertShown == true) {
+                    cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)
+                    alertShown = false
+                }
             }
             Intent.ACTION_POWER_CONNECTED -> {
-                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.cancel(NOTIFICATION_BATTERY_ALERT_ID)
+                cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)
+                alertShown = false
             }
         }
     }
