@@ -89,4 +89,5 @@
     <string name="battery_alerts_channel_desc">Alertes lorsque la batterie est faible</string>
     <string name="battman_alert_title">Batterie faible</string>
     <string name="battery_low_alert_text">%1$d%% Pensez à brancher !</string>
+    <string name="battery_alert_threshold">Seuil d\'alerte</string>
 </resources>

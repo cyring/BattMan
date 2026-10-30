@@ -49,6 +49,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.Slider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -58,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
 
 class MainActivity : ComponentActivity() {
@@ -266,6 +268,32 @@ class MainActivity : ComponentActivity() {
                                             )
                                         }
                                         HorizontalDivider()
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.battery_alert_threshold),
+                                                style = MaterialTheme.typography.titleMedium
+                                                )
+                                            Text(
+                                                text = BatteryViewModel.batteryAlertThreshold.toString() + " %",
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                        Slider(
+                                            value = BatteryViewModel.batteryAlertThreshold.toFloat(),
+                                            valueRange = 1f..100f,
+                                            onValueChange = { newValue ->
+                                                viewModel.updateBatteryAlertThreshold(newValue.roundToInt())
+                                            },
+                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                        )
+                                        HorizontalDivider()
                                     }
 
                                     Column {
@@ -373,7 +401,7 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(end = 16.dp),
-                                        color = if (batteryPercent > BATTERY_ALERT_THRESHOLD) {
+                                        color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
                                             MaterialTheme.colorScheme.primary
                                         } else {
                                             Color.Red

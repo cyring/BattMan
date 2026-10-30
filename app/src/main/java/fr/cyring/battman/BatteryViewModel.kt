@@ -41,6 +41,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     enum class BatteryTrend { INCREASING, DECREASING, UNCHANGED }
 
     companion object {
+        var batteryAlertThreshold by mutableIntStateOf(BATTERY_ALERT_THRESHOLD)
         var batteryPercent by mutableIntStateOf(100)
         var previousPercent = -1
         var batteryTrend = BatteryTrend.UNCHANGED
@@ -69,6 +70,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     private var refreshJob: Job? = null
 
     init {
+        batteryAlertThreshold = prefs.getInt("batteryAlertThreshold", BATTERY_ALERT_THRESHOLD)
         refreshData()
         sysInfo = readSystemInfo()
         startAutoRefreshLoop()
@@ -98,6 +100,11 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 }
             }
         }
+    }
+
+    fun updateBatteryAlertThreshold(value: Int) {
+        batteryAlertThreshold = value
+        prefs.edit().putInt("batteryAlertThreshold", value).apply()
     }
 
     fun onScreenPaused() {

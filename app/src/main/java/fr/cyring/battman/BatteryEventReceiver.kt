@@ -70,7 +70,7 @@ class BatteryEventReceiver : BroadcastReceiver() {
                 val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
                 val trend = BatteryViewModel.updateBatteryLevel(level, scale)
 
-                if (BatteryViewModel.batteryPercent <= BATTERY_ALERT_THRESHOLD
+                if (BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold
                     && trend == BatteryViewModel.BatteryTrend.DECREASING)
                 {
                     showLowBatteryNotification(context, BatteryViewModel.batteryPercent)
