@@ -9,10 +9,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -55,8 +58,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
-import fr.cyring.battman.BuildConfig
-import fr.cyring.battman.R
 import fr.cyring.battman.ui.theme.BattManTheme
 
 const val BATTERY_ALERT_THRESHOLD = 10
@@ -120,149 +121,166 @@ class MainActivity : ComponentActivity() {
                         ModalDrawerSheet(
                             modifier = Modifier.width(320.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.9f)
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            BoxWithConstraints(
+                                modifier = Modifier.fillMaxHeight()
                             ) {
-                                IconButton(
-                                    onClick = {
-                                        coroutineScope.launch { drawerState.close() }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Menu,
-                                        contentDescription = "MenuClose",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
                                 Column(
-                                    modifier = Modifier.weight(1f),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = maxHeight)
+                                        .verticalScroll(rememberScrollState()),
+                                    verticalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(
-                                        text = stringResource(R.string.app_name),
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                                    Column {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            IconButton(
+                                                onClick = {
+                                                    coroutineScope.launch { drawerState.close() }
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Menu,
+                                                    contentDescription = "MenuClose",
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text(
+                                                    text = stringResource(R.string.app_name),
+                                                    style = MaterialTheme.typography.headlineSmall,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = stringResource(R.string.auto_refresh_settings),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                                        )
+                                        HorizontalDivider()
+
+                                        // Auto Off row with Switch
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    viewModel.updateAutoRefresh(false, refreshTime)
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.auto_off),
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Switch(
+                                                checked = !autoRefresh,
+                                                onCheckedChange = { checked ->
+                                                    if (checked) {
+                                                        viewModel.updateAutoRefresh(false, refreshTime)
+                                                    }
+                                                }
+                                            )
+                                        }
+
+                                        // 1 second row with Switch
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    viewModel.updateAutoRefresh(true, 1000L)
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.auto_1_sec),
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Switch(
+                                                checked = autoRefresh && refreshTime == 1000L,
+                                                onCheckedChange = { checked ->
+                                                    if (checked) {
+                                                        viewModel.updateAutoRefresh(true, 1000L)
+                                                    }
+                                                }
+                                            )
+                                        }
+
+                                        // 3 seconds row with Switch
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    viewModel.updateAutoRefresh(true, 3000L)
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.auto_3_sec),
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Switch(
+                                                checked = autoRefresh && refreshTime == 3000L,
+                                                onCheckedChange = { checked ->
+                                                    if (checked) {
+                                                        viewModel.updateAutoRefresh(true, 3000L)
+                                                    }
+                                                }
+                                            )
+                                        }
+
+                                        // 6 seconds row with Switch
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    viewModel.updateAutoRefresh(true, 6000L)
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.auto_6_sec),
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Switch(
+                                                checked = autoRefresh && refreshTime == 6000L,
+                                                onCheckedChange = { checked ->
+                                                    if (checked) {
+                                                        viewModel.updateAutoRefresh(true, 6000L)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                        HorizontalDivider()
+                                    }
+
+                                    Column {
+                                        HorizontalDivider()
+                                        Text(
+                                            "Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                                        )
+                                    }
                                 }
                             }
-
-                            Text(
-                                text = stringResource(R.string.auto_refresh_settings),
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-                            )
-                            HorizontalDivider()
-
-                            // Auto Off row with Switch
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.updateAutoRefresh(false, refreshTime)
-                                    }
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.auto_off),
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Switch(
-                                    checked = !autoRefresh,
-                                    onCheckedChange = { checked ->
-                                        if (checked) {
-                                            viewModel.updateAutoRefresh(false, refreshTime)
-                                        }
-                                    }
-                                )
-                            }
-
-                            // 1 second row with Switch
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.updateAutoRefresh(true, 1000L)
-                                    }
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.auto_1_sec),
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Switch(
-                                    checked = autoRefresh && refreshTime == 1000L,
-                                    onCheckedChange = { checked ->
-                                        if (checked) {
-                                            viewModel.updateAutoRefresh(true, 1000L)
-                                        }
-                                    }
-                                )
-                            }
-
-                            // 3 seconds row with Switch
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.updateAutoRefresh(true, 3000L)
-                                    }
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.auto_3_sec),
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Switch(
-                                    checked = autoRefresh && refreshTime == 3000L,
-                                    onCheckedChange = { checked ->
-                                        if (checked) {
-                                            viewModel.updateAutoRefresh(true, 3000L)
-                                        }
-                                    }
-                                )
-                            }
-
-                            // 6 seconds row with Switch
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.updateAutoRefresh(true, 6000L)
-                                    }
-                                    .padding(horizontal = 24.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.auto_6_sec),
-                                    modifier = Modifier.weight(1f),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Switch(
-                                    checked = autoRefresh && refreshTime == 6000L,
-                                    onCheckedChange = { checked ->
-                                        if (checked) {
-                                            viewModel.updateAutoRefresh(true, 6000L)
-                                        }
-                                    }
-                                )
-                            }
-                            HorizontalDivider()
-                            Spacer(modifier = Modifier.fillMaxHeight(0.7f))
-                            HorizontalDivider()
-                            Text(
-                                "Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-                            )
                         }
                     }
                 ) {

@@ -36,15 +36,25 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     val timeTracker = TimeTracker()
 
+    enum class BatteryTrend { INCREASING, DECREASING, UNCHANGED }
+
     companion object {
         var batteryPercent by mutableIntStateOf(100)
+        var previousPercent = -1
+        var batteryTrend = BatteryTrend.UNCHANGED
 
-        fun updateBatteryLevel(level: Int, scale: Int) {
-            batteryPercent = if (scale > 0 && level >= 0) {
-                level * 100 / scale
-            } else {
-                -1
+        fun updateBatteryLevel(level: Int, scale: Int): BatteryTrend {
+            batteryPercent = if (scale > 0 && level >= 0) level * 100 / scale else -1
+            if (previousPercent != -1 && batteryPercent != -1) {
+                batteryTrend = when {
+                    batteryPercent > previousPercent -> BatteryTrend.INCREASING
+                    batteryPercent < previousPercent -> BatteryTrend.DECREASING
+                    else -> BatteryTrend.UNCHANGED
+                }
             }
+            previousPercent = batteryPercent
+
+            return batteryTrend
         }
     }
 
