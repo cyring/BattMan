@@ -36,6 +36,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -44,6 +45,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -169,7 +171,9 @@ class MainActivity : ComponentActivity() {
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
-                        ModalDrawerSheet {
+                        ModalDrawerSheet(
+                            modifier = Modifier.width(320.dp)
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth(0.9f)
@@ -376,7 +380,17 @@ class MainActivity : ComponentActivity() {
                                         color = MaterialTheme.colorScheme.outline
                                     )
                                 }
-                                Spacer(modifier = Modifier.padding(24.dp))
+                                IconButton(
+                                    onClick = {
+                                        report = readBatteryInfo(this@MainActivity, powerManager, timeTracker)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Refresh",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.height(lineHeight * 0.25f))
 
@@ -443,7 +457,7 @@ class MainActivity : ComponentActivity() {
                                     BatteryReport(lineHeight, rows = report)
                                 }
                             }
-                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+                            Spacer(modifier = Modifier.height(lineHeight * 0.5f))
 
                             // Quarter-width centered separator line
                             Box(
@@ -455,7 +469,7 @@ class MainActivity : ComponentActivity() {
                                     color = MaterialTheme.colorScheme.outlineVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+                            Spacer(modifier = Modifier.height(lineHeight * 0.5f))
 
                             Text(
                                 text = sysInfo,
@@ -480,35 +494,53 @@ private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
         modifier = Modifier.fillMaxWidth()
     ) {
         rows.forEach { row ->
-
-            if (row.label.isEmpty() && row.value.isEmpty()) {
-                Spacer(modifier = Modifier.height(lineHeight))
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = row.label,
-                        modifier = Modifier.weight(1.5f),
-                        maxLines = 1,
-                        softWrap = false,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+            when {
+                // Case 1: ("", "") -> Blank line separator
+                row.label.isEmpty() && row.value.isEmpty() -> {
+                    Spacer(modifier = Modifier.height(lineHeight))
+                }
+                // Case 2: ("@", "") -> Unique pictogram only
+                row.value.isEmpty() -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = row.label,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
                         )
-                    )
-
-                    Text(
-                        text = row.value,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Start,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    }
+                }
+                // Case 3: Standard data row (label & value)
+                else -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = row.label,
+                            modifier = Modifier.weight(1.5f),
+                            maxLines = 1,
+                            softWrap = false,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
                         )
-                    )
+
+                        Text(
+                            text = row.value,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Start,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -785,7 +817,7 @@ private fun readBatteryInfo(context: Context, powerManager: PowerManager,
         row(R.string.health, health),
         row(R.string.technology, technology),
 
-        BatteryReportRow("", ""),
+        BatteryReportRow("⚡", ""),
 
         row(R.string.voltage, voltage),
         row(R.string.temperature, tempFormat),
@@ -794,25 +826,28 @@ private fun readBatteryInfo(context: Context, powerManager: PowerManager,
         row(R.string.current_now, "$currentNow µA"),
         row(R.string.current_average, "$currentAverage µA"),
 
-        BatteryReportRow("", ""),
+        BatteryReportRow("\uD83D\uDD0C", ""),
 
         row(R.string.battery_plugged, batteryPlugged),
-        row(R.string.battery_saver, batterySaver),
         row(R.string.time_remaining, timeRemaining),
+        row(R.string.battery_saver, batterySaver),
 
-        BatteryReportRow("", ""),
+        BatteryReportRow("\uD83D\uDD0B", ""),
 
         row(R.string.thermal_status, thermalStatus),
         row(R.string.battery_present, batteryPresent),
         row(R.string.battery_low, lowBatteryState),
 
-        BatteryReportRow("",""),
+        BatteryReportRow("\uD83D\uDCF1",""),
 
         row(R.string.brightness, "${brightnessLevel}/255"),
         row(R.string.adaptive, adaptiveMode),
         row(R.string.mode_night, nightMode),
         row(R.string.touchscreen, touchScreen),
         row(R.string.refresh_rate,smoothDisplay),
+
+        BatteryReportRow("⏰",""),
+
         row(R.string.screen_timeout, screenTimeout),
         row(R.string.screen_saver, screenSaver),
         row(R.string.screen_off, lastScreenOffDurationMs)
