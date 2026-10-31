@@ -369,6 +369,46 @@ class MainActivity : ComponentActivity() {
                             }
                             Spacer(modifier = Modifier.height(lineHeight * 0.25f))
 
+                            Text(
+                                text = buildAnnotatedString {
+                                    append(batteryPercent.toString())
+                                    withStyle(style = SpanStyle(fontSize = 24.sp)) {
+                                        append("%")
+                                    }
+                                },
+                                style = MaterialTheme.typography.displayLarge,
+                                textAlign = TextAlign.Right,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(end = 16.dp),
+                                color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    Color.Red
+                                }
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(lineHeight)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(batteryPercent / 100f)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+
                             var isRefreshing by remember { mutableStateOf(false) }
 
                             PullToRefreshBox(
@@ -389,46 +429,6 @@ class MainActivity : ComponentActivity() {
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
                                 ) {
-                                    Text(
-                                        text = buildAnnotatedString {
-                                            append(batteryPercent.toString())
-                                            withStyle(style = SpanStyle(fontSize = 24.sp)) {
-                                                append("%")
-                                            }
-                                        },
-                                        style = MaterialTheme.typography.displayLarge,
-                                        textAlign = TextAlign.Right,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(end = 16.dp),
-                                        color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            Color.Red
-                                        }
-                                    )
-
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(lineHeight)
-                                            .background(
-                                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                                shape = RoundedCornerShape(8.dp)
-                                            )
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxHeight()
-                                                .fillMaxWidth(batteryPercent / 100f)
-                                                .background(
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    shape = RoundedCornerShape(8.dp)
-                                                )
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(lineHeight * 0.75f))
-
                                     BatteryReport(lineHeight, rows = report)
                                 }
                             }
