@@ -27,9 +27,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Switch
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.foundation.clickable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -49,7 +47,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
         registerReceiver(batteryEventReceiver, filter)
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -161,112 +162,48 @@ class MainActivity : ComponentActivity() {
                                             }
                                         }
 
-                                        Text(
-                                            text = stringResource(R.string.auto_refresh_settings),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-                                        )
-                                        HorizontalDivider()
+                                        val refreshSteps = listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60)
+                                        val currentRefreshSeconds = if (!autoRefresh) 0 else (refreshTime / 1000L).toInt().coerceIn(0, 60)
+                                        val currentIndex = remember(currentRefreshSeconds) {
+                                            val idx = refreshSteps.indexOf(currentRefreshSeconds)
+                                            if (idx >= 0) idx else refreshSteps.indexOfLast { it <= currentRefreshSeconds }.coerceAtLeast(0)
+                                        }
 
-                                        // Auto Off row with Switch
                                         Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .clickable {
+                                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.auto_refresh_settings),
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            Text(
+                                                text = if (currentRefreshSeconds == 0) {
+                                                    stringResource(R.string.off)
+                                                } else {
+                                                    "$currentRefreshSeconds s"
+                                                },
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                        Slider(
+                                            value = currentIndex.toFloat(),
+                                            valueRange = 0f..(refreshSteps.size - 1).toFloat(),
+                                            steps = refreshSteps.size - 2,
+                                            onValueChange = { newValue ->
+                                                val index = newValue.roundToInt().coerceIn(0, refreshSteps.lastIndex)
+                                                val seconds = refreshSteps[index]
+                                                if (seconds == 0) {
                                                     viewModel.updateAutoRefresh(false, refreshTime)
+                                                } else {
+                                                    viewModel.updateAutoRefresh(true, 1000L * seconds)
                                                 }
-                                                .padding(horizontal = 24.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.auto_off),
-                                                modifier = Modifier.weight(1f),
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                            Switch(
-                                                checked = !autoRefresh,
-                                                onCheckedChange = { checked ->
-                                                    if (checked) {
-                                                        viewModel.updateAutoRefresh(false, refreshTime)
-                                                    }
-                                                }
-                                            )
-                                        }
-
-                                        // 1 second row with Switch
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    viewModel.updateAutoRefresh(true, 1000L)
-                                                }
-                                                .padding(horizontal = 24.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.auto_1_sec),
-                                                modifier = Modifier.weight(1f),
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                            Switch(
-                                                checked = autoRefresh && refreshTime == 1000L,
-                                                onCheckedChange = { checked ->
-                                                    if (checked) {
-                                                        viewModel.updateAutoRefresh(true, 1000L)
-                                                    }
-                                                }
-                                            )
-                                        }
-
-                                        // 3 seconds row with Switch
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    viewModel.updateAutoRefresh(true, 3000L)
-                                                }
-                                                .padding(horizontal = 24.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.auto_3_sec),
-                                                modifier = Modifier.weight(1f),
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                            Switch(
-                                                checked = autoRefresh && refreshTime == 3000L,
-                                                onCheckedChange = { checked ->
-                                                    if (checked) {
-                                                        viewModel.updateAutoRefresh(true, 3000L)
-                                                    }
-                                                }
-                                            )
-                                        }
-
-                                        // 6 seconds row with Switch
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    viewModel.updateAutoRefresh(true, 6000L)
-                                                }
-                                                .padding(horizontal = 24.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = stringResource(R.string.auto_6_sec),
-                                                modifier = Modifier.weight(1f),
-                                                style = MaterialTheme.typography.bodyLarge
-                                            )
-                                            Switch(
-                                                checked = autoRefresh && refreshTime == 6000L,
-                                                onCheckedChange = { checked ->
-                                                    if (checked) {
-                                                        viewModel.updateAutoRefresh(true, 6000L)
-                                                    }
-                                                }
-                                            )
-                                        }
+                                            },
+                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                        )
                                         HorizontalDivider()
 
                                         Row(
@@ -281,15 +218,25 @@ class MainActivity : ComponentActivity() {
                                                 style = MaterialTheme.typography.titleMedium
                                                 )
                                             Text(
-                                                text = BatteryViewModel.batteryAlertThreshold.toString() + " %",
+                                                text = if (BatteryViewModel.batteryAlertThreshold == 0) {
+                                                    stringResource(R.string.off)
+                                                } else {
+                                                    BatteryViewModel.batteryAlertThreshold.toString() + " %"
+                                                },
                                                 style = MaterialTheme.typography.titleMedium
                                             )
                                         }
                                         Slider(
                                             value = BatteryViewModel.batteryAlertThreshold.toFloat(),
-                                            valueRange = 1f..100f,
+                                            valueRange = 0f..100f,
                                             onValueChange = { newValue ->
                                                 viewModel.updateBatteryAlertThreshold(newValue.roundToInt())
+                                            },
+                                            track = { sliderState ->
+                                                SliderDefaults.Track(
+                                                    sliderState = sliderState,
+                                                    drawStopIndicator = null
+                                                )
                                             },
                                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                                         )

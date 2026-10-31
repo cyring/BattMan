@@ -2,11 +2,6 @@
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
 
-    <string name="auto_off">Auto Off</string>
-    <string name="auto_1_sec">1 second</string>
-    <string name="auto_3_sec">3 seconds</string>
-    <string name="auto_6_sec">6 seconds</string>
-
     <string name="level">Level</string>
     <string name="cycle">Cycle</string>
     <string name="state">State</string>
@@ -67,6 +62,7 @@
     <string name="screen_saver">Screen Saver</string>
     <string name="screen_off">Stopwatch</string>
 
+    <string name="off">Off</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="never">Never</string>
@@ -86,7 +82,7 @@
     <string name="duration_ms_format" translatable="false">%1$d s %2$03d ms</string>
     <string name="duration_m_s_format" translatable="false">%1$d m %2$02d s</string>
     <string name="duration_h_m_s_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
-    <string name="auto_refresh_settings">Auto-Refresh Settings</string>
+    <string name="auto_refresh_settings">Auto-Refresh</string>
 
     <string name="battery_alerts_channel_name">Battery Alerts</string>
     <string name="battery_alerts_channel_desc">Alerts when device battery is running low</string>
