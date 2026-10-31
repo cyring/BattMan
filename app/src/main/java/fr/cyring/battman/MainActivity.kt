@@ -246,7 +246,8 @@ class MainActivity : ComponentActivity() {
                                     Column {
                                         HorizontalDivider()
                                         Text(
-                                            "Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT",
+                                            /*"Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT"*/
+                                            stringResource(R.string.copyright, BuildConfig.VERSION_NAME, 2026),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)

@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">BattMan</string>
     <string name="subtitle">Le gestionnaire de batterie</string>
-
     <string name="level">Niveau</string>
     <string name="cycle">Cycles</string>
     <string name="state">État</string>
@@ -19,7 +18,6 @@
     <string name="thermal_status">État thermique</string>
     <string name="battery_present">Batterie présente</string>
     <string name="battery_low">Batterie faible</string>
-
     <string name="charging">En charge</string>
     <string name="discharging">En décharge</string>
     <string name="full">Pleine</string>
@@ -42,7 +40,6 @@
     <string name="wireless">Sans fil</string>
     <string name="dock">Dock</string>
     <string name="powered">Alimenté</string>
-
     <string name="none">Aucun</string>
     <string name="light">Léger</string>
     <string name="moderate">Modéré</string>
@@ -50,7 +47,6 @@
     <string name="critical">Critique</string>
     <string name="emergency">Urgence</string>
     <string name="shutdown">Arrêt</string>
-
     <string name="brightness">Luminosité</string>
     <string name="adaptive">Adaptative</string>
     <string name="mode_night">Thème sombre</string>
@@ -61,26 +57,22 @@
     <string name="screen_timeout">Extinction</string>
     <string name="screen_saver">Économ. écran</string>
     <string name="screen_off">Chronomètre</string>
-
     <string name="off">Arrêt</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <string name="never">Jamais</string>
     <string name="waiting">En attente</string>
-
     <plurals name="hours">
         <item quantity="one">%d h</item>
         <item quantity="other">%d h</item>
     </plurals>
-
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d min</item>
     </plurals>
-
+    <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
     <string name="auto_refresh_settings">Rafraîchissement</string>
-
     <string name="battery_alerts_channel_name">Alertes batterie</string>
     <string name="battery_alerts_channel_desc">Alertes lorsque la batterie est faible</string>
     <string name="battman_alert_title">Batterie faible</string>

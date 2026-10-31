@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
-
     <string name="level">Level</string>
     <string name="cycle">Cycle</string>
     <string name="state">State</string>
@@ -19,7 +18,6 @@
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>
     <string name="battery_low">Battery low</string>
-
     <string name="charging">Charging</string>
     <string name="discharging">Discharging</string>
     <string name="full">Full</string>
@@ -42,7 +40,6 @@
     <string name="wireless">Wireless</string>
     <string name="dock">Dock</string>
     <string name="powered">Powered</string>
-
     <string name="none">None</string>
     <string name="light">Light</string>
     <string name="moderate">Moderate</string>
@@ -50,7 +47,6 @@
     <string name="critical">Critical</string>
     <string name="emergency">Emergency</string>
     <string name="shutdown">Shutdown</string>
-
     <string name="brightness">Brightness</string>
     <string name="adaptive">Adaptive</string>
     <string name="mode_night">Dark theme</string>
@@ -61,29 +57,25 @@
     <string name="screen_timeout">Screen timeout</string>
     <string name="screen_saver">Screen Saver</string>
     <string name="screen_off">Stopwatch</string>
-
     <string name="off">Off</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="never">Never</string>
     <string name="waiting">Waiting</string>
-
     <plurals name="hours">
         <item quantity="one">%d hr</item>
         <item quantity="other">%d hr</item>
     </plurals>
-
     <plurals name="minutes">
         <item quantity="one">%d min</item>
         <item quantity="other">%d min</item>
     </plurals>
-
+    <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s, %2$s</string>
     <string name="duration_ms_format" translatable="false">%1$d s %2$03d ms</string>
     <string name="duration_m_s_format" translatable="false">%1$d m %2$02d s</string>
     <string name="duration_h_m_s_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
     <string name="auto_refresh_settings">Auto-Refresh</string>
-
     <string name="battery_alerts_channel_name">Battery Alerts</string>
     <string name="battery_alerts_channel_desc">Alerts when device battery is running low</string>
     <string name="battman_alert_title">Battery is running low</string>
