@@ -78,4 +78,9 @@
     <string name="battman_alert_title">Batterie faible</string>
     <string name="battery_low_alert_text">%1$d%% Pensez à brancher !</string>
     <string name="battery_alert_threshold">Seuil d\'alerte</string>
+    <string name="language">Langue</string>
+    <string name="theme">Thème</string>
+    <string name="theme_system">Système</string>
+    <string name="theme_light">Clair</string>
+    <string name="theme_dark">Sombre</string>
 </resources>

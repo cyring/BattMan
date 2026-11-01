@@ -63,6 +63,14 @@
     <string name="no">No</string>
     <string name="never">Nunca</string>
     <string name="waiting">Esperando</string>
+    <plurals name="hours">
+        <item quantity="one">%d h</item>
+        <item quantity="other">%d h</item>
+    </plurals>
+    <plurals name="minutes">
+        <item quantity="one">%d min</item>
+        <item quantity="other">%d min</item>
+    </plurals>
     <string name="copyright">"Versión %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
     <string name="auto_refresh_settings">Actualización</string>
@@ -71,4 +79,9 @@
     <string name="battman_alert_title">Batería se está agotando</string>
     <string name="battery_low_alert_text">%1$d%% ¡Es hora de enchufar!</string>
     <string name="battery_alert_threshold">Umbral de alerta</string>
+    <string name="language">Idioma</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
 </resources>

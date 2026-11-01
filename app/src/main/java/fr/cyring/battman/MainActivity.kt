@@ -2,8 +2,10 @@ package fr.cyring.battman
 
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,13 +31,21 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -106,8 +116,15 @@ class MainActivity : ComponentActivity() {
             val report = viewModel.report
             val batteryPercent = BatteryViewModel.batteryPercent
             val sysInfo = viewModel.sysInfo
+            val themeMode = viewModel.themeMode
 
-            BattManTheme {
+            val darkTheme = when (themeMode) {
+                1 -> false
+                2 -> true
+                else -> isSystemInDarkTheme()
+            }
+
+            BattManTheme(darkTheme = darkTheme) {
                 val reportTextStyle = MaterialTheme.typography.labelSmall
                 lineHeight = with(LocalDensity.current) {
                     reportTextStyle.lineHeight.toDp()
@@ -176,10 +193,21 @@ class MainActivity : ComponentActivity() {
                                                 .fillMaxWidth()
                                                 .padding(horizontal = 24.dp, vertical = 16.dp)
                                         ) {
-                                            Text(
-                                                text = stringResource(R.string.auto_refresh_settings),
-                                                style = MaterialTheme.typography.titleMedium
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Autorenew,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.padding(end = 16.dp)
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.auto_refresh_settings),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
                                             Text(
                                                 text = if (currentRefreshSeconds == 0) {
                                                     stringResource(R.string.off)
@@ -213,10 +241,21 @@ class MainActivity : ComponentActivity() {
                                                 .fillMaxWidth()
                                                 .padding(horizontal = 24.dp, vertical = 16.dp)
                                         ) {
-                                            Text(
-                                                text = stringResource(R.string.battery_alert_threshold),
-                                                style = MaterialTheme.typography.titleMedium
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.NotificationsActive,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.padding(end = 16.dp)
                                                 )
+                                                Text(
+                                                    text = stringResource(R.string.battery_alert_threshold),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
                                             Text(
                                                 text = if (BatteryViewModel.batteryAlertThreshold == 0) {
                                                     stringResource(R.string.off)
@@ -240,6 +279,79 @@ class MainActivity : ComponentActivity() {
                                             },
                                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                                         )
+                                        HorizontalDivider()
+
+                                        val context = LocalContext.current
+                                        val currentLocale = LocalConfiguration.current.locales[0]
+                                        val currentLanguageName = currentLocale.getDisplayLanguage(currentLocale).replaceFirstChar { it.uppercase() }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                        Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
+                                                            data = Uri.fromParts("package", context.packageName, null)
+                                                        }
+                                                    } else {
+                                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                            data = Uri.fromParts("package", context.packageName, null)
+                                                        }
+                                                    }
+                                                    context.startActivity(intent)
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = lineHeight)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Language,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(end = 16.dp)
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.language),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Text(
+                                                text = currentLanguageName,
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                        HorizontalDivider()
+
+                                        val themeText = when (themeMode) {
+                                            1 -> stringResource(R.string.theme_light)
+                                            2 -> stringResource(R.string.theme_dark)
+                                            else -> stringResource(R.string.theme_system)
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    viewModel.cycleThemeMode()
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = lineHeight)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Palette,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(end = 16.dp)
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.theme),
+                                                style = MaterialTheme.typography.titleMedium,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Text(
+                                                text = themeText,
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
                                         HorizontalDivider()
                                     }
 

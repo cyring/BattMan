@@ -102,6 +102,13 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    var themeMode by mutableIntStateOf(prefs.getInt("themeMode", 0))
+
+    fun cycleThemeMode() {
+        themeMode = (themeMode + 1) % 3
+        prefs.edit().putInt("themeMode", themeMode).apply()
+    }
+
     fun updateBatteryAlertThreshold(value: Int) {
         batteryAlertThreshold = value
         prefs.edit().putInt("batteryAlertThreshold", value).apply()
