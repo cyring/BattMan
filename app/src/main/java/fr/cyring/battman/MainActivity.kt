@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -357,13 +359,31 @@ class MainActivity : ComponentActivity() {
 
                                     Column {
                                         HorizontalDivider()
-                                        Text(
-                                            /*"Version ${BuildConfig.VERSION_NAME}\n© 2026 CYRIL COURTIAT"*/
-                                            stringResource(R.string.copyright, BuildConfig.VERSION_NAME, 2026),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-                                        )
+                                        val activity = LocalActivity.current
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.copyright, BuildConfig.VERSION_NAME, 2026),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            IconButton(
+                                                onClick = {
+                                                    activity?.finishAndRemoveTask()
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.PowerSettingsNew,
+                                                    contentDescription = "Quit",
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -429,6 +449,12 @@ class MainActivity : ComponentActivity() {
                             }
                             Spacer(modifier = Modifier.height(lineHeight * 0.25f))
 
+                            val levelColor: Color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.inversePrimary
+                            }
+
                             Text(
                                 text = buildAnnotatedString {
                                     append(batteryPercent.toString())
@@ -441,11 +467,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(end = 16.dp),
-                                color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    Color.Red
-                                }
+                                color = levelColor
                             )
 
                             Box(
@@ -462,7 +484,7 @@ class MainActivity : ComponentActivity() {
                                         .fillMaxHeight()
                                         .fillMaxWidth(batteryPercent / 100f)
                                         .background(
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = levelColor,
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                 )
