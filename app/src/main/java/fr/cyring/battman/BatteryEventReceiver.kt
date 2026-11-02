@@ -66,9 +66,7 @@ class BatteryEventReceiver : BroadcastReceiver() {
         }
         when (intent.action) {
             Intent.ACTION_BATTERY_CHANGED -> {
-                val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-                val trend = BatteryViewModel.updateBatteryLevel(level, scale)
+                val trend = BatteryViewModel.updateBatteryLevel(intent)
 
                 if (BatteryViewModel.batteryAlertThreshold > 0
                     && BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold

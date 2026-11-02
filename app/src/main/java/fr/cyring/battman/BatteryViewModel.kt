@@ -38,17 +38,24 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     val timeTracker = TimeTracker()
 
-    enum class BatteryTrend { INCREASING, DECREASING, UNCHANGED }
+    enum class BatteryTrend { INCREASING, DECREASING, UNCHANGED, RESUMED }
 
     companion object {
         var batteryAlertThreshold by mutableIntStateOf(BATTERY_ALERT_THRESHOLD)
         var batteryPercent by mutableIntStateOf(100)
         var previousPercent = -1
-        var batteryTrend = BatteryTrend.UNCHANGED
 
-        fun updateBatteryLevel(level: Int, scale: Int): BatteryTrend {
+        var batteryTrend: BatteryTrend = BatteryTrend.UNCHANGED
+            private set
+
+        fun updateBatteryLevel(intent: Intent): BatteryTrend {
+            val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+            val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
             batteryPercent = if (scale > 0 && level >= 0) level * 100 / scale else -1
-            if (previousPercent != -1 && batteryPercent != -1) {
+
+            if (batteryTrend == BatteryTrend.RESUMED) {
+                batteryTrend = BatteryTrend.DECREASING
+            } else if (previousPercent != -1 && batteryPercent != -1) {
                 batteryTrend = when {
                     batteryPercent > previousPercent -> BatteryTrend.INCREASING
                     batteryPercent < previousPercent -> BatteryTrend.DECREASING
@@ -56,8 +63,16 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 }
             }
             previousPercent = batteryPercent
-
             return batteryTrend
+        }
+
+        fun trackBatteryTrend(intent: Intent?, newTrend: BatteryTrend) {
+            val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+            val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+
+            if (isCharging == false) {
+                batteryTrend = newTrend
+            }
         }
     }
 
@@ -121,6 +136,10 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun onScreenResumed() {
+        trackBatteryTrend(
+            getApplication<Application>().registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)),
+            BatteryTrend.RESUMED
+        )
         if (powerManager.isInteractive && timeTracker.screenOffStartedAt > 0L) {
             timeTracker.lastScreenOffDurationMs = System.currentTimeMillis() - timeTracker.screenOffStartedAt
             timeTracker.screenOffStartedAt = 0L
@@ -164,10 +183,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         } else {
             -1
         }
-        val level = extra(BatteryManager.EXTRA_LEVEL)
-        val scale = extra(BatteryManager.EXTRA_SCALE, 100)
 
-        updateBatteryLevel(level, scale)
+        updateBatteryLevel(intent)
 
         val cycle = if (count == -1) context.getString(R.string.unavailable) else count.toString()
 
