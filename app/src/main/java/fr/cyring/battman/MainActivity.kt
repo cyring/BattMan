@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -55,6 +56,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -470,7 +473,7 @@ class MainActivity : ComponentActivity() {
                                 color = levelColor
                             )
 
-                            Box(
+                            BoxWithConstraints(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(lineHeight)
@@ -488,6 +491,23 @@ class MainActivity : ComponentActivity() {
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                 )
+
+                                if (BatteryViewModel.batteryAlertThreshold > 0) {
+                                    val markerSize = lineHeight * 0.4f
+                                    val fraction = BatteryViewModel.batteryAlertThreshold / 100f
+                                    val markerOffset = (maxWidth * fraction) - (markerSize / 2)
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(markerSize)
+                                            .align(Alignment.CenterStart)
+                                            .offset(x = markerOffset)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                shape = CircleShape
+                                            )
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.height(lineHeight * 0.75f))
 
