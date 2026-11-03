@@ -14,6 +14,7 @@
     <string name="current_average">Current average</string>
     <string name="battery_plugged">Power source</string>
     <string name="battery_saver">Battery saver</string>
+    <string name="adaptive_charging">Adaptive charging</string>
     <string name="time_remaining">Time to full</string>
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>

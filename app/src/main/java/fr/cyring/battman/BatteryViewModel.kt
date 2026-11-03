@@ -262,6 +262,11 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             context.getString(R.string.deactivated)
         }
 
+        val adaptiveChargingEnabled = Settings.Secure.getInt(
+            context.contentResolver,
+            "adaptive_charging_enabled", -1
+        )
+
         val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
             when (powerManager.currentThermalStatus) {
                 PowerManager.THERMAL_STATUS_NONE -> context.getString(R.string.none)
@@ -421,7 +426,11 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             else -> timeToHMSMS(display.screenTimeoutMs)
         }
         val screenSaver = if (display.screenSaverEnabled == true) context.getString(R.string.activated) else context.getString(R.string.deactivated)
-
+        val adaptiveCharging = when (adaptiveChargingEnabled) {
+            1 -> context.getString(R.string.yes)
+            0 -> context.getString(R.string.no)
+            else -> context.getString(R.string.unsupported)
+        }
         val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == -1L) {
             "<${context.getString(R.string.waiting)}>"
         } else {
@@ -452,6 +461,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             row(R.string.battery_plugged, batteryPlugged),
             row(R.string.time_remaining, timeRemaining),
             row(R.string.battery_saver, batterySaver),
+            row(R.string.adaptive_charging, adaptiveCharging),
 
             BatteryReportRow("\uD83D\uDD0B", ""),
 

@@ -14,6 +14,7 @@
     <string name="current_average">Courant moyen</string>
     <string name="battery_plugged">Alimentation</string>
     <string name="battery_saver">Économ. batterie</string>
+    <string name="adaptive_charging">Charge adaptative</string>
     <string name="time_remaining">Temps de charge</string>
     <string name="thermal_status">État thermique</string>
     <string name="battery_present">Batterie présente</string>

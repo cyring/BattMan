@@ -15,6 +15,7 @@
     <string name="current_average">Eléctrica promedio</string>
     <string name="battery_plugged">Fuente alimentación</string>
     <string name="battery_saver">Ahorro de batería</string>
+    <string name="adaptive_charging">Carga adaptativa</string>
     <string name="time_remaining">Tiempo para completar</string>
     <string name="thermal_status">Estado térmico</string>
     <string name="battery_present">Batería presente</string>
