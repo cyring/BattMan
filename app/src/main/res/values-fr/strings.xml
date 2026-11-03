@@ -75,8 +75,8 @@
     <string name="auto_refresh_settings">Rafraîchissement</string>
     <string name="battery_alerts_channel_name">Alertes batterie</string>
     <string name="battery_alerts_channel_desc">Alertes lorsque la batterie est faible</string>
-    <string name="battman_alert_title">Batterie faible</string>
-    <string name="battery_low_alert_text">%1$d%% Pensez à brancher !</string>
+    <string name="battman_alert_title">%1$d%% Alerte batterie</string>
+    <string name="battery_low_alert_text">Pensez à brancher !</string>
     <string name="battery_alert_threshold">Seuil d\'alerte</string>
     <string name="max_alerts">Alertes max</string>
     <string name="language">Langue</string>

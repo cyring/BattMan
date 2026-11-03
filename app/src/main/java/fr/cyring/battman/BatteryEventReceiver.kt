@@ -34,11 +34,11 @@ fun showLowBatteryNotification(context: Context, level: Int) {
         context, 0, intent, PendingIntent.FLAG_IMMUTABLE
     )
 
-    val message = context.getString(R.string.battery_low_alert_text, level)
+    val message = context.getString(R.string.battery_low_alert_text)
 
     val notification = NotificationCompat.Builder(context, channelId)
         .setSmallIcon(android.R.drawable.ic_dialog_alert)
-        .setContentTitle(context.getString(R.string.battman_alert_title))
+        .setContentTitle(context.getString(R.string.battman_alert_title, level))
         .setContentText(message)
         .setStyle(NotificationCompat.BigTextStyle().bigText(message))
         .setPriority(NotificationCompat.PRIORITY_HIGH)
