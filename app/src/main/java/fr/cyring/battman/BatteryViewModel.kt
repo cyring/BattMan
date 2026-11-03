@@ -21,6 +21,7 @@ import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
 const val BATTERY_ALERT_THRESHOLD = 10
+const val DEFAULT_MAX_ALERTS = 3
 
 data class BatteryReportRow(
     val label: String,
@@ -42,6 +43,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     companion object {
         var batteryAlertThreshold by mutableIntStateOf(BATTERY_ALERT_THRESHOLD)
+        var maxAlerts by mutableIntStateOf(DEFAULT_MAX_ALERTS)
         var batteryPercent by mutableIntStateOf(100)
         var previousPercent = -1
 
@@ -86,6 +88,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     init {
         batteryAlertThreshold = prefs.getInt("batteryAlertThreshold", BATTERY_ALERT_THRESHOLD)
+        maxAlerts = prefs.getInt("maxAlerts", DEFAULT_MAX_ALERTS)
+        BatteryEventReceiver.maxAlerts = maxAlerts
         refreshData()
         sysInfo = readSystemInfo()
         startAutoRefreshLoop()
@@ -127,6 +131,12 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     fun updateBatteryAlertThreshold(value: Int) {
         batteryAlertThreshold = value
         prefs.edit().putInt("batteryAlertThreshold", value).apply()
+    }
+
+    fun updateMaxAlerts(value: Int) {
+        maxAlerts = value
+        BatteryEventReceiver.maxAlerts = value
+        prefs.edit().putInt("maxAlerts", value).apply()
     }
 
     fun onScreenPaused() {

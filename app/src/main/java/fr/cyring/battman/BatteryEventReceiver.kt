@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.BatteryManager
 import android.os.Build
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -57,6 +56,8 @@ fun showLowBatteryNotification(context: Context, level: Int) {
 class BatteryEventReceiver : BroadcastReceiver() {
     companion object {
         private var alertShown = false
+        private var alertCount = 0
+        var maxAlerts = 3
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -72,16 +73,21 @@ class BatteryEventReceiver : BroadcastReceiver() {
                     && BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold
                     && trend == BatteryViewModel.BatteryTrend.DECREASING)
                 {
-                    showLowBatteryNotification(context, BatteryViewModel.batteryPercent)
-                    alertShown = true
-                } else if (alertShown == true) {
+                    if (alertCount < maxAlerts) {
+                        showLowBatteryNotification(context, BatteryViewModel.batteryPercent)
+                        alertShown = true
+                        alertCount++
+                    }
+                } else if (alertShown || BatteryViewModel.batteryPercent > BatteryViewModel.batteryAlertThreshold) {
                     cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)
                     alertShown = false
+                    alertCount = 0
                 }
             }
             Intent.ACTION_POWER_CONNECTED -> {
                 cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)
                 alertShown = false
+                alertCount = 0
             }
         }
     }

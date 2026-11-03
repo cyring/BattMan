@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -275,6 +276,50 @@ class MainActivity : ComponentActivity() {
                                             valueRange = 0f..100f,
                                             onValueChange = { newValue ->
                                                 viewModel.updateBatteryAlertThreshold(newValue.roundToInt())
+                                            },
+                                            track = { sliderState ->
+                                                SliderDefaults.Track(
+                                                    sliderState = sliderState,
+                                                    drawStopIndicator = null
+                                                )
+                                            },
+                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                        )
+                                        HorizontalDivider()
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Notifications,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.padding(end = 16.dp)
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.max_alerts),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
+                                            Text(
+                                                text = BatteryViewModel.maxAlerts.toString(),
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                        }
+                                        Slider(
+                                            value = BatteryViewModel.maxAlerts.toFloat(),
+                                            valueRange = 1f..10f,
+                                            steps = 8,
+                                            onValueChange = { newValue ->
+                                                viewModel.updateMaxAlerts(newValue.roundToInt())
                                             },
                                             track = { sliderState ->
                                                 SliderDefaults.Track(

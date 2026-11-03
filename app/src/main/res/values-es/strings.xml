@@ -79,6 +79,7 @@
     <string name="battman_alert_title">Batería se está agotando</string>
     <string name="battery_low_alert_text">%1$d%% ¡Es hora de enchufar!</string>
     <string name="battery_alert_threshold">Umbral de alerta</string>
+    <string name="max_alerts">Alertas máx.</string>
     <string name="language">Idioma</string>
     <string name="theme">Tema</string>
     <string name="theme_system">Sistema</string>
