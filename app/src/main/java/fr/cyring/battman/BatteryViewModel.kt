@@ -128,6 +128,13 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         prefs.edit().putInt("themeMode", themeMode).apply()
     }
 
+    var fontSizeMode by mutableIntStateOf(prefs.getInt("fontSizeMode", FONT_SIZE_SYSTEM))
+
+    fun cycleFontSizeMode() {
+        fontSizeMode = (fontSizeMode + 1) % 4
+        prefs.edit().putInt("fontSizeMode", fontSizeMode).apply()
+    }
+
     fun updateBatteryAlertThreshold(value: Int) {
         batteryAlertThreshold = value
         prefs.edit().putInt("batteryAlertThreshold", value).apply()

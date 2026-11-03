@@ -88,4 +88,8 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="accessibility">Accessibility</string>
+    <string name="accessibility_small">Small</string>
+    <string name="accessibility_medium">Medium</string>
+    <string name="accessibility_large">Large</string>
 </resources>

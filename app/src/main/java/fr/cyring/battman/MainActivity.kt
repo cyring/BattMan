@@ -35,6 +35,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Accessibility
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Menu
@@ -73,14 +74,55 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
 
+const val KEY_TITLE: Int = 0; const val KEY_SUB_TITLE: Int = 1
+const val FONT_SIZE_SYSTEM: Int = 0
+const val FONT_SIZE_SMALL: Int = 1
+const val FONT_SIZE_MEDIUM: Int = 2
+const val FONT_SIZE_LARGE: Int = 3
+
+data class CentralFont (
+    val appTitleStyle: List<TextStyle>,
+    val reportStyle: TextStyle,
+    val sysInfoStyle: TextStyle,
+    val menuStyle: TextStyle,
+    var lineHeight: Dp = 16.dp
+)
+
+@Composable
+fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
+    val baseReportStyle = MaterialTheme.typography.bodyMedium.copy(
+        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+    )
+    val reportStyle = when (fontSizeMode) {
+        FONT_SIZE_SMALL -> baseReportStyle.copy(fontSize = 11.sp, lineHeight = 15.sp)
+        FONT_SIZE_MEDIUM -> baseReportStyle.copy(fontSize = 13.sp, lineHeight = 17.sp)
+        FONT_SIZE_LARGE -> baseReportStyle.copy(fontSize = 16.sp, lineHeight = 20.sp)
+        else -> baseReportStyle
+    }
+    return CentralFont(
+        appTitleStyle = listOf(
+            MaterialTheme.typography.headlineMedium,
+            MaterialTheme.typography.headlineSmall
+        ),
+        reportStyle = reportStyle,
+        sysInfoStyle = MaterialTheme.typography.bodySmall.copy(
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+        ),
+        menuStyle = MaterialTheme.typography.titleMedium,
+        lineHeight = with(LocalDensity.current) {
+            MaterialTheme.typography.labelSmall.lineHeight.toDp()
+        }
+    )
+}
+
 class MainActivity : ComponentActivity() {
     private val viewModel: BatteryViewModel by viewModels()
-    private var lineHeight: Dp = 16.dp
     private val batteryEventReceiver = BatteryEventReceiver()
 
     override fun onPause() {
@@ -117,6 +159,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val fontConfig: CentralFont = centralFont(viewModel.fontSizeMode)
             val autoRefresh = viewModel.autoRefresh
             val refreshTime = viewModel.refreshTime
             val report = viewModel.report
@@ -131,11 +174,6 @@ class MainActivity : ComponentActivity() {
             }
 
             BattManTheme(darkTheme = darkTheme) {
-                val reportTextStyle = MaterialTheme.typography.labelSmall
-                lineHeight = with(LocalDensity.current) {
-                    reportTextStyle.lineHeight.toDp()
-                }
-
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val coroutineScope = rememberCoroutineScope()
 
@@ -211,7 +249,7 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 Text(
                                                     text = stringResource(R.string.auto_refresh_settings),
-                                                    style = MaterialTheme.typography.titleMedium
+                                                    style = fontConfig.menuStyle
                                                 )
                                             }
                                             Text(
@@ -220,7 +258,7 @@ class MainActivity : ComponentActivity() {
                                                 } else {
                                                     "$currentRefreshSeconds s"
                                                 },
-                                                style = MaterialTheme.typography.titleMedium
+                                                style = fontConfig.menuStyle
                                             )
                                         }
                                         Slider(
@@ -259,7 +297,7 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 Text(
                                                     text = stringResource(R.string.battery_alert_threshold),
-                                                    style = MaterialTheme.typography.titleMedium
+                                                    style = fontConfig.menuStyle
                                                 )
                                             }
                                             Text(
@@ -268,7 +306,7 @@ class MainActivity : ComponentActivity() {
                                                 } else {
                                                     BatteryViewModel.batteryAlertThreshold.toString() + " %"
                                                 },
-                                                style = MaterialTheme.typography.titleMedium
+                                                style = fontConfig.menuStyle
                                             )
                                         }
                                         Slider(
@@ -306,12 +344,12 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 Text(
                                                     text = stringResource(R.string.max_alerts),
-                                                    style = MaterialTheme.typography.titleMedium
+                                                    style = fontConfig.menuStyle
                                                 )
                                             }
                                             Text(
                                                 text = BatteryViewModel.maxAlerts.toString(),
-                                                style = MaterialTheme.typography.titleMedium
+                                                style = fontConfig.menuStyle
                                             )
                                         }
                                         Slider(
@@ -351,7 +389,7 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                     context.startActivity(intent)
                                                 }
-                                                .padding(horizontal = 24.dp, vertical = lineHeight)
+                                                .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Language,
@@ -361,12 +399,12 @@ class MainActivity : ComponentActivity() {
                                             )
                                             Text(
                                                 text = stringResource(R.string.language),
-                                                style = MaterialTheme.typography.titleMedium,
+                                                style = fontConfig.menuStyle,
                                                 modifier = Modifier.weight(1f)
                                             )
                                             Text(
                                                 text = currentLanguageName,
-                                                style = MaterialTheme.typography.titleMedium
+                                                style = fontConfig.menuStyle
                                             )
                                         }
                                         HorizontalDivider()
@@ -384,7 +422,7 @@ class MainActivity : ComponentActivity() {
                                                 .clickable {
                                                     viewModel.cycleThemeMode()
                                                 }
-                                                .padding(horizontal = 24.dp, vertical = lineHeight)
+                                                .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Palette,
@@ -394,12 +432,47 @@ class MainActivity : ComponentActivity() {
                                             )
                                             Text(
                                                 text = stringResource(R.string.theme),
-                                                style = MaterialTheme.typography.titleMedium,
+                                                style = fontConfig.menuStyle,
                                                 modifier = Modifier.weight(1f)
                                             )
                                             Text(
                                                 text = themeText,
-                                                style = MaterialTheme.typography.titleMedium
+                                                style = fontConfig.menuStyle
+                                            )
+                                        }
+                                        HorizontalDivider()
+
+                                        val fontSizeMode = viewModel.fontSizeMode
+                                        val accessibilityText = when (fontSizeMode) {
+                                            FONT_SIZE_SMALL -> stringResource(R.string.accessibility_small)
+                                            FONT_SIZE_MEDIUM -> stringResource(R.string.accessibility_medium)
+                                            FONT_SIZE_LARGE -> stringResource(R.string.accessibility_large)
+                                            else -> stringResource(R.string.theme_system)
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    viewModel.cycleFontSizeMode()
+                                                }
+                                                .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Accessibility,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(end = 16.dp)
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.accessibility),
+                                                style = fontConfig.menuStyle,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Text(
+                                                text = accessibilityText,
+                                                style = fontConfig.menuStyle
                                             )
                                         }
                                         HorizontalDivider()
@@ -468,7 +541,7 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Text(
                                         text = stringResource(R.string.app_name),
-                                        style = MaterialTheme.typography.headlineMedium,
+                                        style = fontConfig.appTitleStyle[KEY_TITLE],
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
@@ -476,10 +549,10 @@ class MainActivity : ComponentActivity() {
                                         maxLines = 1,
                                         softWrap = false,
                                         autoSize = TextAutoSize.StepBased(
-                                            maxFontSize = MaterialTheme.typography.headlineSmall.fontSize
+                                            maxFontSize = fontConfig.appTitleStyle[KEY_SUB_TITLE].fontSize
                                         ),
                                         textAlign = TextAlign.Center,
-                                        style = MaterialTheme.typography.headlineSmall,
+                                        style = fontConfig.appTitleStyle[KEY_SUB_TITLE],
                                         color = MaterialTheme.colorScheme.outline
                                     )
                                 }
@@ -495,7 +568,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(lineHeight * 0.25f))
+                            Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.25f))
 
                             val levelColor: Color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
                                 MaterialTheme.colorScheme.primary
@@ -521,7 +594,7 @@ class MainActivity : ComponentActivity() {
                             BoxWithConstraints(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(lineHeight)
+                                    .height(fontConfig.lineHeight)
                                     .background(
                                         color = MaterialTheme.colorScheme.surfaceVariant,
                                         shape = RoundedCornerShape(8.dp)
@@ -538,7 +611,7 @@ class MainActivity : ComponentActivity() {
                                 )
 
                                 if (BatteryViewModel.batteryAlertThreshold > 0) {
-                                    val markerSize = lineHeight * 0.4f
+                                    val markerSize = fontConfig.lineHeight * 0.4f
                                     val fraction = BatteryViewModel.batteryAlertThreshold / 100f
                                     val markerOffset = (maxWidth * fraction) - (markerSize / 2)
 
@@ -554,7 +627,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(lineHeight * 0.75f))
+                            Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.75f))
 
                             var isRefreshing by remember { mutableStateOf(false) }
 
@@ -576,10 +649,10 @@ class MainActivity : ComponentActivity() {
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
                                 ) {
-                                    BatteryReport(lineHeight, rows = report)
+                                    BatteryReport(fontConfig, rows = report)
                                 }
                             }
-                            Spacer(modifier = Modifier.height(lineHeight * 0.5f))
+                            Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.5f))
 
                             // Quarter-width centered separator line
                             Box(
@@ -591,14 +664,12 @@ class MainActivity : ComponentActivity() {
                                     color = MaterialTheme.colorScheme.outlineVariant
                                 )
                             }
-                            Spacer(modifier = Modifier.height(lineHeight * 0.5f))
+                            Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.5f))
 
                             Text(
                                 text = sysInfo,
                                 softWrap = false,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                ),
+                                style = fontConfig.sysInfoStyle,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -611,7 +682,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
+private fun BatteryReport(fontConfig: CentralFont, rows: List<BatteryReportRow>) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -619,7 +690,7 @@ private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
             when {
                 // Case 1: ("", "") -> Blank line separator
                 row.label.isEmpty() && row.value.isEmpty() -> {
-                    Spacer(modifier = Modifier.height(lineHeight))
+                    Spacer(modifier = Modifier.height(fontConfig.lineHeight))
                 }
                 // Case 2: ("@", "") -> Unique pictogram only
                 row.value.isEmpty() -> {
@@ -629,9 +700,7 @@ private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
                     ) {
                         Text(
                             text = row.label,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
+                            style = fontConfig.reportStyle
                         )
                     }
                 }
@@ -646,9 +715,7 @@ private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
                             modifier = Modifier.weight(1.5f),
                             maxLines = 1,
                             softWrap = false,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
+                            style = fontConfig.reportStyle
                         )
 
                         Text(
@@ -658,9 +725,7 @@ private fun BatteryReport(lineHeight: Dp, rows: List<BatteryReportRow>) {
                             maxLines = 1,
                             softWrap = false,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
+                            style = fontConfig.reportStyle
                         )
                     }
                 }

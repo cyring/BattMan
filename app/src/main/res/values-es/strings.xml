@@ -86,4 +86,8 @@
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
+    <string name="accessibility">Accesibilidad</string>
+    <string name="accessibility_small">Pequeño</string>
+    <string name="accessibility_medium">Mediano</string>
+    <string name="accessibility_large">Grande</string>
 </resources>
