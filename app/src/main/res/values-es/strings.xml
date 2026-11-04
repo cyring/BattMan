@@ -60,6 +60,7 @@
     <string name="screen_saver">Pantalla retraso</string>
     <string name="screen_off">Cronógrafo</string>
     <string name="off">Detener</string>
+    <string name="cancel">Cancelar</string>
     <string name="yes">Si</string>
     <string name="no">No</string>
     <string name="never">Nunca</string>
@@ -86,8 +87,10 @@
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
+    <string name="theme_desc">Selecciona la apariencia preferida de la aplicación.</string>
     <string name="accessibility">Accesibilidad</string>
     <string name="accessibility_small">Pequeño</string>
     <string name="accessibility_medium">Mediano</string>
     <string name="accessibility_large">Grande</string>
+    <string name="accessibility_desc">Ajusta el tamaño del texto del informe para mejorar la legibilidad.</string>
 </resources>

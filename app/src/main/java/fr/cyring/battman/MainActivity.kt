@@ -21,9 +21,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DrawerValue
@@ -59,32 +62,41 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
 
-const val KEY_TITLE: Int = 0; const val KEY_SUB_TITLE: Int = 1
+const val KEY_TITLE: Int = 0
+const val KEY_SUB_TITLE: Int = 1
+
 const val FONT_SIZE_SYSTEM: Int = 0
 const val FONT_SIZE_SMALL: Int = 1
 const val FONT_SIZE_MEDIUM: Int = 2
 const val FONT_SIZE_LARGE: Int = 3
+
+const val THEME_SYSTEM: Int = 0
+const val THEME_LIGHT: Int = 1
+const val THEME_DARK: Int = 2
 
 data class CentralFont (
     val appTitleStyle: List<TextStyle>,
@@ -92,6 +104,11 @@ data class CentralFont (
     val sysInfoStyle: TextStyle,
     val menuStyle: TextStyle,
     var lineHeight: Dp = 16.dp
+)
+
+data class SelectionCell (
+    val resource: Int,
+    val value: Int
 )
 
 @Composable
@@ -118,6 +135,66 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
         lineHeight = with(LocalDensity.current) {
             MaterialTheme.typography.labelSmall.lineHeight.toDp()
         }
+    )
+}
+
+@Composable
+fun SelectionDialog(
+    titleRes: Int,
+    cells: List<SelectionCell>,
+    selectedVal: Int,
+    descriptionRes: Int? = null,
+    onDismissRequest: () -> Unit,
+    onItemSelected: (Int) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(stringResource(titleRes))
+        },
+        text = {
+            Column(Modifier.fillMaxWidth()) {
+                LazyColumn(Modifier.fillMaxWidth()) {
+                    items(cells) { cell ->
+                        val isSelected = cell.value == selectedVal
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onItemSelected(cell.value)
+                                    onDismissRequest()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = null
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = stringResource(cell.resource),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+                if (descriptionRes != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(descriptionRes),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+        properties = DialogProperties(dismissOnBackPress = true)
     )
 }
 
@@ -167,13 +244,50 @@ class MainActivity : ComponentActivity() {
             val sysInfo = viewModel.sysInfo
             val themeMode = viewModel.themeMode
 
+            var showThemeDialog by remember { mutableStateOf(false) }
+            var showFontDialog by remember { mutableStateOf(false) }
+
             val darkTheme = when (themeMode) {
-                1 -> false
-                2 -> true
+                THEME_LIGHT -> false
+                THEME_DARK -> true
                 else -> isSystemInDarkTheme()
             }
 
             BattManTheme(darkTheme = darkTheme) {
+                if (showThemeDialog) {
+                    SelectionDialog(
+                        titleRes = R.string.theme,
+                        cells = listOf(
+                            SelectionCell(R.string.theme_light, THEME_LIGHT),
+                            SelectionCell(R.string.theme_dark, THEME_DARK),
+                            SelectionCell(R.string.theme_system, THEME_SYSTEM)
+                        ),
+                        selectedVal = themeMode,
+                        descriptionRes = R.string.theme_desc,
+                        onDismissRequest = { showThemeDialog = false },
+                        onItemSelected = { newValue ->
+                            viewModel.updateThemeMode(newValue)
+                        }
+                    )
+                }
+
+                if (showFontDialog) {
+                    SelectionDialog(
+                        titleRes = R.string.accessibility,
+                        cells = listOf(
+                            SelectionCell(R.string.accessibility_small, FONT_SIZE_SMALL),
+                            SelectionCell(R.string.accessibility_medium, FONT_SIZE_MEDIUM),
+                            SelectionCell(R.string.accessibility_large, FONT_SIZE_LARGE),
+                            SelectionCell(R.string.theme_system, FONT_SIZE_SYSTEM)
+                        ),
+                        selectedVal = viewModel.fontSizeMode,
+                        descriptionRes = R.string.accessibility_desc,
+                        onDismissRequest = { showFontDialog = false },
+                        onItemSelected = { newValue ->
+                            viewModel.updateFontSizeMode(newValue)
+                        }
+                    )
+                }
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val coroutineScope = rememberCoroutineScope()
 
@@ -410,8 +524,8 @@ class MainActivity : ComponentActivity() {
                                         HorizontalDivider()
 
                                         val themeText = when (themeMode) {
-                                            1 -> stringResource(R.string.theme_light)
-                                            2 -> stringResource(R.string.theme_dark)
+                                            THEME_LIGHT -> stringResource(R.string.theme_light)
+                                            THEME_DARK -> stringResource(R.string.theme_dark)
                                             else -> stringResource(R.string.theme_system)
                                         }
 
@@ -420,7 +534,7 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    viewModel.cycleThemeMode()
+                                                    showThemeDialog = true
                                                 }
                                                 .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
                                         ) {
@@ -455,7 +569,7 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    viewModel.cycleFontSizeMode()
+                                                    showFontDialog = true
                                                 }
                                                 .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
                                         ) {

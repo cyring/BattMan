@@ -121,18 +121,18 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    var themeMode by mutableIntStateOf(prefs.getInt("themeMode", 0))
+    var themeMode by mutableIntStateOf(prefs.getInt("themeMode", THEME_SYSTEM))
 
-    fun cycleThemeMode() {
-        themeMode = (themeMode + 1) % 3
-        prefs.edit().putInt("themeMode", themeMode).apply()
+    fun updateThemeMode(mode: Int) {
+        themeMode = mode
+        prefs.edit().putInt("themeMode", mode).apply()
     }
 
     var fontSizeMode by mutableIntStateOf(prefs.getInt("fontSizeMode", FONT_SIZE_SYSTEM))
 
-    fun cycleFontSizeMode() {
-        fontSizeMode = (fontSizeMode + 1) % 4
-        prefs.edit().putInt("fontSizeMode", fontSizeMode).apply()
+    fun updateFontSizeMode(mode: Int) {
+        fontSizeMode = mode
+        prefs.edit().putInt("fontSizeMode", mode).apply()
     }
 
     fun updateBatteryAlertThreshold(value: Int) {
