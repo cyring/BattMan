@@ -269,10 +269,14 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             context.getString(R.string.deactivated)
         }
 
-        val adaptiveChargingEnabled = Settings.Secure.getInt(
-            context.contentResolver,
-            "adaptive_charging_enabled", -1
-        )
+        val adaptiveChargingEnabled = try {
+            Settings.Secure.getInt(
+                context.contentResolver,
+                "adaptive_charging_enabled", -1
+            )
+        } catch (_: Exception) {
+            -1
+        }
 
         val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
             when (powerManager.currentThermalStatus) {
@@ -382,13 +386,40 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             val resolver = ctx.contentResolver
             val sysConf = Resources.getSystem().configuration
 
-            return DisplayInfo(
-                brightness = getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1),
-                adaptive = getInt(
+            val brightness = try {
+                getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1)
+            } catch (_: Exception) {
+                -1
+            }
+
+            val adaptive = try {
+                getInt(
                     resolver,
                     Settings.System.SCREEN_BRIGHTNESS_MODE,
                     Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-                ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
+                ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+            } catch (_: Exception) {
+                false
+            }
+
+            val screenTimeoutMs = try {
+                Settings.System.getLong(resolver, Settings.System.SCREEN_OFF_TIMEOUT, -1L)
+            } catch (_: Exception) {
+                -1L
+            }
+
+            val screenSaverEnabled = try {
+                Settings.Secure.getInt(
+                    ctx.contentResolver,
+                    "screensaver_enabled"
+                ) != 0
+            } catch (_: Exception) {
+                null
+            }
+
+            return DisplayInfo(
+                brightness = brightness,
+                adaptive = adaptive,
                 nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
                 touchKind = sysConf.touchscreen,
                 refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -402,15 +433,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 } else {
                     0f
                 },
-                screenTimeoutMs = Settings.System.getLong(resolver, Settings.System.SCREEN_OFF_TIMEOUT, -1L),
-                screenSaverEnabled = try {
-                    Settings.Secure.getInt(
-                        context.contentResolver,
-                        "screensaver_enabled"
-                    ) != 0
-                } catch (_: Settings.SettingNotFoundException) {
-                    null
-                }
+                screenTimeoutMs = screenTimeoutMs,
+                screenSaverEnabled = screenSaverEnabled
             )
         }
 
