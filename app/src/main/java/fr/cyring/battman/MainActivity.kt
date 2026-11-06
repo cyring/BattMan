@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -98,6 +99,19 @@ const val THEME_SYSTEM: Int = 0
 const val THEME_LIGHT: Int = 1
 const val THEME_DARK: Int = 2
 
+private val TIME_FORMATTERS: Array<(Int) -> String> = arrayOf(
+    { sec -> "$sec s" },
+    { min ->
+        val h = min / 60
+        val m = min % 60
+        when {
+            h > 0 && m > 0 -> "$h h $m min"
+            h > 0 -> "$h h"
+            else -> "$m min"
+        }
+    }
+)
+
 data class CentralFont (
     val appTitleStyle: List<TextStyle>,
     val reportStyle: TextStyle,
@@ -113,29 +127,36 @@ data class SelectionCell (
 
 @Composable
 fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
-    val baseReportStyle = MaterialTheme.typography.bodyMedium.copy(
-        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-    )
-    val reportStyle = when (fontSizeMode) {
-        FONT_SIZE_SMALL -> baseReportStyle.copy(fontSize = 11.sp, lineHeight = 15.sp)
-        FONT_SIZE_MEDIUM -> baseReportStyle.copy(fontSize = 13.sp, lineHeight = 17.sp)
-        FONT_SIZE_LARGE -> baseReportStyle.copy(fontSize = 16.sp, lineHeight = 20.sp)
-        else -> baseReportStyle
-    }
-    return CentralFont(
-        appTitleStyle = listOf(
-            MaterialTheme.typography.headlineMedium,
-            MaterialTheme.typography.headlineSmall
-        ),
-        reportStyle = reportStyle,
-        sysInfoStyle = MaterialTheme.typography.bodySmall.copy(
+    val typography = MaterialTheme.typography
+    val density = LocalDensity.current
+
+    return remember(fontSizeMode, typography, density) {
+        val styleMap = arrayOf(
+            typography.bodyMedium, // FONT_SIZE_SYSTEM (0)
+            typography.bodySmall,  // FONT_SIZE_SMALL (1)
+            typography.bodyMedium, // FONT_SIZE_MEDIUM (2)
+            typography.bodyLarge   // FONT_SIZE_LARGE (3)
+        )
+        val baseStyle = styleMap.getOrElse(fontSizeMode) { typography.bodyMedium }
+        val reportStyle = baseStyle.copy(
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-        ),
-        menuStyle = MaterialTheme.typography.titleMedium,
-        lineHeight = with(LocalDensity.current) {
-            MaterialTheme.typography.labelSmall.lineHeight.toDp()
-        }
-    )
+        )
+
+        CentralFont(
+            appTitleStyle = listOf(
+                typography.headlineMedium,
+                typography.headlineSmall
+            ),
+            reportStyle = reportStyle,
+            sysInfoStyle = typography.bodySmall.copy(
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+            ),
+            menuStyle = typography.titleMedium,
+            lineHeight = with(density) {
+                typography.labelSmall.lineHeight.toDp()
+            }
+        )
+    }
 }
 
 @Composable
@@ -336,61 +357,77 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
                                         }
+                                        // Monitoring settings
+                                        val icons = listOf(Icons.Default.Autorenew, Icons.Default.Schedule)
+                                        val titles = listOf(stringResource(R.string.auto_refresh_settings), stringResource(R.string.agent_scheduler_settings))
+                                        val stepValuesList = listOf(
+                                            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60),
+                                            listOf(0, 15, 30, 60, 90, 120, 240, 360)
+                                        )
+                                        val unitMultipliers = listOf(1000L, 60_000L)
 
-                                        val refreshSteps = listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60)
-                                        val currentRefreshSeconds = if (!autoRefresh) 0 else (refreshTime / 1000L).toInt().coerceIn(0, 60)
-                                        val currentIndex = remember(currentRefreshSeconds) {
-                                            val idx = refreshSteps.indexOf(currentRefreshSeconds)
-                                            if (idx >= 0) idx else refreshSteps.indexOfLast { it <= currentRefreshSeconds }.coerceAtLeast(0)
-                                        }
+                                        listOf(CASE_FOCUS, CASE_AWAY).forEach { caseIdx ->
+                                            val steps = stepValuesList[caseIdx]
+                                            val multiplier = unitMultipliers[caseIdx]
+                                            val currentMs = refreshTime[caseIdx]
+                                            val isAuto = autoRefresh[caseIdx]
 
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 24.dp, vertical = 16.dp)
-                                        ) {
+                                            val currentUnitValue = if (!isAuto) 0 else (currentMs / multiplier).toInt()
+                                            val currentIndex = remember(currentUnitValue) {
+                                                val idx = steps.indexOf(currentUnitValue)
+                                                if (idx >= 0) idx else steps.indexOfLast { it <= currentUnitValue }.coerceAtLeast(0)
+                                            }
+
+                                            val valueText = if (!isAuto || steps[currentIndex] == 0) {
+                                                stringResource(R.string.off)
+                                            } else {
+                                                TIME_FORMATTERS[caseIdx](steps[currentIndex])
+                                            }
+
                                             Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.weight(1f)
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 24.dp, vertical = 16.dp)
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Autorenew,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.primary,
-                                                    modifier = Modifier.padding(end = 16.dp)
-                                                )
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = icons[caseIdx],
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.padding(end = 16.dp)
+                                                    )
+                                                    Text(
+                                                        text = titles[caseIdx],
+                                                        style = fontConfig.menuStyle
+                                                    )
+                                                }
                                                 Text(
-                                                    text = stringResource(R.string.auto_refresh_settings),
+                                                    text = valueText,
                                                     style = fontConfig.menuStyle
                                                 )
                                             }
-                                            Text(
-                                                text = if (currentRefreshSeconds == 0) {
-                                                    stringResource(R.string.off)
-                                                } else {
-                                                    "$currentRefreshSeconds s"
+                                            Slider(
+                                                value = currentIndex.toFloat(),
+                                                valueRange = 0f..(steps.size - 1).toFloat(),
+                                                steps = if (steps.size > 2) steps.size - 2 else 0,
+                                                onValueChange = { newValue ->
+                                                    val index = newValue.roundToInt().coerceIn(0, steps.lastIndex)
+                                                    val units = steps[index]
+                                                    if (units == 0) {
+                                                        viewModel.updateAutoRefreshHandlers[caseIdx](false, currentMs)
+                                                    } else {
+                                                        viewModel.updateAutoRefreshHandlers[caseIdx](true, units * multiplier)
+                                                    }
                                                 },
-                                                style = fontConfig.menuStyle
+                                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                                             )
+                                            HorizontalDivider()
                                         }
-                                        Slider(
-                                            value = currentIndex.toFloat(),
-                                            valueRange = 0f..(refreshSteps.size - 1).toFloat(),
-                                            steps = refreshSteps.size - 2,
-                                            onValueChange = { newValue ->
-                                                val index = newValue.roundToInt().coerceIn(0, refreshSteps.lastIndex)
-                                                val seconds = refreshSteps[index]
-                                                if (seconds == 0) {
-                                                    viewModel.updateAutoRefresh(false, refreshTime)
-                                                } else {
-                                                    viewModel.updateAutoRefresh(true, 1000L * seconds)
-                                                }
-                                            },
-                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                                        )
-                                        HorizontalDivider()
 
                                         Row(
                                             horizontalArrangement = Arrangement.SpaceBetween,

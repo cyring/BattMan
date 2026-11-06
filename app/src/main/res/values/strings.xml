@@ -14,7 +14,6 @@
     <string name="current_average">Current average</string>
     <string name="battery_plugged">Power source</string>
     <string name="battery_saver">Battery saver</string>
-    <string name="adaptive_charging">Adaptive charging</string>
     <string name="time_remaining">Time to full</string>
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>
@@ -78,6 +77,7 @@
     <string name="duration_m_s_format" translatable="false">%1$d m %2$02d s</string>
     <string name="duration_h_m_s_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
     <string name="auto_refresh_settings">Auto-Refresh</string>
+    <string name="agent_scheduler_settings">Agent Scheduler</string>
     <string name="battery_alerts_channel_name">Battery Alerts</string>
     <string name="battery_alerts_channel_desc">Alerts when device battery is running low</string>
     <string name="battman_alert_title">%1$d%% Battery alert</string>

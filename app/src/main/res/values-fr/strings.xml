@@ -13,8 +13,7 @@
     <string name="current_now">Courant actuel</string>
     <string name="current_average">Courant moyen</string>
     <string name="battery_plugged">Alimentation</string>
-    <string name="battery_saver">Économ. batterie</string>
-    <string name="adaptive_charging">Charge adaptative</string>
+    <string name="battery_saver">Économie batterie</string>
     <string name="time_remaining">Temps de charge</string>
     <string name="thermal_status">État thermique</string>
     <string name="battery_present">Batterie présente</string>
@@ -56,7 +55,7 @@
     <string name="notouch">Non tactile</string>
     <string name="refresh_rate">Écran fluide</string>
     <string name="screen_timeout">Extinction</string>
-    <string name="screen_saver">Économ. écran</string>
+    <string name="screen_saver">Économie écran</string>
     <string name="screen_off">Chronomètre</string>
     <string name="off">Arrêt</string>
     <string name="cancel">Annuler</string>
@@ -66,15 +65,18 @@
     <string name="waiting">En attente</string>
     <plurals name="hours">
         <item quantity="one">%d h</item>
+        <item quantity="many">%d h</item>
         <item quantity="other">%d h</item>
     </plurals>
     <plurals name="minutes">
         <item quantity="one">%d min</item>
+        <item quantity="many">%d min</item>
         <item quantity="other">%d min</item>
     </plurals>
     <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
     <string name="auto_refresh_settings">Rafraîchissement</string>
+    <string name="agent_scheduler_settings">Planificateur d\'agent</string>
     <string name="battery_alerts_channel_name">Alertes batterie</string>
     <string name="battery_alerts_channel_desc">Alertes lorsque la batterie est faible</string>
     <string name="battman_alert_title">%1$d%% Alerte batterie</string>

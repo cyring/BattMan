@@ -28,6 +28,33 @@ data class BatteryReportRow(
     val value: String
 )
 
+const val CASE_FOCUS = 0
+const val CASE_AWAY = 1
+
+const val PREF_FOCUS = "focusRefresh"
+const val PREF_AWAY = "awayRefresh"
+
+const val PREF_TIME_FOCUS = "focusRefreshTime"
+const val PREF_TIME_AWAY = "awayRefreshTime"
+
+const val DEFAULT_TIME_FOCUS = 3000L
+const val DEFAULT_TIME_AWAY = 15L
+
+const val DEFAULT_AUTO_FOCUS = true
+const val DEFAULT_AUTO_AWAY = true
+
+enum class RefreshCase(
+    val prefKey: String,
+    val prefTimeKey: String,
+    val defaultTimeMs: Long,
+    val defaultAuto: Boolean = true
+) {
+    FOCUS(PREF_FOCUS, PREF_TIME_FOCUS, DEFAULT_TIME_FOCUS, DEFAULT_AUTO_FOCUS),
+    AWAY(PREF_AWAY, PREF_TIME_AWAY, DEFAULT_TIME_AWAY * 60 * 1000L, DEFAULT_AUTO_AWAY);
+
+    val idx: Int get() = ordinal
+}
+
 class BatteryViewModel(application: Application) : AndroidViewModel(application) {
     private val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
     private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
@@ -78,8 +105,15 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    var autoRefresh by mutableStateOf(prefs.getBoolean("autoRefresh", true))
-    var refreshTime by mutableLongStateOf(prefs.getLong("refreshTime", 3000L))
+    val autoRefresh = mutableStateListOf(
+        prefs.getBoolean(RefreshCase.FOCUS.prefKey, RefreshCase.FOCUS.defaultAuto),
+        prefs.getBoolean(RefreshCase.AWAY.prefKey, RefreshCase.AWAY.defaultAuto)
+    )
+
+    val refreshTime = mutableStateListOf(
+        prefs.getLong(RefreshCase.FOCUS.prefTimeKey, prefs.getLong("refreshTime", RefreshCase.FOCUS.defaultTimeMs)),
+        prefs.getLong(RefreshCase.AWAY.prefTimeKey, RefreshCase.AWAY.defaultTimeMs)
+    )
 
     var report by mutableStateOf<List<BatteryReportRow>>(emptyList())
     var sysInfo by mutableStateOf("")
@@ -92,34 +126,43 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         BatteryEventReceiver.maxAlerts = maxAlerts
         refreshData()
         sysInfo = readSystemInfo()
-        startAutoRefreshLoop()
+
+        // Reactive observer: automatically manages the foreground loop when CASE_FOCUS settings change
+        viewModelScope.launch {
+            snapshotFlow { autoRefresh[CASE_FOCUS] to refreshTime[CASE_FOCUS] }
+                .collect { (enabled, time) ->
+                    refreshJob?.cancel()
+                    if (enabled) {
+                        refreshJob = viewModelScope.launch {
+                            while (true) {
+                                delay(time.milliseconds)
+                                refreshData()
+                            }
+                        }
+                    }
+                }
+        }
     }
 
     fun refreshData() {
         report = readBatteryInfo(getApplication(), powerManager, timeTracker)
     }
 
-    fun updateAutoRefresh(enabled: Boolean, time: Long) {
-        autoRefresh = enabled
-        refreshTime = time
+    fun updateAutoRefresh(idx: Int, enabled: Boolean, time: Long) {
+        val config = RefreshCase.entries[idx]
+        autoRefresh[idx] = enabled
+        refreshTime[idx] = time
         prefs.edit()
-            .putBoolean("autoRefresh", enabled)
-            .putLong("refreshTime", time)
+            .putBoolean(config.prefKey, enabled)
+            .putLong(config.prefTimeKey, time)
             .apply()
-        startAutoRefreshLoop()
     }
 
-    private fun startAutoRefreshLoop() {
-        refreshJob?.cancel()
-        if (autoRefresh) {
-            refreshJob = viewModelScope.launch {
-                while (true) {
-                    delay(refreshTime.milliseconds)
-                    refreshData()
-                }
-            }
-        }
-    }
+    // Function pointer callbacks table (C-style function pointer array)
+    val updateAutoRefreshHandlers: Array<(Boolean, Long) -> Unit> = arrayOf(
+        { enabled, time -> updateAutoRefresh(CASE_FOCUS, enabled, time) },
+        { enabled, time -> updateAutoRefresh(CASE_AWAY, enabled, time) }
+    )
 
     var themeMode by mutableIntStateOf(prefs.getInt("themeMode", THEME_SYSTEM))
 
@@ -150,9 +193,16 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         if (!powerManager.isInteractive && timeTracker.screenOffStartedAt == 0L) {
             timeTracker.screenOffStartedAt = System.currentTimeMillis()
         }
+        val awayMinutes = refreshTime[CASE_AWAY] / 60_000L
+        if (autoRefresh[CASE_AWAY] && awayMinutes > 0 && batteryAlertThreshold > 0) {
+            BatteryAlertWorker.schedule(getApplication(), awayMinutes)
+        } else {
+            BatteryAlertWorker.cancel(getApplication())
+        }
     }
 
     fun onScreenResumed() {
+        BatteryAlertWorker.cancel(getApplication())
         trackBatteryTrend(
             getApplication<Application>().registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)),
             BatteryTrend.RESUMED
@@ -267,15 +317,6 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             context.getString(R.string.activated)
         } else {
             context.getString(R.string.deactivated)
-        }
-
-        val adaptiveChargingEnabled = try {
-            Settings.Secure.getInt(
-                context.contentResolver,
-                "adaptive_charging_enabled", -1
-            )
-        } catch (_: Exception) {
-            -1
         }
 
         val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
@@ -457,11 +498,6 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             else -> timeToHMSMS(display.screenTimeoutMs)
         }
         val screenSaver = if (display.screenSaverEnabled == true) context.getString(R.string.activated) else context.getString(R.string.deactivated)
-        val adaptiveCharging = when (adaptiveChargingEnabled) {
-            1 -> context.getString(R.string.yes)
-            0 -> context.getString(R.string.no)
-            else -> context.getString(R.string.unsupported)
-        }
         val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == -1L) {
             "<${context.getString(R.string.waiting)}>"
         } else {
@@ -492,7 +528,6 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             row(R.string.battery_plugged, batteryPlugged),
             row(R.string.time_remaining, timeRemaining),
             row(R.string.battery_saver, batterySaver),
-            row(R.string.adaptive_charging, adaptiveCharging),
 
             BatteryReportRow("\uD83D\uDD0B", ""),
 
