@@ -76,7 +76,9 @@
     <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
     <string name="auto_refresh_settings">Rafraîchissement</string>
-    <string name="agent_scheduler_settings">Planificateur d\'agent</string>
+    <string name="auto_refresh_help_text">Actif pendant écran allumé</string>
+    <string name="agent_scheduler_settings">Planificateur agent</string>
+    <string name="agent_scheduler_help_text">Supervision écran éteint</string>
     <string name="battery_alerts_channel_name">Alertes batterie</string>
     <string name="battery_alerts_channel_desc">Alertes lorsque la batterie est faible</string>
     <string name="battman_alert_title">%1$d%% Alerte batterie</string>

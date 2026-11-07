@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.BatteryManager
 import android.os.Build
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -38,7 +37,7 @@ fun showLowBatteryNotification(context: Context, level: Int, id: Int) {
     val message = context.getString(R.string.battery_low_alert_text)
 
     val notification = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(android.R.drawable.ic_dialog_alert)
+        .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
         .setContentTitle(context.getString(R.string.battman_alert_title, level))
         .setContentText(message)
         .setStyle(NotificationCompat.BigTextStyle().bigText(message))
@@ -58,7 +57,7 @@ class BatteryEventReceiver : BroadcastReceiver() {
     companion object {
         private var alertShown = false
         private var alertCount = 0
-        var maxAlerts = 3
+        var maxAlerts = DEFAULT_MAX_ALERTS
 
         fun cancelNotification(context: Context, id: Int) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -67,14 +66,18 @@ class BatteryEventReceiver : BroadcastReceiver() {
             alertCount = 0
         }
 
-        fun foregroundMonitor(context: Context, intent: Intent) {
-            val trend = BatteryViewModel.updateBatteryLevel(intent)
+        fun evaluateBatteryAlert(
+            context: Context,
+            intent: Intent,
+            condition: (mask: Int) -> Boolean
+        ) {
+            val mask = BatteryViewModel.updateBatteryLevel(intent)
 
-            if (BatteryViewModel.batteryAlertThreshold > 0
-                && BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold
-                && trend == BatteryViewModel.BatteryTrend.DECREASING)
-            {
-                if (alertCount < maxAlerts) {
+            val isAlertThresholdMet = BatteryViewModel.batteryAlertThreshold > 0
+                    && BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold
+
+            if (isAlertThresholdMet && condition(mask)) {
+                if (maxAlerts == 0 || alertCount < maxAlerts) {
                     showLowBatteryNotification(context, BatteryViewModel.batteryPercent, NOTIFICATION_BATTERY_ALERT_ID)
                     alertShown = true
                     alertCount++
@@ -84,30 +87,22 @@ class BatteryEventReceiver : BroadcastReceiver() {
             }
         }
 
-        fun backgroundMonitor(context: Context, intent: Intent) {
-            val trend = BatteryViewModel.updateBatteryLevel(intent)
-            val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-            val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
-
-            if (BatteryViewModel.batteryAlertThreshold > 0
-                && BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold
-                && !isCharging)
-            {
-                if (alertCount < maxAlerts) {
-                    showLowBatteryNotification(context, BatteryViewModel.batteryPercent, NOTIFICATION_BATTERY_ALERT_ID)
-                    alertShown = true
-                    alertCount++
-                }
-            } else if (alertShown || BatteryViewModel.batteryPercent > BatteryViewModel.batteryAlertThreshold) {
-                cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)
+        fun frontMonitor(context: Context, intent: Intent) =
+            evaluateBatteryAlert(context, intent) { mask ->
+                (mask and BatteryTrendMask.TREND_DECREASING) != 0 &&
+                        (mask and (BatteryTrendMask.STATE_CHARGING or BatteryTrendMask.STATE_FULL)) == 0
             }
-        }
+
+        fun agentMonitor(context: Context, intent: Intent) =
+            evaluateBatteryAlert(context, intent) { mask ->
+                (mask and (BatteryTrendMask.STATE_DISCHARGING or BatteryTrendMask.STATE_NOT_CHARGING)) != 0
+            }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_BATTERY_CHANGED -> {
-                foregroundMonitor(context, intent)
+                frontMonitor(context, intent)
             }
             Intent.ACTION_POWER_CONNECTED -> {
                 cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)

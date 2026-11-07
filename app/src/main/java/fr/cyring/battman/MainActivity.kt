@@ -56,6 +56,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -360,8 +361,12 @@ class MainActivity : ComponentActivity() {
                                         // Monitoring settings
                                         val icons = listOf(Icons.Default.Autorenew, Icons.Default.Schedule)
                                         val titles = listOf(stringResource(R.string.auto_refresh_settings), stringResource(R.string.agent_scheduler_settings))
+                                        val helpTexts = listOf(
+                                            stringResource(R.string.auto_refresh_help_text),
+                                            stringResource(R.string.agent_scheduler_help_text)
+                                        )
                                         val stepValuesList = listOf(
-                                            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60),
+                                            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15),
                                             listOf(0, 15, 30, 60, 90, 120, 240, 360)
                                         )
                                         val unitMultipliers = listOf(1000L, 60_000L)
@@ -401,10 +406,23 @@ class MainActivity : ComponentActivity() {
                                                         tint = MaterialTheme.colorScheme.primary,
                                                         modifier = Modifier.padding(end = 16.dp)
                                                     )
-                                                    Text(
-                                                        text = titles[caseIdx],
-                                                        style = fontConfig.menuStyle
-                                                    )
+                                                    Column {
+                                                        Text(
+                                                            text = titles[caseIdx],
+                                                            style = fontConfig.menuStyle,
+                                                            maxLines = 1,
+                                                            softWrap = false,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                        Text(
+                                                            text = helpTexts[caseIdx],
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                            maxLines = 1,
+                                                            softWrap = false,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
                                                 }
                                                 Text(
                                                     text = valueText,
@@ -462,7 +480,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                         Slider(
                                             value = BatteryViewModel.batteryAlertThreshold.toFloat(),
-                                            valueRange = 0f..100f,
+                                            valueRange = MIN_ALERT_THRESHOLD.toFloat()..MAX_ALERT_THRESHOLD.toFloat(),
                                             onValueChange = { newValue ->
                                                 viewModel.updateBatteryAlertThreshold(newValue.roundToInt())
                                             },
@@ -499,14 +517,18 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
                                             Text(
-                                                text = BatteryViewModel.maxAlerts.toString(),
+                                                text = if (BatteryViewModel.maxAlerts == 0) {
+                                                    stringResource(R.string.off)
+                                                } else {
+                                                    BatteryViewModel.maxAlerts.toString()
+                                                },
                                                 style = fontConfig.menuStyle
                                             )
                                         }
                                         Slider(
                                             value = BatteryViewModel.maxAlerts.toFloat(),
-                                            valueRange = 1f..10f,
-                                            steps = 8,
+                                            valueRange = MIN_MAX_ALERTS.toFloat()..MAX_MAX_ALERTS.toFloat(),
+                                            steps = 9,
                                             onValueChange = { newValue ->
                                                 viewModel.updateMaxAlerts(newValue.roundToInt())
                                             },

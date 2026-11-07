@@ -17,11 +17,17 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.content.SharedPreferences
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
 const val BATTERY_ALERT_THRESHOLD = 10
+const val MIN_ALERT_THRESHOLD = 0
+const val MAX_ALERT_THRESHOLD = 100
+
 const val DEFAULT_MAX_ALERTS = 3
+const val MIN_MAX_ALERTS = 0
+const val MAX_MAX_ALERTS = 10
 
 data class BatteryReportRow(
     val label: String,
@@ -37,22 +43,55 @@ const val PREF_AWAY = "awayRefresh"
 const val PREF_TIME_FOCUS = "focusRefreshTime"
 const val PREF_TIME_AWAY = "awayRefreshTime"
 
+const val MIN_TIME_FOCUS = 0L
+const val MAX_TIME_FOCUS = 15000L
 const val DEFAULT_TIME_FOCUS = 3000L
+
+const val MIN_TIME_AWAY = 0L
+const val MAX_TIME_AWAY = 360L
 const val DEFAULT_TIME_AWAY = 15L
 
 const val DEFAULT_AUTO_FOCUS = true
 const val DEFAULT_AUTO_AWAY = true
 
+fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
+    val value = getLong(key, default)
+    return if (value in min..max) value else default
+}
+
+fun SharedPreferences.getIntInBounds(key: String, min: Int, max: Int, default: Int): Int {
+    val value = getInt(key, default)
+    return if (value in min..max) value else default
+}
+
 enum class RefreshCase(
     val prefKey: String,
     val prefTimeKey: String,
+    val minTimeMs: Long,
+    val maxTimeMs: Long,
     val defaultTimeMs: Long,
     val defaultAuto: Boolean = true
 ) {
-    FOCUS(PREF_FOCUS, PREF_TIME_FOCUS, DEFAULT_TIME_FOCUS, DEFAULT_AUTO_FOCUS),
-    AWAY(PREF_AWAY, PREF_TIME_AWAY, DEFAULT_TIME_AWAY * 60 * 1000L, DEFAULT_AUTO_AWAY);
+    FOCUS(PREF_FOCUS, PREF_TIME_FOCUS, MIN_TIME_FOCUS, MAX_TIME_FOCUS, DEFAULT_TIME_FOCUS, DEFAULT_AUTO_FOCUS),
+    AWAY(PREF_AWAY, PREF_TIME_AWAY, MIN_TIME_AWAY * 60_000L, MAX_TIME_AWAY * 60_000L, DEFAULT_TIME_AWAY * 60_000L, DEFAULT_AUTO_AWAY)
+}
 
-    val idx: Int get() = ordinal
+object BatteryTrendMask {
+    // Section 1 (Bits 0-3): Trend (Discrete 1-bit flags)
+    const val TREND_INCREASING = 1 shl 0        // Bit 0  (0b00000000000000000000000000000001)
+    const val TREND_DECREASING = 1 shl 1        // Bit 1  (0b00000000000000000000000000000010)
+    const val TREND_UNCHANGED  = 1 shl 2        // Bit 2  (0b00000000000000000000000000000100)
+
+    // Section 2 (Bits 4-8): Battery Charge Status (Discrete 1-bit flags)
+    const val STATE_UNKNOWN      = 1 shl 4       // Bit 4  (0b00000000000000000000000000010000)
+    const val STATE_CHARGING     = 1 shl 5       // Bit 5  (0b00000000000000000000000000100000)
+    const val STATE_DISCHARGING  = 1 shl 6       // Bit 6  (0b00000000000000000000000001000000)
+    const val STATE_NOT_CHARGING = 1 shl 7       // Bit 7  (0b00000000000000000000000010000000)
+    const val STATE_FULL         = 1 shl 8       // Bit 8  (0b00000000000000000000000100000000)
+    const val MASK_CHARGE        = STATE_UNKNOWN or STATE_CHARGING or STATE_DISCHARGING or STATE_NOT_CHARGING or STATE_FULL
+
+    // Section 3 (Bits 9-10): App/Screen Lifecycle (Discrete 1-bit flags)
+    const val STATE_RESUMED = 1 shl 9           // Bit 9  (0b00000000000000000000001000000000)
 }
 
 class BatteryViewModel(application: Application) : AndroidViewModel(application) {
@@ -66,42 +105,50 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     val timeTracker = TimeTracker()
 
-    enum class BatteryTrend { INCREASING, DECREASING, UNCHANGED, RESUMED }
-
     companion object {
         var batteryAlertThreshold by mutableIntStateOf(BATTERY_ALERT_THRESHOLD)
         var maxAlerts by mutableIntStateOf(DEFAULT_MAX_ALERTS)
         var batteryPercent by mutableIntStateOf(100)
         var previousPercent = -1
 
-        var batteryTrend: BatteryTrend = BatteryTrend.UNCHANGED
+        var batteryTrendMask: Int = BatteryTrendMask.TREND_UNCHANGED
             private set
 
-        fun updateBatteryLevel(intent: Intent): BatteryTrend {
+        fun updateBatteryLevel(intent: Intent, isResumedEvent: Boolean = false): Int {
             val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
             batteryPercent = if (scale > 0 && level >= 0) level * 100 / scale else -1
 
-            if (batteryTrend == BatteryTrend.RESUMED) {
-                batteryTrend = BatteryTrend.DECREASING
-            } else if (previousPercent != -1 && batteryPercent != -1) {
-                batteryTrend = when {
-                    batteryPercent > previousPercent -> BatteryTrend.INCREASING
-                    batteryPercent < previousPercent -> BatteryTrend.DECREASING
-                    else -> BatteryTrend.UNCHANGED
+            // Nibble 1: Trend
+            val trendBits = when {
+                isResumedEvent || (batteryTrendMask and BatteryTrendMask.STATE_RESUMED) != 0 -> {
+                    BatteryTrendMask.TREND_DECREASING
                 }
+                previousPercent != -1 && batteryPercent != -1 -> when {
+                    batteryPercent > previousPercent -> BatteryTrendMask.TREND_INCREASING
+                    batteryPercent < previousPercent -> BatteryTrendMask.TREND_DECREASING
+                    else -> BatteryTrendMask.TREND_UNCHANGED
+                }
+                else -> BatteryTrendMask.TREND_UNCHANGED
             }
             previousPercent = batteryPercent
-            return batteryTrend
-        }
 
-        fun trackBatteryTrend(intent: Intent?, newTrend: BatteryTrend) {
-            val status = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
-            val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
-
-            if (isCharging == false) {
-                batteryTrend = newTrend
+            // Nibble 2: Battery Charge Status
+            val rawStatus = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+            val chargeBits = when (rawStatus) {
+                BatteryManager.BATTERY_STATUS_CHARGING -> BatteryTrendMask.STATE_CHARGING
+                BatteryManager.BATTERY_STATUS_DISCHARGING -> BatteryTrendMask.STATE_DISCHARGING
+                BatteryManager.BATTERY_STATUS_FULL -> BatteryTrendMask.STATE_FULL
+                BatteryManager.BATTERY_STATUS_NOT_CHARGING -> BatteryTrendMask.STATE_NOT_CHARGING
+                BatteryManager.BATTERY_STATUS_UNKNOWN -> BatteryTrendMask.STATE_UNKNOWN
+                else -> BatteryTrendMask.STATE_UNKNOWN
             }
+
+            // Nibble 3: App Lifecycle State
+            val stateBits = if (isResumedEvent) BatteryTrendMask.STATE_RESUMED else 0
+
+            batteryTrendMask = trendBits or chargeBits or stateBits
+            return batteryTrendMask
         }
     }
 
@@ -111,8 +158,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     )
 
     val refreshTime = mutableStateListOf(
-        prefs.getLong(RefreshCase.FOCUS.prefTimeKey, prefs.getLong("refreshTime", RefreshCase.FOCUS.defaultTimeMs)),
-        prefs.getLong(RefreshCase.AWAY.prefTimeKey, RefreshCase.AWAY.defaultTimeMs)
+        prefs.getLongInBounds(RefreshCase.FOCUS.prefTimeKey, RefreshCase.FOCUS.minTimeMs, RefreshCase.FOCUS.maxTimeMs, prefs.getLong("refreshTime", RefreshCase.FOCUS.defaultTimeMs)),
+        prefs.getLongInBounds(RefreshCase.AWAY.prefTimeKey, RefreshCase.AWAY.minTimeMs, RefreshCase.AWAY.maxTimeMs, RefreshCase.AWAY.defaultTimeMs)
     )
 
     var report by mutableStateOf<List<BatteryReportRow>>(emptyList())
@@ -121,8 +168,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     private var refreshJob: Job? = null
 
     init {
-        batteryAlertThreshold = prefs.getInt("batteryAlertThreshold", BATTERY_ALERT_THRESHOLD)
-        maxAlerts = prefs.getInt("maxAlerts", DEFAULT_MAX_ALERTS)
+        batteryAlertThreshold = prefs.getIntInBounds("batteryAlertThreshold", MIN_ALERT_THRESHOLD, MAX_ALERT_THRESHOLD, BATTERY_ALERT_THRESHOLD)
+        maxAlerts = prefs.getIntInBounds("maxAlerts", MIN_MAX_ALERTS, MAX_MAX_ALERTS, DEFAULT_MAX_ALERTS)
         BatteryEventReceiver.maxAlerts = maxAlerts
         refreshData()
         sysInfo = readSystemInfo()
@@ -203,10 +250,10 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     fun onScreenResumed() {
         BatteryAlertWorker.cancel(getApplication())
-        trackBatteryTrend(
-            getApplication<Application>().registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)),
-            BatteryTrend.RESUMED
-        )
+        val intent = getApplication<Application>().registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        if (intent != null) {
+            updateBatteryLevel(intent, isResumedEvent = true)
+        }
         if (powerManager.isInteractive && timeTracker.screenOffStartedAt > 0L) {
             timeTracker.lastScreenOffDurationMs = System.currentTimeMillis() - timeTracker.screenOffStartedAt
             timeTracker.screenOffStartedAt = 0L
@@ -255,12 +302,12 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         val cycle = if (count == -1) context.getString(R.string.unavailable) else count.toString()
 
-        val status = when (extra(BatteryManager.EXTRA_STATUS)) {
-            BatteryManager.BATTERY_STATUS_CHARGING -> context.getString(R.string.charging)
-            BatteryManager.BATTERY_STATUS_DISCHARGING -> context.getString(R.string.discharging)
-            BatteryManager.BATTERY_STATUS_FULL -> context.getString(R.string.full)
-            BatteryManager.BATTERY_STATUS_NOT_CHARGING -> context.getString(R.string.not_charging)
-            BatteryManager.BATTERY_STATUS_UNKNOWN -> context.getString(R.string.unknown)
+        val status = when (batteryTrendMask and BatteryTrendMask.MASK_CHARGE) {
+            BatteryTrendMask.STATE_CHARGING -> context.getString(R.string.charging)
+            BatteryTrendMask.STATE_DISCHARGING -> context.getString(R.string.discharging)
+            BatteryTrendMask.STATE_FULL -> context.getString(R.string.full)
+            BatteryTrendMask.STATE_NOT_CHARGING -> context.getString(R.string.not_charging)
+            BatteryTrendMask.STATE_UNKNOWN -> context.getString(R.string.unknown)
             else -> context.getString(R.string.undefined)
         }
 

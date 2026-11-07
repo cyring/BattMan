@@ -22,7 +22,7 @@ class BatteryAlertWorker(
 
     override suspend fun doWork(): Result {
         if (privateIntent != null) {
-            BatteryEventReceiver.backgroundMonitor(applicationContext, privateIntent)
+            BatteryEventReceiver.agentMonitor(applicationContext, privateIntent)
         }
         return Result.success()
     }

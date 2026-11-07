@@ -77,7 +77,9 @@
     <string name="duration_m_s_format" translatable="false">%1$d m %2$02d s</string>
     <string name="duration_h_m_s_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
     <string name="auto_refresh_settings">Auto-Refresh</string>
+    <string name="auto_refresh_help_text">Active while screen on</string>
     <string name="agent_scheduler_settings">Agent Scheduler</string>
+    <string name="agent_scheduler_help_text">Monitoring while screen off</string>
     <string name="battery_alerts_channel_name">Battery Alerts</string>
     <string name="battery_alerts_channel_desc">Alerts when device battery is running low</string>
     <string name="battman_alert_title">%1$d%% Battery alert</string>
