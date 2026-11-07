@@ -113,11 +113,31 @@ private val TIME_FORMATTERS: Array<(Int) -> String> = arrayOf(
     }
 )
 
+private val icons = listOf(
+    Icons.Default.Autorenew,
+    Icons.Default.Schedule
+)
+
+private val maxValue = intArrayOf(
+        MAX_TIME_FOCUS.toInt() / 1000,
+        MAX_TIME_AWAY.toInt()
+)
+
+private val median = 10 + (maxValue[CASE_FOCUS] - 10) / 2
+
+private val stepValuesList = arrayOf(
+    intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, median, maxValue[CASE_FOCUS]),
+    intArrayOf(0, 15, 30, 60, 90, 120, 240, maxValue[CASE_AWAY])
+)
+
+private val unitMultipliers = longArrayOf(1000L, 60_000L)
+
 data class CentralFont (
     val appTitleStyle: List<TextStyle>,
     val reportStyle: TextStyle,
     val sysInfoStyle: TextStyle,
     val menuStyle: TextStyle,
+    val captionStyle: TextStyle,
     var lineHeight: Dp = 16.dp
 )
 
@@ -153,6 +173,7 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             ),
             menuStyle = typography.titleMedium,
+            captionStyle = typography.titleSmall,
             lineHeight = with(density) {
                 typography.labelSmall.lineHeight.toDp()
             }
@@ -359,17 +380,14 @@ class MainActivity : ComponentActivity() {
                                             }
                                         }
                                         // Monitoring settings
-                                        val icons = listOf(Icons.Default.Autorenew, Icons.Default.Schedule)
-                                        val titles = listOf(stringResource(R.string.auto_refresh_settings), stringResource(R.string.agent_scheduler_settings))
+                                        val titles = listOf(
+                                            stringResource(R.string.auto_refresh_settings),
+                                            stringResource(R.string.agent_scheduler_settings)
+                                        )
                                         val helpTexts = listOf(
                                             stringResource(R.string.auto_refresh_help_text),
                                             stringResource(R.string.agent_scheduler_help_text)
                                         )
-                                        val stepValuesList = listOf(
-                                            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15),
-                                            listOf(0, 15, 30, 60, 90, 120, 240, 360)
-                                        )
-                                        val unitMultipliers = listOf(1000L, 60_000L)
 
                                         listOf(CASE_FOCUS, CASE_AWAY).forEach { caseIdx ->
                                             val steps = stepValuesList[caseIdx]
@@ -416,7 +434,7 @@ class MainActivity : ComponentActivity() {
                                                         )
                                                         Text(
                                                             text = helpTexts[caseIdx],
-                                                            style = MaterialTheme.typography.labelSmall,
+                                                            style = fontConfig.captionStyle,
                                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                             maxLines = 1,
                                                             softWrap = false,
@@ -551,18 +569,30 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                                        Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
-                                                            data = Uri.fromParts("package", context.packageName, null)
+                                                    val intent =
+                                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                            Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
+                                                                data = Uri.fromParts(
+                                                                    "package",
+                                                                    context.packageName,
+                                                                    null
+                                                                )
+                                                            }
+                                                        } else {
+                                                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                                                data = Uri.fromParts(
+                                                                    "package",
+                                                                    context.packageName,
+                                                                    null
+                                                                )
+                                                            }
                                                         }
-                                                    } else {
-                                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                            data = Uri.fromParts("package", context.packageName, null)
-                                                        }
-                                                    }
                                                     context.startActivity(intent)
                                                 }
-                                                .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
+                                                .padding(
+                                                    horizontal = 24.dp,
+                                                    vertical = fontConfig.lineHeight
+                                                )
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Language,
@@ -595,7 +625,10 @@ class MainActivity : ComponentActivity() {
                                                 .clickable {
                                                     showThemeDialog = true
                                                 }
-                                                .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
+                                                .padding(
+                                                    horizontal = 24.dp,
+                                                    vertical = fontConfig.lineHeight
+                                                )
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Palette,
@@ -630,7 +663,10 @@ class MainActivity : ComponentActivity() {
                                                 .clickable {
                                                     showFontDialog = true
                                                 }
-                                                .padding(horizontal = 24.dp, vertical = fontConfig.lineHeight)
+                                                .padding(
+                                                    horizontal = 24.dp,
+                                                    vertical = fontConfig.lineHeight
+                                                )
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Accessibility,

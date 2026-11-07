@@ -44,7 +44,7 @@ const val PREF_TIME_FOCUS = "focusRefreshTime"
 const val PREF_TIME_AWAY = "awayRefreshTime"
 
 const val MIN_TIME_FOCUS = 0L
-const val MAX_TIME_FOCUS = 15000L
+const val MAX_TIME_FOCUS = 25000L
 const val DEFAULT_TIME_FOCUS = 3000L
 
 const val MIN_TIME_AWAY = 0L
