@@ -21,12 +21,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DrawerValue
@@ -55,6 +54,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.Alignment
@@ -64,13 +64,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -83,7 +81,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Surface
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
@@ -138,13 +139,15 @@ data class CentralFont (
     val sysInfoStyle: TextStyle,
     val menuStyle: TextStyle,
     val captionStyle: TextStyle,
+    val dialogStyle: DialogStyle,
     var lineHeight: Dp = 16.dp
-)
-
-data class SelectionCell (
-    val resource: Int,
-    val value: Int
-)
+) {
+    data class DialogStyle(
+        val title: TextStyle,
+        val button: TextStyle,
+        val description: TextStyle
+    )
+}
 
 @Composable
 fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
@@ -152,15 +155,73 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
     val density = LocalDensity.current
 
     return remember(fontSizeMode, typography, density) {
-        val styleMap = arrayOf(
-            typography.bodyMedium, // FONT_SIZE_SYSTEM (0)
-            typography.bodySmall,  // FONT_SIZE_SMALL (1)
-            typography.bodyMedium, // FONT_SIZE_MEDIUM (2)
-            typography.bodyLarge   // FONT_SIZE_LARGE (3)
-        )
-        val baseStyle = styleMap.getOrElse(fontSizeMode) { typography.bodyMedium }
-        val reportStyle = baseStyle.copy(
+
+        fun mapStyle(
+            options: Array<TextStyle>,
+            fontFamily: androidx.compose.ui.text.font.FontFamily = androidx.compose.ui.text.font.FontFamily.Default
+        ): TextStyle {
+            val baseStyle = options.getOrElse(fontSizeMode) { options[1] }
+            return baseStyle.copy(fontFamily = fontFamily)
+        }
+
+        val reportStyle = mapStyle(
+            arrayOf(
+                typography.bodyMedium, // FONT_SIZE_SYSTEM (0)
+                typography.bodySmall,  // FONT_SIZE_SMALL (1)
+                typography.bodyMedium, // FONT_SIZE_MEDIUM (2)
+                typography.bodyLarge   // FONT_SIZE_LARGE (3)
+            ),
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+        )
+
+        val menuStyle = mapStyle(
+            arrayOf(
+                typography.titleMedium,
+                typography.titleSmall,
+                typography.titleMedium,
+                typography.titleLarge
+            ),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+        )
+
+        val captionStyle = mapStyle(
+            arrayOf(
+                typography.titleSmall,
+                typography.titleSmall,
+                typography.titleMedium,
+                typography.titleMedium
+            ),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+        )
+
+        val dialogTitleStyle = mapStyle(
+            arrayOf(
+                typography.titleLarge,
+                typography.titleSmall,
+                typography.titleMedium,
+                typography.titleLarge
+            ),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+        )
+
+        val dialogButtonStyle = mapStyle(
+            arrayOf(
+                typography.bodyLarge,
+                typography.bodySmall,
+                typography.bodyMedium,
+                typography.bodyLarge
+            ),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Default
+        )
+
+        val dialogDescStyle = mapStyle(
+            arrayOf(
+                typography.bodyMedium,
+                typography.bodySmall,
+                typography.bodySmall,
+                typography.bodyMedium
+            ),
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Default
         )
 
         CentralFont(
@@ -172,8 +233,13 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
             sysInfoStyle = typography.bodySmall.copy(
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             ),
-            menuStyle = typography.titleMedium,
-            captionStyle = typography.titleSmall,
+            menuStyle = menuStyle,
+            captionStyle = captionStyle,
+            dialogStyle = CentralFont.DialogStyle(
+                title = dialogTitleStyle,
+                button = dialogButtonStyle,
+                description = dialogDescStyle
+            ),
             lineHeight = with(density) {
                 typography.labelSmall.lineHeight.toDp()
             }
@@ -181,64 +247,109 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
     }
 }
 
+data class SelectionCell (
+    val resource: Int,
+    val value: Int
+)
+
 @Composable
 fun SelectionDialog(
+    fontConfig: CentralFont,
     titleRes: Int,
     cells: List<SelectionCell>,
     selectedVal: Int,
     descriptionRes: Int? = null,
     onDismissRequest: () -> Unit,
-    onItemSelected: (Int) -> Unit
+    onItemSelected: (Int) -> Unit,
+    icon: ImageVector? = null
 ) {
-    AlertDialog(
+    val windowSize = LocalWindowInfo.current.containerSize
+    val isLandscape = windowSize.width > windowSize.height
+    val widthFraction = if (isLandscape) 0.55f else 0.85f
+
+    Dialog(
         onDismissRequest = onDismissRequest,
-        title = {
-            Text(stringResource(titleRes))
-        },
-        text = {
-            Column(Modifier.fillMaxWidth()) {
-                LazyColumn(Modifier.fillMaxWidth()) {
-                    items(cells) { cell ->
-                        val isSelected = cell.value == selectedVal
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onItemSelected(cell.value)
-                                    onDismissRequest()
-                                }
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = null
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(
-                                text = stringResource(cell.resource),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
+        properties = DialogProperties(dismissOnBackPress = true, usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+            modifier = Modifier.fillMaxWidth(widthFraction)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (icon != null) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(end = 12.dp)
+                        )
+                    }
+                    Text(
+                        text = stringResource(titleRes),
+                        style = fontConfig.dialogStyle.title
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                cells.forEach { cell ->
+                    val isSelected = cell.value == selectedVal
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onItemSelected(cell.value)
+                                onDismissRequest()
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = null
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(cell.resource),
+                            style = fontConfig.dialogStyle.button
+                        )
                     }
                 }
+
                 if (descriptionRes != null) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = stringResource(descriptionRes),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = fontConfig.dialogStyle.description,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    FilledTonalButton(onClick = onDismissRequest) {
+                        Text(
+                            text = stringResource(R.string.cancel),
+                            style = fontConfig.dialogStyle.button
+                        )
+                    }
+                }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text(stringResource(R.string.cancel))
-            }
-        },
-        properties = DialogProperties(dismissOnBackPress = true)
-    )
+        }
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -299,6 +410,7 @@ class MainActivity : ComponentActivity() {
             BattManTheme(darkTheme = darkTheme) {
                 if (showThemeDialog) {
                     SelectionDialog(
+                        fontConfig = fontConfig,
                         titleRes = R.string.theme,
                         cells = listOf(
                             SelectionCell(R.string.theme_light, THEME_LIGHT),
@@ -310,12 +422,14 @@ class MainActivity : ComponentActivity() {
                         onDismissRequest = { showThemeDialog = false },
                         onItemSelected = { newValue ->
                             viewModel.updateThemeMode(newValue)
-                        }
+                        },
+                        icon = Icons.Default.Palette
                     )
                 }
 
                 if (showFontDialog) {
                     SelectionDialog(
+                        fontConfig = fontConfig,
                         titleRes = R.string.accessibility,
                         cells = listOf(
                             SelectionCell(R.string.accessibility_small, FONT_SIZE_SMALL),
@@ -328,7 +442,8 @@ class MainActivity : ComponentActivity() {
                         onDismissRequest = { showFontDialog = false },
                         onItemSelected = { newValue ->
                             viewModel.updateFontSizeMode(newValue)
-                        }
+                        },
+                        icon = Icons.Default.Accessibility
                     )
                 }
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -412,7 +527,7 @@ class MainActivity : ComponentActivity() {
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                                                    .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp)
                                             ) {
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
@@ -460,7 +575,7 @@ class MainActivity : ComponentActivity() {
                                                         viewModel.updateAutoRefreshHandlers[caseIdx](true, units * multiplier)
                                                     }
                                                 },
-                                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
                                             )
                                             HorizontalDivider()
                                         }
@@ -470,7 +585,7 @@ class MainActivity : ComponentActivity() {
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                                                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp)
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -484,7 +599,10 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 Text(
                                                     text = stringResource(R.string.battery_alert_threshold),
-                                                    style = fontConfig.menuStyle
+                                                    style = fontConfig.menuStyle,
+                                                    maxLines = 1,
+                                                    softWrap = false,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
                                             }
                                             Text(
@@ -508,7 +626,7 @@ class MainActivity : ComponentActivity() {
                                                     drawStopIndicator = null
                                                 )
                                             },
-                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
                                         )
                                         HorizontalDivider()
 
@@ -517,7 +635,7 @@ class MainActivity : ComponentActivity() {
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                                                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp)
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -531,7 +649,10 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 Text(
                                                     text = stringResource(R.string.max_alerts),
-                                                    style = fontConfig.menuStyle
+                                                    style = fontConfig.menuStyle,
+                                                    maxLines = 1,
+                                                    softWrap = false,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
                                             }
                                             Text(
@@ -556,7 +677,7 @@ class MainActivity : ComponentActivity() {
                                                     drawStopIndicator = null
                                                 )
                                             },
-                                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                                            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
                                         )
                                         HorizontalDivider()
 
@@ -603,7 +724,10 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 text = stringResource(R.string.language),
                                                 style = fontConfig.menuStyle,
-                                                modifier = Modifier.weight(1f)
+                                                modifier = Modifier.weight(1f),
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = currentLanguageName,
@@ -639,7 +763,10 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 text = stringResource(R.string.theme),
                                                 style = fontConfig.menuStyle,
-                                                modifier = Modifier.weight(1f)
+                                                modifier = Modifier.weight(1f),
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = themeText,
@@ -677,14 +804,17 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 text = stringResource(R.string.accessibility),
                                                 style = fontConfig.menuStyle,
-                                                modifier = Modifier.weight(1f)
+                                                modifier = Modifier.weight(1f),
+                                                maxLines = 1,
+                                                softWrap = false,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                             Text(
                                                 text = accessibilityText,
                                                 style = fontConfig.menuStyle
                                             )
                                         }
-                                        HorizontalDivider()
+                                        //TODO:HorizontalDivider()
                                     }
 
                                     Column {
@@ -933,7 +1063,7 @@ private fun BatteryReport(fontConfig: CentralFont, rows: List<BatteryReportRow>)
                             textAlign = TextAlign.Start,
                             maxLines = 1,
                             softWrap = false,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
+                            overflow = TextOverflow.Clip,
                             style = fontConfig.reportStyle
                         )
                     }

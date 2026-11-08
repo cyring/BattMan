@@ -90,10 +90,10 @@
     <string name="theme_system">Système</string>
     <string name="theme_light">Clair</string>
     <string name="theme_dark">Sombre</string>
-    <string name="theme_desc">Sélectionnez l\'apparence de l\'application.</string>
+    <string name="theme_desc">Sélectionnez l\'apparence de l\'application</string>
     <string name="accessibility">Accessibilité</string>
     <string name="accessibility_small">Petit</string>
     <string name="accessibility_medium">Moyen</string>
     <string name="accessibility_large">Grand</string>
-    <string name="accessibility_desc">Ajustez la taille du texte du rapport pour une meilleure lisibilité.</string>
+    <string name="accessibility_desc">Ajustez la taille du texte du rapport pour une meilleure lisibilité</string>
 </resources>
