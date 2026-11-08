@@ -689,7 +689,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                             Text(
                                                 text = if (BatteryViewModel.maxAlerts == 0) {
-                                                    stringResource(R.string.off)
+                                                    "∞"
                                                 } else {
                                                     BatteryViewModel.maxAlerts.toString()
                                                 },

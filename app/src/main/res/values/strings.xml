@@ -18,6 +18,7 @@
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>
     <string name="battery_low">Battery low</string>
+    <string name="prediction">Time to low</string>
     <string name="charging">Charging</string>
     <string name="discharging">Discharging</string>
     <string name="full">Full</string>

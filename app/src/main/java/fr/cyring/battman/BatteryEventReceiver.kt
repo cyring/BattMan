@@ -59,6 +59,10 @@ class BatteryEventReceiver : BroadcastReceiver() {
         private var alertCount = 0
         var maxAlerts = DEFAULT_MAX_ALERTS
 
+        fun resetAlertCount() {
+            alertCount = 0
+        }
+
         fun cancelNotification(context: Context, id: Int) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancel(id)

@@ -18,6 +18,7 @@
     <string name="thermal_status">État thermique</string>
     <string name="battery_present">Batterie présente</string>
     <string name="battery_low">Batterie faible</string>
+    <string name="prediction">Temps décharge</string>
     <string name="charging">En charge</string>
     <string name="discharging">En décharge</string>
     <string name="full">Pleine</string>

@@ -233,6 +233,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     fun updateMaxAlerts(value: Int) {
         maxAlerts = value
         BatteryEventReceiver.maxAlerts = value
+        BatteryEventReceiver.resetAlertCount()
         prefs.edit().putInt("maxAlerts", value).apply()
     }
 
@@ -366,6 +367,17 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             context.getString(R.string.deactivated)
         }
 
+        val predictionMs: Long = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                val duration: java.time.Duration? = powerManager.batteryDischargePrediction
+                duration?.toMillis() ?: -3L
+            } catch (_: Exception) {
+                -2L
+            }
+        } else {
+             -1L
+        }
+
         val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
             when (powerManager.currentThermalStatus) {
                 PowerManager.THERMAL_STATUS_NONE -> context.getString(R.string.none)
@@ -458,6 +470,15 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             context.getString(R.string.unavailable)
         } else {
             timeToHM(milliseconds)
+        }
+
+        val prediction: String = when {
+            predictionMs == -1L -> context.getString(R.string.unsupported)
+            predictionMs == -2L -> context.getString(R.string.undefined)
+            predictionMs == -3L -> status
+            predictionMs == 0L -> context.getString(R.string.unavailable)
+            predictionMs > 0L -> timeToHM(predictionMs)
+            else -> context.getString(R.string.unknown)
         }
 
         data class DisplayInfo(
@@ -581,6 +602,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             row(R.string.thermal_status, thermalStatus),
             row(R.string.battery_present, batteryPresent),
             row(R.string.battery_low, lowBatteryState),
+            row(R.string.prediction, prediction),
 
             BatteryReportRow("\uD83D\uDCF1",""),
 
