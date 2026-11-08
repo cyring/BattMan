@@ -72,6 +72,8 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -82,6 +84,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -267,6 +270,7 @@ fun SelectionDialog(
     val windowSize = LocalWindowInfo.current.containerSize
     val isLandscape = windowSize.width > windowSize.height
     val widthFraction = if (isLandscape) 0.55f else 0.85f
+    val scrollState = rememberScrollState()
 
     Dialog(
         onDismissRequest = onDismissRequest,
@@ -281,7 +285,34 @@ fun SelectionDialog(
             Column(
                 modifier = Modifier
                     .padding(24.dp)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
+                    .drawWithContent {
+
+                        drawContent()
+
+                        if (scrollState.maxValue > 0) {
+                            val scrollStateMaxValue: Float = scrollState.maxValue.toFloat()
+                            val scrollStateValue: Float = scrollState.value.toFloat()
+
+                            val totalContentHeight = scrollStateMaxValue + size.height
+                            val scrollThumbHeight = 128f
+                            val thumbSize = Size(12f, scrollThumbHeight)
+                            val scrollProgress = scrollStateValue / scrollStateMaxValue
+                            val travelHeight = size.height - scrollThumbHeight
+                            val yOffset = (scrollProgress * travelHeight).coerceIn(0f, travelHeight)
+
+                            drawRect(
+                                color = Color.Gray.copy(alpha = 0.15f),
+                                size = Size(12f, totalContentHeight),
+                                topLeft = Offset(size.width + 24f, 0f)
+                                )
+                            drawRect(
+                                color = Color.Gray.copy(alpha = 0.45f),
+                                size = thumbSize,
+                                topLeft = Offset(size.width + 24f, yOffset)
+                            )
+                        }
+                    }
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
