@@ -89,9 +89,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
 
-const val KEY_TITLE: Int = 0
-const val KEY_SUB_TITLE: Int = 1
-
 const val FONT_SIZE_SYSTEM: Int = 0
 const val FONT_SIZE_SMALL: Int = 1
 const val FONT_SIZE_MEDIUM: Int = 2
@@ -134,7 +131,7 @@ private val stepValuesList = arrayOf(
 private val unitMultipliers = longArrayOf(1000L, 60_000L)
 
 data class CentralFont (
-    val appTitleStyle: List<TextStyle>,
+    val appStyle: AppStyle,
     val reportStyle: TextStyle,
     val sysInfoStyle: TextStyle,
     val menuStyle: TextStyle,
@@ -142,6 +139,10 @@ data class CentralFont (
     val dialogStyle: DialogStyle,
     var lineHeight: Dp = 16.dp
 ) {
+    data class AppStyle(
+        val title: TextStyle,
+        val subTitle: TextStyle
+    )
     data class DialogStyle(
         val title: TextStyle,
         val button: TextStyle,
@@ -225,9 +226,9 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
         )
 
         CentralFont(
-            appTitleStyle = listOf(
-                typography.headlineMedium,
-                typography.headlineSmall
+            appStyle = CentralFont.AppStyle(
+                title = typography.headlineMedium,
+                subTitle = typography.headlineSmall
             ),
             reportStyle = reportStyle,
             sysInfoStyle = typography.bodySmall.copy(
@@ -880,7 +881,7 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Text(
                                         text = stringResource(R.string.app_name),
-                                        style = fontConfig.appTitleStyle[KEY_TITLE],
+                                        style = fontConfig.appStyle.title,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
@@ -888,10 +889,10 @@ class MainActivity : ComponentActivity() {
                                         maxLines = 1,
                                         softWrap = false,
                                         autoSize = TextAutoSize.StepBased(
-                                            maxFontSize = fontConfig.appTitleStyle[KEY_SUB_TITLE].fontSize
+                                            maxFontSize = fontConfig.appStyle.subTitle.fontSize
                                         ),
                                         textAlign = TextAlign.Center,
-                                        style = fontConfig.appTitleStyle[KEY_SUB_TITLE],
+                                        style = fontConfig.appStyle.subTitle,
                                         color = MaterialTheme.colorScheme.outline
                                     )
                                 }
