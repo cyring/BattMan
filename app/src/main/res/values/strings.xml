@@ -74,9 +74,11 @@
     </plurals>
     <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s, %2$s</string>
-    <string name="duration_ms_format" translatable="false">%1$d s %2$03d ms</string>
-    <string name="duration_m_s_format" translatable="false">%1$d m %2$02d s</string>
-    <string name="duration_h_m_s_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
+    <string name="duration_ms_str_format" translatable="false">%1$d s %2$03d ms</string>
+    <string name="duration_m_s_str_format" translatable="false">%1$d m %2$02d s</string>
+    <string name="duration_h_m_s_str_format" translatable="false">%1$d h %2$02d m %3$02d s</string>
+    <string name="duration_h_m_str_format" translatable="true">%1$d hr, %2$d min</string>
+    <string name="duration_m_str_format" translatable="true">%1$d min</string>
     <string name="auto_refresh_settings">Auto-Refresh</string>
     <string name="auto_refresh_help_text">Screen on</string>
     <string name="agent_scheduler_settings">Data Collector</string>

@@ -7,12 +7,12 @@
     <string name="state">Estado</string>
     <string name="health">Salud</string>
     <string name="technology">Tecnología</string>
-    <string name="voltage">Tensión</string>
+    <string name="voltage">Voltaje</string>
     <string name="temperature">Temperatura</string>
-    <string name="energy_counter">Contador de energía</string>
-    <string name="charge_counter">Contador de carga</string>
-    <string name="current_now">Eléctrica ahora</string>
-    <string name="current_average">Eléctrica promedio</string>
+    <string name="energy_counter">Medidor de energía</string>
+    <string name="charge_counter">Medidor de carga</string>
+    <string name="current_now">Consumo ahora</string>
+    <string name="current_average">Consumo promedio</string>
     <string name="battery_plugged">Fuente alimentación</string>
     <string name="battery_saver">Ahorro de batería</string>
     <string name="time_remaining">Tiempo para completar</string>
@@ -77,6 +77,8 @@
     </plurals>
     <string name="copyright">"Versión %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
+    <string name="duration_h_m_str_format">%1$d h %2$d min</string>
+    <string name="duration_m_str_format">%1$d min</string>
     <string name="auto_refresh_settings">Actualización</string>
     <string name="auto_refresh_help_text">Pantalla encendida</string>
     <string name="agent_scheduler_settings">Colector de datos</string>

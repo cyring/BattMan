@@ -18,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.content.SharedPreferences
+import androidx.compose.runtime.setValue
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -98,7 +99,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     private val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
     private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
 
-    class TimeTracker(
+    data class TimeTracker(
         var screenOffStartedAt: Long = 0L,
         var lastScreenOffDurationMs: Long = -1L
     )
@@ -106,6 +107,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     val timeTracker = TimeTracker()
 
     companion object {
+        var timeRemainingMs by mutableLongStateOf(-1L)
+        var predictionMs by mutableLongStateOf(-1L)
         var batteryAlertThreshold by mutableIntStateOf(BATTERY_ALERT_THRESHOLD)
         var maxAlerts by mutableIntStateOf(DEFAULT_MAX_ALERTS)
         var batteryPercent by mutableIntStateOf(100)
@@ -301,7 +304,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         updateBatteryLevel(intent)
 
-        val cycle = if (count == -1) context.getString(R.string.unavailable) else count.toString()
+        val cycle = if (count < 0) context.getString(R.string.unavailable) else count.toString()
 
         val status = when (batteryTrendMask and BatteryTrendMask.MASK_CHARGE) {
             BatteryTrendMask.STATE_CHARGING -> context.getString(R.string.charging)
@@ -367,7 +370,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             context.getString(R.string.deactivated)
         }
 
-        val predictionMs: Long = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        predictionMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 val duration: java.time.Duration? = powerManager.batteryDischargePrediction
                 duration?.toMillis() ?: -3L
@@ -421,55 +424,15 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
         )
 
-        fun timeToHM(ms: Long): String {
-            val totalMinutes = (ms + 59_999L) / 60_000L
-            val hours = (totalMinutes / 60).toInt()
-            val minutes = (totalMinutes % 60).toInt()
-
-            val hoursText = context.resources.getQuantityString(
-                R.plurals.hours,
-                hours,
-                hours
-            )
-            val minutesText = context.resources.getQuantityString(
-                R.plurals.minutes,
-                minutes,
-                minutes
-            )
-            return when {
-                hours > 0 && minutes > 0 ->
-                    context.getString(R.string.duration_format, hoursText, minutesText)
-
-                hours > 0 -> hoursText
-                else -> minutesText
-            }
-        }
-
-        fun timeToHMSMS(ms: Long?): String {
-            val durationMs = ms ?: 0
-            val totalSeconds = durationMs / 1_000
-            val milliseconds = (durationMs % 1_000).toInt()
-            val seconds = (totalSeconds % 60).toInt()
-            val totalMinutes = totalSeconds / 60
-            val minutes = (totalMinutes % 60).toInt()
-            val hours = (totalMinutes / 60).toInt()
-
-            return when {
-                hours > 0 -> context.getString(R.string.duration_h_m_s_format, hours, minutes, seconds)
-                minutes > 0 -> context.getString(R.string.duration_m_s_format, minutes, seconds)
-                else -> context.getString(R.string.duration_ms_format, seconds, milliseconds)
-            }
-        }
-
-        val milliseconds = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        timeRemainingMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             manager.computeChargeTimeRemaining()
         } else {
             -1L
         }
-        val timeRemaining = if (milliseconds < 0L) {
+        val timeRemaining = if (timeRemainingMs < 0L) {
             context.getString(R.string.unavailable)
         } else {
-            timeToHM(milliseconds)
+            timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) }
         }
 
         val prediction: String = when {
@@ -477,7 +440,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             predictionMs == -2L -> context.getString(R.string.undefined)
             predictionMs == -3L -> status
             predictionMs == 0L -> context.getString(R.string.unavailable)
-            predictionMs > 0L -> timeToHM(predictionMs)
+            predictionMs > 0L -> predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) }
             else -> context.getString(R.string.unknown)
         }
 
@@ -563,13 +526,13 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             display.screenTimeoutMs < 0L -> context.getString(R.string.unknown)
             display.screenTimeoutMs == Int.MAX_VALUE.toLong() ->
                 context.getString(R.string.never)
-            else -> timeToHMSMS(display.screenTimeoutMs)
+            else -> display.screenTimeoutMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
         }
         val screenSaver = if (display.screenSaverEnabled == true) context.getString(R.string.activated) else context.getString(R.string.deactivated)
         val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == -1L) {
             "<${context.getString(R.string.waiting)}>"
         } else {
-            timeToHMSMS(timeTracker.lastScreenOffDurationMs)
+            timeTracker.lastScreenOffDurationMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
         }
 
         fun row(labelId: Int, value: String) =

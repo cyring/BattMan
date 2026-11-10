@@ -12,7 +12,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -57,10 +56,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
@@ -84,6 +83,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -91,6 +91,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
+import kotlin.time.Duration.Companion.milliseconds
 
 const val FONT_SIZE_SYSTEM: Int = 0
 const val FONT_SIZE_SMALL: Int = 1
@@ -941,26 +942,53 @@ class MainActivity : ComponentActivity() {
                             }
                             Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.25f))
 
-                            val levelColor: Color = if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
-                                MaterialTheme.colorScheme.primary
+                            // Rules
+                            val levelColor: Color
+                            var signColor: Color
+                            val signText: String
+
+                            if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
+                                levelColor = MaterialTheme.colorScheme.primary
+                                signColor = MaterialTheme.colorScheme.primary
                             } else {
-                                MaterialTheme.colorScheme.inversePrimary
+                                levelColor = MaterialTheme.colorScheme.inversePrimary
+                                signColor = MaterialTheme.colorScheme.inversePrimary
+                            }
+                            if (BatteryViewModel.predictionMs > 0L) {
+                                signText = "⬇ " + BatteryViewModel.predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                            } else if (BatteryViewModel.timeRemainingMs > 0L) {
+                                signColor = MaterialTheme.colorScheme.outline
+                                signText = "⬆ " + BatteryViewModel.timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                            } else {
+                                signText = ""
                             }
 
-                            Text(
-                                text = buildAnnotatedString {
-                                    append(batteryPercent.toString())
-                                    withStyle(style = SpanStyle(fontSize = 24.sp)) {
-                                        append("%")
-                                    }
-                                },
-                                style = MaterialTheme.typography.displayLarge,
-                                textAlign = TextAlign.Right,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(end = 16.dp),
-                                color = levelColor
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
                             )
+                            {
+                                Text(
+                                    text = signText,
+                                    color = signColor,
+                                    style = TextStyle(fontSize = 24.sp),
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
+                                )
+                                Text(
+                                    text = buildAnnotatedString {
+                                        append(batteryPercent.toString())
+                                        withStyle(style = SpanStyle(fontSize = 24.sp)) {
+                                            append("%")
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.displayLarge,
+                                    textAlign = TextAlign.Right,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(end = 16.dp),
+                                    color = levelColor
+                                )
+                            }
 
                             BoxWithConstraints(
                                 modifier = Modifier
@@ -1039,7 +1067,10 @@ class MainActivity : ComponentActivity() {
 
                             Text(
                                 text = sysInfo,
+                                maxLines = 1,
                                 softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.outline,
                                 style = fontConfig.sysInfoStyle,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()

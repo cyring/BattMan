@@ -76,6 +76,8 @@
     </plurals>
     <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
+    <string name="duration_h_m_str_format">%1$d h %2$d min</string>
+    <string name="duration_m_str_format">%1$d min</string>
     <string name="auto_refresh_settings">Rafraîchissement</string>
     <string name="auto_refresh_help_text">Écran allumé</string>
     <string name="agent_scheduler_settings">Agent de collecte</string>
