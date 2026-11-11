@@ -257,6 +257,15 @@ data class SelectionCell (
     val value: Int
 )
 
+data class SelectionDialogPayload(
+    val titleRes: Int,
+    val cells: List<SelectionCell>,
+    val selectedVal: Int,
+    val descriptionRes: Int? = null,
+    val icon: ImageVector? = null,
+    val onItemSelected: (Int) -> Unit
+)
+
 @Composable
 fun SelectionDialog(
     fontConfig: CentralFont,
@@ -385,6 +394,43 @@ fun SelectionDialog(
     }
 }
 
+fun openThemeDialog(
+    themeMode: Int,
+    onItemSelected: (Int) -> Unit
+): SelectionDialogPayload {
+    return SelectionDialogPayload(
+        titleRes = R.string.theme,
+        cells = listOf(
+            SelectionCell(R.string.theme_light, THEME_LIGHT),
+            SelectionCell(R.string.theme_dark, THEME_DARK),
+            SelectionCell(R.string.theme_system, THEME_SYSTEM)
+        ),
+        selectedVal = themeMode,
+        descriptionRes = R.string.theme_desc,
+        icon = Icons.Default.Palette,
+        onItemSelected = onItemSelected
+    )
+}
+
+fun openFontDialog(
+    fontSizeMode: Int,
+    onItemSelected: (Int) -> Unit
+): SelectionDialogPayload {
+    return SelectionDialogPayload(
+        titleRes = R.string.accessibility,
+        cells = listOf(
+            SelectionCell(R.string.accessibility_small, FONT_SIZE_SMALL),
+            SelectionCell(R.string.accessibility_medium, FONT_SIZE_MEDIUM),
+            SelectionCell(R.string.accessibility_large, FONT_SIZE_LARGE),
+            SelectionCell(R.string.theme_system, FONT_SIZE_SYSTEM)
+        ),
+        selectedVal = fontSizeMode,
+        descriptionRes = R.string.accessibility_desc,
+        icon = Icons.Default.Accessibility,
+        onItemSelected = onItemSelected
+    )
+}
+
 class MainActivity : ComponentActivity() {
     private val viewModel: BatteryViewModel by viewModels()
     private val batteryEventReceiver = BatteryEventReceiver()
@@ -431,8 +477,7 @@ class MainActivity : ComponentActivity() {
             val sysInfo = viewModel.sysInfo
             val themeMode = viewModel.themeMode
 
-            var showThemeDialog by remember { mutableStateOf(false) }
-            var showFontDialog by remember { mutableStateOf(false) }
+            var activeSelectionDialog by remember { mutableStateOf<SelectionDialogPayload?>(null) } /* Sentinel */
 
             val darkTheme = when (themeMode) {
                 THEME_LIGHT -> false
@@ -441,44 +486,22 @@ class MainActivity : ComponentActivity() {
             }
 
             BattManTheme(darkTheme = darkTheme) {
-                if (showThemeDialog) {
+                activeSelectionDialog?.let { payload ->
                     SelectionDialog(
                         fontConfig = fontConfig,
-                        titleRes = R.string.theme,
-                        cells = listOf(
-                            SelectionCell(R.string.theme_light, THEME_LIGHT),
-                            SelectionCell(R.string.theme_dark, THEME_DARK),
-                            SelectionCell(R.string.theme_system, THEME_SYSTEM)
-                        ),
-                        selectedVal = themeMode,
-                        descriptionRes = R.string.theme_desc,
-                        onDismissRequest = { showThemeDialog = false },
+                        titleRes = payload.titleRes,
+                        cells = payload.cells,
+                        selectedVal = payload.selectedVal,
+                        descriptionRes = payload.descriptionRes,
+                        onDismissRequest = { activeSelectionDialog = null /* Sentinel */ },
                         onItemSelected = { newValue ->
-                            viewModel.updateThemeMode(newValue)
+                            payload.onItemSelected(newValue)
+                            activeSelectionDialog = null /* Sentinel */
                         },
-                        icon = Icons.Default.Palette
+                        icon = payload.icon
                     )
                 }
 
-                if (showFontDialog) {
-                    SelectionDialog(
-                        fontConfig = fontConfig,
-                        titleRes = R.string.accessibility,
-                        cells = listOf(
-                            SelectionCell(R.string.accessibility_small, FONT_SIZE_SMALL),
-                            SelectionCell(R.string.accessibility_medium, FONT_SIZE_MEDIUM),
-                            SelectionCell(R.string.accessibility_large, FONT_SIZE_LARGE),
-                            SelectionCell(R.string.theme_system, FONT_SIZE_SYSTEM)
-                        ),
-                        selectedVal = viewModel.fontSizeMode,
-                        descriptionRes = R.string.accessibility_desc,
-                        onDismissRequest = { showFontDialog = false },
-                        onItemSelected = { newValue ->
-                            viewModel.updateFontSizeMode(newValue)
-                        },
-                        icon = Icons.Default.Accessibility
-                    )
-                }
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val coroutineScope = rememberCoroutineScope()
 
@@ -780,7 +803,12 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    showThemeDialog = true
+                                                    activeSelectionDialog = openThemeDialog(
+                                                        themeMode = themeMode,
+                                                        onItemSelected = { newValue ->
+                                                            viewModel.updateThemeMode(newValue)
+                                                        }
+                                                    )
                                                 }
                                                 .padding(
                                                     horizontal = 24.dp,
@@ -821,7 +849,12 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable {
-                                                    showFontDialog = true
+                                                    activeSelectionDialog = openFontDialog(
+                                                        fontSizeMode = viewModel.fontSizeMode,
+                                                        onItemSelected = { newValue ->
+                                                            viewModel.updateFontSizeMode(newValue)
+                                                        }
+                                                    )
                                                 }
                                                 .padding(
                                                     horizontal = 24.dp,
