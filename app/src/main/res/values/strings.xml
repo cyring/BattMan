@@ -1,4 +1,11 @@
 <resources>
+    <string name="_zap_" translatable="false">\u26A1</string>
+    <string name="_electric_plug_" translatable="false">\uD83D\uDD0C</string>
+    <string name="_battery_" translatable="false">\uD83D\uDD0B</string>
+    <string name="_mobile_phone_" translatable="false">\uD83D\uDCF1</string>
+    <string name="_alarm_clock_" translatable="false">\u23F0</string>
+    <string name="_arrow_down_" translatable="false">\u2B07</string>"
+    <string name="_arrow_up_" translatable="false">\u2B06</string>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
     <string name="level">Level</string>
@@ -15,10 +22,12 @@
     <string name="battery_plugged">Power source</string>
     <string name="battery_saver">Battery saver</string>
     <string name="time_remaining">Time to full</string>
+    <string name="fully_charged">Fully charged</string>
     <string name="thermal_status">Thermal status</string>
     <string name="battery_present">Battery present</string>
     <string name="battery_low">Battery low</string>
     <string name="prediction">Time to low</string>
+    <string name="totally_empty">Battery empty</string>
     <string name="charging">Charging</string>
     <string name="discharging">Discharging</string>
     <string name="full">Full</string>
@@ -64,6 +73,8 @@
     <string name="no">No</string>
     <string name="never">Never</string>
     <string name="waiting">Waiting</string>
+    <string name="celsius_format" translatable="false">%.1f °C</string>
+    <string name="fahrenheit_format" translatable="false">%.1f °F</string>
     <plurals name="hours">
         <item quantity="one">%d hr</item>
         <item quantity="other">%d hr</item>
@@ -100,4 +111,6 @@
     <string name="accessibility_medium">Medium</string>
     <string name="accessibility_large">Large</string>
     <string name="accessibility_desc">Adjust the report text size for optimal legibility</string>
+    <string name="tomorrow">Tomorrow %1$s</string>
+    <string name="in_days">In %1$d days %2$s</string>
 </resources>

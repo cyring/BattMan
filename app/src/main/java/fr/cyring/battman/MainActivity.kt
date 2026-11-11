@@ -88,6 +88,10 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
@@ -133,6 +137,19 @@ private val stepValuesList = arrayOf(
 )
 
 private val unitMultipliers = longArrayOf(1000L, 60_000L)
+
+val waitingStyle: SpanStyle = SpanStyle(
+    textDecoration = TextDecoration.None,
+    fontStyle = FontStyle.Italic,
+    fontWeight = FontWeight.ExtraLight
+)
+
+fun String.waitingStyle(): AnnotatedString = buildAnnotatedString {
+    withStyle(style = waitingStyle) { append(this@waitingStyle) }
+}
+
+val arrowDown: SpanStyle = SpanStyle(color = Color.Yellow)
+val arrowUp: SpanStyle = SpanStyle(color = Color.Green)
 
 data class CentralFont (
     val appStyle: AppStyle,
@@ -315,7 +332,7 @@ fun SelectionDialog(
                                 color = Color.Gray.copy(alpha = 0.15f),
                                 size = Size(12f, totalContentHeight),
                                 topLeft = Offset(size.width + 24f, 0f)
-                                )
+                            )
                             drawRect(
                                 color = Color.Gray.copy(alpha = 0.45f),
                                 size = thumbSize,
@@ -583,7 +600,12 @@ class MainActivity : ComponentActivity() {
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp)
+                                                    .padding(
+                                                        start = 24.dp,
+                                                        end = 24.dp,
+                                                        top = 16.dp,
+                                                        bottom = 4.dp
+                                                    )
                                             ) {
                                                 Row(
                                                     verticalAlignment = Alignment.CenterVertically,
@@ -641,7 +663,12 @@ class MainActivity : ComponentActivity() {
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp)
+                                                .padding(
+                                                    start = 24.dp,
+                                                    end = 24.dp,
+                                                    top = 16.dp,
+                                                    bottom = 4.dp
+                                                )
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -691,7 +718,12 @@ class MainActivity : ComponentActivity() {
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp)
+                                                .padding(
+                                                    start = 24.dp,
+                                                    end = 24.dp,
+                                                    top = 16.dp,
+                                                    bottom = 4.dp
+                                                )
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -975,10 +1007,10 @@ class MainActivity : ComponentActivity() {
                             }
                             Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.25f))
 
-                            // Rules
+                            // Management rules
                             val levelColor: Color
                             var signColor: Color
-                            val signText: String
+                            val signText: AnnotatedString
 
                             if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
                                 levelColor = MaterialTheme.colorScheme.primary
@@ -988,12 +1020,20 @@ class MainActivity : ComponentActivity() {
                                 signColor = MaterialTheme.colorScheme.inversePrimary
                             }
                             if (BatteryViewModel.predictionMs > 0L) {
-                                signText = "⬇ " + BatteryViewModel.predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                val formattedDuration = BatteryViewModel.predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                signText = buildAnnotatedString {
+                                    withStyle(arrowDown) { append(stringResource(R.string._arrow_down_) + " ") } /* ⬇ */
+                                    append(formattedDuration)
+                                }
                             } else if (BatteryViewModel.timeRemainingMs > 0L) {
                                 signColor = MaterialTheme.colorScheme.outline
-                                signText = "⬆ " + BatteryViewModel.timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                val formattedDuration = BatteryViewModel.timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                signText = buildAnnotatedString {
+                                    withStyle(arrowUp) { append(stringResource(R.string._arrow_up_) + " ") } /* ⬆ */
+                                    append(formattedDuration)
+                                }
                             } else {
-                                signText = ""
+                                signText = AnnotatedString("")
                             }
 
                             Row(

@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
@@ -19,6 +18,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import android.content.SharedPreferences
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.core.text.util.LocalePreferences
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -32,7 +36,7 @@ const val MAX_MAX_ALERTS = 10
 
 data class BatteryReportRow(
     val label: String,
-    val value: String
+    val value: AnnotatedString
 )
 
 const val CASE_FOCUS = 0
@@ -53,7 +57,7 @@ const val MAX_TIME_AWAY = 360L
 const val DEFAULT_TIME_AWAY = 15L
 
 const val DEFAULT_AUTO_FOCUS = true
-const val DEFAULT_AUTO_AWAY = true
+const val DEFAULT_AUTO_AWAY = false
 
 fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
     val value = getLong(key, default)
@@ -97,6 +101,13 @@ object BatteryTrendMask {
 
 class BatteryViewModel(application: Application) : AndroidViewModel(application) {
     private val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
+    private val displayManager by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            application.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager
+        } else {
+            null
+        }
+    }
     private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
 
     data class TimeTracker(
@@ -268,6 +279,108 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         return "${Build.MANUFACTURER} ${Build.MODEL} - Android ${Build.VERSION.RELEASE} - API ${Build.VERSION.SDK_INT}"
     }
 
+    private data class DisplayInfo(
+        val brightness: Int,
+        val adaptive: Boolean,
+        val nightState: Boolean,
+        val touchKind: Int,
+        val refreshRate: Float,
+        val screenTimeoutMs: Long,
+        val screenSaverEnabled: Boolean?
+    )
+
+    private fun readDisplayInfo(ctx: Context): DisplayInfo {
+        val resolver = ctx.contentResolver
+        val sysConf = ctx.resources.configuration
+
+        val brightness = try {
+            getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1)
+        } catch (_: Exception) {
+            -1
+        }
+
+        val adaptive = try {
+            getInt(
+                resolver,
+                Settings.System.SCREEN_BRIGHTNESS_MODE,
+                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+            ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+        } catch (_: Exception) {
+            false
+        }
+
+        val screenTimeoutMs = try {
+            Settings.System.getLong(resolver, Settings.System.SCREEN_OFF_TIMEOUT, -1L)
+        } catch (_: Exception) {
+            -1L
+        }
+
+        val screenSaverEnabled = try {
+            Settings.Secure.getInt(
+                ctx.contentResolver,
+                "screensaver_enabled"
+            ) != 0
+        } catch (_: Exception) {
+            null
+        }
+
+        return DisplayInfo(
+            brightness = brightness,
+            adaptive = adaptive,
+            nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
+            touchKind = sysConf.touchscreen,
+            refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                try {
+                    val display = displayManager?.getDisplay(android.view.Display.DEFAULT_DISPLAY)
+                    display?.refreshRate ?: 0f
+                } catch (_: Exception) {
+                    0f
+                }
+            } else {
+                0f
+            },
+            screenTimeoutMs = screenTimeoutMs,
+            screenSaverEnabled = screenSaverEnabled
+        )
+    }
+
+    private fun formatTargetTime(context: Context, durationMs: Long, id: Int, style: SpanStyle): AnnotatedString {
+        if (durationMs <= 0L) {
+            return context.getString(R.string.waiting).waitingStyle()
+        }
+        val targetMs = System.currentTimeMillis() + durationMs
+        val targetDate = java.util.Date(targetMs)
+        val timeString = android.text.format.DateFormat.getTimeFormat(context).format(targetDate)
+
+        val nowCal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val targetCal = java.util.Calendar.getInstance().apply {
+            timeInMillis = targetMs
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val diffDays = ((targetCal.timeInMillis - nowCal.timeInMillis) / (24 * 60 * 60 * 1000L)).toInt()
+
+        val timeContent = when (diffDays) {
+            0 -> timeString
+            1 -> context.getString(R.string.tomorrow, timeString)
+            else -> context.getString(R.string.in_days, diffDays, timeString)
+        }
+
+        return buildAnnotatedString {
+            withStyle(style) {
+                append(context.getString(id))
+            }
+            append(timeContent)
+        }
+    }
+
     fun readBatteryInfo(context: Context, powerManager: PowerManager, timeTracker: TimeTracker): List<BatteryReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -276,7 +389,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             ?: return listOf(
                 BatteryReportRow(
                     context.getString(R.string.unavailable),
-                    ""
+                    AnnotatedString("")
                 )
             )
 
@@ -304,27 +417,29 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         updateBatteryLevel(intent)
 
-        val cycle = if (count < 0) context.getString(R.string.unavailable) else count.toString()
+        val currentLocale = Locale.getDefault()
 
-        val status = when (batteryTrendMask and BatteryTrendMask.MASK_CHARGE) {
-            BatteryTrendMask.STATE_CHARGING -> context.getString(R.string.charging)
-            BatteryTrendMask.STATE_DISCHARGING -> context.getString(R.string.discharging)
-            BatteryTrendMask.STATE_FULL -> context.getString(R.string.full)
-            BatteryTrendMask.STATE_NOT_CHARGING -> context.getString(R.string.not_charging)
-            BatteryTrendMask.STATE_UNKNOWN -> context.getString(R.string.unknown)
-            else -> context.getString(R.string.undefined)
-        }
+        val cycle = AnnotatedString(if (count < 0) context.getString(R.string.unavailable) else count.toString())
 
-        val health = when (extra(BatteryManager.EXTRA_HEALTH)) {
-            BatteryManager.BATTERY_HEALTH_GOOD -> context.getString(R.string.good)
-            BatteryManager.BATTERY_HEALTH_OVERHEAT -> context.getString(R.string.overheated)
-            BatteryManager.BATTERY_HEALTH_DEAD -> context.getString(R.string.dead)
-            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> context.getString(R.string.over_voltage)
-            BatteryManager.BATTERY_HEALTH_COLD -> context.getString(R.string.cold)
-            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> context.getString(R.string.failure)
-            BatteryManager.BATTERY_HEALTH_UNKNOWN -> context.getString(R.string.unknown)
-            else -> context.getString(R.string.undefined)
-        }
+        val status = context.getString(when (batteryTrendMask and BatteryTrendMask.MASK_CHARGE) {
+            BatteryTrendMask.STATE_CHARGING -> R.string.charging
+            BatteryTrendMask.STATE_DISCHARGING -> R.string.discharging
+            BatteryTrendMask.STATE_FULL -> R.string.full
+            BatteryTrendMask.STATE_NOT_CHARGING -> R.string.not_charging
+            BatteryTrendMask.STATE_UNKNOWN -> R.string.unknown
+            else -> R.string.undefined
+        })
+
+        val health = AnnotatedString(context.getString(when (extra(BatteryManager.EXTRA_HEALTH)) {
+            BatteryManager.BATTERY_HEALTH_GOOD -> R.string.good
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> R.string.overheated
+            BatteryManager.BATTERY_HEALTH_DEAD -> R.string.dead
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> R.string.over_voltage
+            BatteryManager.BATTERY_HEALTH_COLD -> R.string.cold
+            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> R.string.failure
+            BatteryManager.BATTERY_HEALTH_UNKNOWN -> R.string.unknown
+            else -> R.string.undefined
+        }))
 
         val energy = manager.getLongProperty(
             BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
@@ -337,38 +452,38 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             BatteryManager.EXTRA_TECHNOLOGY
         ) ?: "Unknown"
 
-        val lowBatteryState = if (intent.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, false) == true) {
-            context.getString(R.string.yes)
+        val lowBatteryState = AnnotatedString(context.getString(if (intent.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, false) == true) {
+            R.string.yes
         } else {
-            context.getString(R.string.no)
-        }
+            R.string.no
+        }))
 
-        val batteryPlugged = when (extra(BatteryManager.EXTRA_PLUGGED)) {
-            0 -> context.getString(R.string.on_battery)
-            BatteryManager.BATTERY_PLUGGED_AC -> context.getString(R.string.ac_charger)
-            BatteryManager.BATTERY_PLUGGED_USB -> context.getString(R.string.usb_plug)
-            BatteryManager.BATTERY_PLUGGED_WIRELESS -> context.getString(R.string.wireless)
-            BatteryManager.BATTERY_PLUGGED_DOCK -> context.getString(R.string.dock)
-            else -> context.getString(R.string.powered)
-        }
+        val batteryPlugged = AnnotatedString(context.getString(when (extra(BatteryManager.EXTRA_PLUGGED)) {
+            0 -> R.string.on_battery
+            BatteryManager.BATTERY_PLUGGED_AC -> R.string.ac_charger
+            BatteryManager.BATTERY_PLUGGED_USB -> R.string.usb_plug
+            BatteryManager.BATTERY_PLUGGED_WIRELESS -> R.string.wireless
+            BatteryManager.BATTERY_PLUGGED_DOCK -> R.string.dock
+            else -> R.string.powered
+        }))
 
-        val batteryPresent = if (intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true) {
-            context.getString(R.string.yes)
+        val batteryPresent = AnnotatedString(context.getString(if (intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true) {
+            R.string.yes
         } else {
-            context.getString(R.string.no)
-        }
+            R.string.no
+        }))
 
-        val technology = if (extraTech == "Unknown") {
-            "${Build.MANUFACTURER}"
+        val technology = AnnotatedString(if (extraTech == "Unknown") {
+            Build.MANUFACTURER
         } else {
             extraTech
-        }
+        })
 
-        val batterySaver = if (powerManager.isPowerSaveMode == true) {
-            context.getString(R.string.activated)
+        val batterySaver = AnnotatedString(context.getString(if (powerManager.isPowerSaveMode == true) {
+            R.string.activated
         } else {
-            context.getString(R.string.deactivated)
-        }
+            R.string.deactivated
+        }))
 
         predictionMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
@@ -381,201 +496,154 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
              -1L
         }
 
-        val thermalStatus = if (Build.VERSION.SDK_INT >= 29) {
+        val thermalStatus = AnnotatedString(context.getString(if (Build.VERSION.SDK_INT >= 29) {
             when (powerManager.currentThermalStatus) {
-                PowerManager.THERMAL_STATUS_NONE -> context.getString(R.string.none)
-                PowerManager.THERMAL_STATUS_LIGHT -> context.getString(R.string.light)
-                PowerManager.THERMAL_STATUS_MODERATE -> context.getString(R.string.moderate)
-                PowerManager.THERMAL_STATUS_SEVERE -> context.getString(R.string.severe)
-                PowerManager.THERMAL_STATUS_CRITICAL -> context.getString(R.string.critical)
-                PowerManager.THERMAL_STATUS_EMERGENCY -> context.getString(R.string.emergency)
-                PowerManager.THERMAL_STATUS_SHUTDOWN -> context.getString(R.string.shutdown)
-                else -> context.getString(R.string.undefined)
+                PowerManager.THERMAL_STATUS_NONE -> R.string.none
+                PowerManager.THERMAL_STATUS_LIGHT -> R.string.light
+                PowerManager.THERMAL_STATUS_MODERATE -> R.string.moderate
+                PowerManager.THERMAL_STATUS_SEVERE -> R.string.severe
+                PowerManager.THERMAL_STATUS_CRITICAL -> R.string.critical
+                PowerManager.THERMAL_STATUS_EMERGENCY -> R.string.emergency
+                PowerManager.THERMAL_STATUS_SHUTDOWN -> R.string.shutdown
+                else -> R.string.undefined
             }
         } else {
-            context.getString(R.string.unsupported)
-        }
+            R.string.unsupported
+        }))
 
-        val voltage = if (voltageMv >= 0) {
-            "%.3f V".format(Locale.US, voltageMv / 1000.0)
+        val voltage = AnnotatedString(if (voltageMv >= 0) {
+            "%.3f V".format(currentLocale, voltageMv / 1000.0)
         } else {
             context.getString(R.string.unavailable)
-        }
+        })
 
-        val tempFormat = if (temperature >= 0) {
-            "%.1f °C".format(Locale.US, temperature / 10.0)
+        val tempFormat = AnnotatedString(if (temperature >= 0) {
+            val celsius = temperature / 10.0
+            val unit = LocalePreferences.getTemperatureUnit()
+            if (unit == LocalePreferences.TemperatureUnit.FAHRENHEIT) {
+                val fahrenheit = (celsius * 1.8) + 32.0
+                context.getString(R.string.fahrenheit_format).format(currentLocale, fahrenheit)
+            } else {
+                context.getString(R.string.celsius_format).format(currentLocale, celsius)
+            }
         } else {
             context.getString(R.string.unavailable)
-        }
+        })
 
-        val energyCounter = if (energy != Long.MIN_VALUE) {
+        val energyCounter = AnnotatedString(if (energy != Long.MIN_VALUE) {
             "$energy nWh"
         } else {
             context.getString(R.string.unavailable)
-        }
+        })
 
-        val chargeCounter = property(
+        val chargeCounter = AnnotatedString(property(
             BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER
-        )
-        val currentNow = property(
+        ) + " µAh")
+
+        val currentNow = AnnotatedString(property(
             BatteryManager.BATTERY_PROPERTY_CURRENT_NOW
-        )
-        val currentAverage = property(
+        ) + " µA")
+
+        val currentAverage = AnnotatedString(property(
             BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
-        )
+        ) + " µA")
 
         timeRemainingMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             manager.computeChargeTimeRemaining()
         } else {
             -1L
         }
-        val timeRemaining = if (timeRemainingMs < 0L) {
-            context.getString(R.string.unavailable)
+        val (timeRemaining, fullyChargedAt) = if (timeRemainingMs <= 0L) {
+            val waiting = context.getString(R.string.waiting).waitingStyle()
+            waiting to waiting
         } else {
-            timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) }
+            val remaining = AnnotatedString(timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) })
+            remaining to formatTargetTime(context, timeRemainingMs, R.string._arrow_up_, arrowUp)
         }
 
-        val prediction: String = when {
-            predictionMs == -1L -> context.getString(R.string.unsupported)
-            predictionMs == -2L -> context.getString(R.string.undefined)
-            predictionMs == -3L -> status
-            predictionMs == 0L -> context.getString(R.string.unavailable)
-            predictionMs > 0L -> predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) }
-            else -> context.getString(R.string.unknown)
-        }
-
-        data class DisplayInfo(
-            val brightness: Int,
-            val adaptive: Boolean,
-            val nightState: Boolean,
-            val touchKind: Int,
-            val refreshRate: Float,
-            val screenTimeoutMs: Long,
-            val screenSaverEnabled: Boolean?
-        )
-
-        fun readDisplayInfo(ctx: Context): DisplayInfo {
-            val resolver = ctx.contentResolver
-            val sysConf = Resources.getSystem().configuration
-
-            val brightness = try {
-                getInt(resolver, Settings.System.SCREEN_BRIGHTNESS, -1)
-            } catch (_: Exception) {
-                -1
-            }
-
-            val adaptive = try {
-                getInt(
-                    resolver,
-                    Settings.System.SCREEN_BRIGHTNESS_MODE,
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-                ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-            } catch (_: Exception) {
-                false
-            }
-
-            val screenTimeoutMs = try {
-                Settings.System.getLong(resolver, Settings.System.SCREEN_OFF_TIMEOUT, -1L)
-            } catch (_: Exception) {
-                -1L
-            }
-
-            val screenSaverEnabled = try {
-                Settings.Secure.getInt(
-                    ctx.contentResolver,
-                    "screensaver_enabled"
-                ) != 0
-            } catch (_: Exception) {
-                null
-            }
-
-            return DisplayInfo(
-                brightness = brightness,
-                adaptive = adaptive,
-                nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
-                touchKind = sysConf.touchscreen,
-                refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    try {
-                        val displayManager = ctx.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager
-                        val display = displayManager?.getDisplay(android.view.Display.DEFAULT_DISPLAY)
-                        display?.refreshRate ?: 0f
-                    } catch (_: Exception) {
-                        0f
-                    }
-                } else {
-                    0f
-                },
-                screenTimeoutMs = screenTimeoutMs,
-                screenSaverEnabled = screenSaverEnabled
-            )
+        val (prediction, totallyEmptyAt) = if (predictionMs <= 0L) {
+            val issue = AnnotatedString(when (predictionMs) {
+                -1L -> context.getString(R.string.unsupported)
+                -2L -> context.getString(R.string.undefined)
+                -3L -> status
+                0L -> context.getString(R.string.unavailable)
+                else -> context.getString(R.string.unknown)
+            })
+            val waiting = context.getString(R.string.waiting).waitingStyle()
+            issue to waiting
+        } else {
+            val duration = AnnotatedString(predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) })
+            duration to formatTargetTime(context, predictionMs, R.string._arrow_down_, arrowDown)
         }
 
         val display: DisplayInfo = readDisplayInfo(context)
 
         val brightnessLevel = if (display.brightness >= 0) display.brightness.toString() else context.getString(R.string.unknown)
-        val adaptiveMode = context.getString(if (display.adaptive) R.string.yes else R.string.no)
-        val nightMode = context.getString(if (display.nightState) R.string.yes else R.string.no)
-        val touchScreen = when (display.touchKind) {
-            Configuration.TOUCHSCREEN_FINGER -> context.getString(R.string.finger)
-            Configuration.TOUCHSCREEN_NOTOUCH -> context.getString(R.string.notouch)
-            Configuration.TOUCHSCREEN_UNDEFINED -> context.getString(R.string.undefined)
-            else -> context.getString(R.string.unknown)
-        }
-        val smoothDisplay = if (display.refreshRate == 0f) context.getString(R.string.unsupported) else display.refreshRate.toInt().toString() + " Hz"
-        val screenTimeout = when {
+        val adaptiveMode = AnnotatedString(context.getString(if (display.adaptive) R.string.yes else R.string.no))
+        val nightMode = AnnotatedString(context.getString(if (display.nightState) R.string.yes else R.string.no))
+        val touchScreen = AnnotatedString(context.getString(when (display.touchKind) {
+            Configuration.TOUCHSCREEN_FINGER -> R.string.finger
+            Configuration.TOUCHSCREEN_NOTOUCH -> R.string.notouch
+            Configuration.TOUCHSCREEN_UNDEFINED -> R.string.undefined
+            else -> R.string.unknown
+        }))
+        val smoothDisplay = AnnotatedString(if (display.refreshRate == 0f) context.getString(R.string.unsupported) else "${display.refreshRate.toInt()} Hz")
+
+        val screenTimeout = AnnotatedString(when {
             display.screenTimeoutMs < 0L -> context.getString(R.string.unknown)
-            display.screenTimeoutMs == Int.MAX_VALUE.toLong() ->
-                context.getString(R.string.never)
+            display.screenTimeoutMs == Int.MAX_VALUE.toLong() -> context.getString(R.string.never)
             else -> display.screenTimeoutMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
-        }
-        val screenSaver = if (display.screenSaverEnabled == true) context.getString(R.string.activated) else context.getString(R.string.deactivated)
-        val lastScreenOffDurationMs: String = if (timeTracker.lastScreenOffDurationMs == -1L) {
-            "<${context.getString(R.string.waiting)}>"
+        })
+        val screenSaver = AnnotatedString(context.getString(if (display.screenSaverEnabled == true) R.string.activated else R.string.deactivated))
+        val lastScreenOffDurationMs: AnnotatedString = if (timeTracker.lastScreenOffDurationMs == -1L) {
+            context.getString(R.string.waiting).waitingStyle()
         } else {
-            timeTracker.lastScreenOffDurationMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
+            AnnotatedString(timeTracker.lastScreenOffDurationMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) })
         }
 
-        fun row(labelId: Int, value: String) =
+        fun row(labelId: Int, value: AnnotatedString) =
             BatteryReportRow(context.getString(labelId), value)
 
         return listOf(
-            row(R.string.level, "$batteryPercent%"),
+            row(R.string.level, AnnotatedString("$batteryPercent%")),
             row(R.string.cycle, cycle),
-            row(R.string.state, status),
+            row(R.string.state, AnnotatedString(status)),
             row(R.string.health, health),
             row(R.string.technology, technology),
 
-            BatteryReportRow("⚡", ""),
+            BatteryReportRow(context.getString(R.string._zap_), AnnotatedString("")),    /* ⚡ */
 
             row(R.string.voltage, voltage),
             row(R.string.temperature, tempFormat),
             row(R.string.energy_counter, energyCounter),
-            row(R.string.charge_counter, "$chargeCounter µAh"),
-            row(R.string.current_now, "$currentNow µA"),
-            row(R.string.current_average, "$currentAverage µA"),
+            row(R.string.charge_counter, chargeCounter),
+            row(R.string.current_now, currentNow),
+            row(R.string.current_average, currentAverage),
 
-            BatteryReportRow("\uD83D\uDD0C", ""),
+            BatteryReportRow(context.getString(R.string._electric_plug_), AnnotatedString("")),
 
             row(R.string.battery_plugged, batteryPlugged),
             row(R.string.time_remaining, timeRemaining),
+            row(R.string.fully_charged, fullyChargedAt),
             row(R.string.battery_saver, batterySaver),
 
-            BatteryReportRow("\uD83D\uDD0B", ""),
+            BatteryReportRow(context.getString(R.string._battery_), AnnotatedString("")),
 
             row(R.string.thermal_status, thermalStatus),
             row(R.string.battery_present, batteryPresent),
             row(R.string.battery_low, lowBatteryState),
             row(R.string.prediction, prediction),
+            row(R.string.totally_empty, totallyEmptyAt),
 
-            BatteryReportRow("\uD83D\uDCF1",""),
+            BatteryReportRow(context.getString(R.string._mobile_phone_), AnnotatedString("")),
 
-            row(R.string.brightness, "${brightnessLevel}/255"),
+            row(R.string.brightness, AnnotatedString("${brightnessLevel}/255")),
             row(R.string.adaptive, adaptiveMode),
             row(R.string.mode_night, nightMode),
             row(R.string.touchscreen, touchScreen),
-            row(R.string.refresh_rate,smoothDisplay),
+            row(R.string.refresh_rate, smoothDisplay),
 
-            BatteryReportRow("⏰",""),
+            BatteryReportRow(context.getString(R.string._alarm_clock_), AnnotatedString("")), /* ⏰ */
 
             row(R.string.screen_timeout, screenTimeout),
             row(R.string.screen_saver, screenSaver),
