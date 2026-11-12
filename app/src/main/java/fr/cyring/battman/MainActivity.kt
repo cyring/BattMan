@@ -68,6 +68,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material.icons.filled.ResetTv
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -919,7 +920,6 @@ class MainActivity : ComponentActivity() {
                                         HorizontalDivider()
                                         val activity = LocalActivity.current
                                         Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -930,16 +930,45 @@ class MainActivity : ComponentActivity() {
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
-                                            IconButton(
-                                                onClick = {
-                                                    activity?.finishAndRemoveTask()
-                                                }
+                                            Spacer(modifier = Modifier.weight(1f))
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(0.dp),
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.PowerSettingsNew,
-                                                    contentDescription = "Quit",
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
+                                                IconButton(
+                                                    onClick = {
+                                                        viewModel.updateAutoRefresh(
+                                                            CASE_FOCUS,
+                                                            DEFAULT_AUTO_FOCUS,
+                                                            DEFAULT_TIME_FOCUS
+                                                        )
+                                                        viewModel.updateAutoRefresh(
+                                                            CASE_AWAY,
+                                                            DEFAULT_AUTO_AWAY,
+                                                            DEFAULT_TIME_AWAY
+                                                        )
+                                                        viewModel.updateBatteryAlertThreshold(
+                                                            BATTERY_ALERT_THRESHOLD
+                                                        )
+                                                        viewModel.updateMaxAlerts(DEFAULT_MAX_ALERTS)
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.ResetTv,
+                                                        contentDescription = "Reset",
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        activity?.finishAndRemoveTask()
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.PowerSettingsNew,
+                                                        contentDescription = "Quit",
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
                                             }
                                         }
                                     }
