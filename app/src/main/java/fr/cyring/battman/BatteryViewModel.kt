@@ -177,7 +177,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     )
 
     var report by mutableStateOf<List<BatteryReportRow>>(emptyList())
-    var sysInfo by mutableStateOf("")
+    var sysInfo: String = ""
 
     private var refreshJob: Job? = null
 
@@ -279,7 +279,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         return "${Build.MANUFACTURER} ${Build.MODEL} - Android ${Build.VERSION.RELEASE} - API ${Build.VERSION.SDK_INT}"
     }
 
-    private data class DisplayInfo(
+    data class DisplayInfo(
         val brightness: Int,
         val adaptive: Boolean,
         val nightState: Boolean,
@@ -381,6 +381,172 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun buildCycle(ctx: Context, count: Int) = AnnotatedString(if (count < 0) ctx.getString(R.string.unavailable) else count.toString())
+
+    fun buildStatus(ctx: Context) = ctx.getString(when (batteryTrendMask and BatteryTrendMask.MASK_CHARGE) {
+        BatteryTrendMask.STATE_CHARGING -> R.string.charging
+        BatteryTrendMask.STATE_DISCHARGING -> R.string.discharging
+        BatteryTrendMask.STATE_FULL -> R.string.full
+        BatteryTrendMask.STATE_NOT_CHARGING -> R.string.not_charging
+        BatteryTrendMask.STATE_UNKNOWN -> R.string.unknown
+        else -> R.string.undefined
+    })
+
+    fun buildHealth(ctx: Context, intent: Intent) = AnnotatedString(ctx.getString(when (intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)) {
+        BatteryManager.BATTERY_HEALTH_GOOD -> R.string.good
+        BatteryManager.BATTERY_HEALTH_OVERHEAT -> R.string.overheated
+        BatteryManager.BATTERY_HEALTH_DEAD -> R.string.dead
+        BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> R.string.over_voltage
+        BatteryManager.BATTERY_HEALTH_COLD -> R.string.cold
+        BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> R.string.failure
+        BatteryManager.BATTERY_HEALTH_UNKNOWN -> R.string.unknown
+        else -> R.string.undefined
+    }))
+
+    fun buildLowBattery(ctx: Context, intent: Intent) = AnnotatedString(ctx.getString(if (intent.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, false) == true) {
+        R.string.yes
+    } else {
+        R.string.no
+    }))
+
+    fun buildBatteryPlug(ctx: Context, intent: Intent) = AnnotatedString(ctx.getString(when (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
+        0 -> R.string.on_battery
+        BatteryManager.BATTERY_PLUGGED_AC -> R.string.ac_charger
+        BatteryManager.BATTERY_PLUGGED_USB -> R.string.usb_plug
+        BatteryManager.BATTERY_PLUGGED_WIRELESS -> R.string.wireless
+        BatteryManager.BATTERY_PLUGGED_DOCK -> R.string.dock
+        else -> R.string.powered
+    }))
+
+    fun buildBatteryPresent(ctx: Context, intent: Intent) = AnnotatedString(ctx.getString(if (intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true) {
+        R.string.yes
+    } else {
+        R.string.no
+    }))
+
+    fun buildBatterySaver(ctx: Context) = AnnotatedString(ctx.getString(if (powerManager.isPowerSaveMode == true) {
+        R.string.activated
+    } else {
+        R.string.deactivated
+    }))
+
+    fun property(ctx: Context, manager: BatteryManager, id: Int): String {
+        val value = manager.getIntProperty(id)
+        return if (value == Int.MIN_VALUE) {
+            ctx.getString(R.string.unavailable)
+        } else {
+            value.toString()
+        }
+    }
+
+    fun buildThermal(ctx: Context) = AnnotatedString(ctx.getString(if (Build.VERSION.SDK_INT >= 29) {
+        when (powerManager.currentThermalStatus) {
+            PowerManager.THERMAL_STATUS_NONE -> R.string.none
+            PowerManager.THERMAL_STATUS_LIGHT -> R.string.light
+            PowerManager.THERMAL_STATUS_MODERATE -> R.string.moderate
+            PowerManager.THERMAL_STATUS_SEVERE -> R.string.severe
+            PowerManager.THERMAL_STATUS_CRITICAL -> R.string.critical
+            PowerManager.THERMAL_STATUS_EMERGENCY -> R.string.emergency
+            PowerManager.THERMAL_STATUS_SHUTDOWN -> R.string.shutdown
+            else -> R.string.undefined
+        }
+    } else {
+        R.string.unsupported
+    }))
+
+    fun buildVoltage(ctx: Context, locale: Locale, voltageMv: Int) = AnnotatedString(
+        if (voltageMv >= 0) {
+            "%.3f V".format(locale, voltageMv / 1000.0)
+        } else {
+            ctx.getString(R.string.unavailable)
+        }
+    )
+
+    fun buildTemperature(ctx: Context, locale: Locale, temp: Int) = AnnotatedString(
+        if (temp >= 0) {
+            val celsius = temp / 10.0
+            val unit = LocalePreferences.getTemperatureUnit()
+            if (unit == LocalePreferences.TemperatureUnit.FAHRENHEIT) {
+                val fahrenheit = (celsius * 1.8) + 32.0
+                ctx.getString(R.string.fahrenheit_format).format(locale, fahrenheit)
+            } else {
+                ctx.getString(R.string.celsius_format).format(locale, celsius)
+            }
+        } else {
+            ctx.getString(R.string.unavailable)
+        }
+    )
+
+    fun buildEnergyCounter(ctx: Context, energy: Long) = AnnotatedString(
+        if (energy != Long.MIN_VALUE) {
+            "$energy nWh"
+        } else {
+            ctx.getString(R.string.unavailable)
+        }
+    )
+
+    fun buildChargeCounter(ctx: Context, manager: BatteryManager) = AnnotatedString(property(ctx, manager, BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) + " µAh")
+
+    fun buildCurrentNow(ctx: Context, manager: BatteryManager) = AnnotatedString(property(ctx, manager, BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) + " µA")
+
+    fun buildCurrentAverage(ctx: Context, manager: BatteryManager) = AnnotatedString(property(ctx, manager, BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE) + " µA")
+
+    fun buildRemaining(ctx: Context, ms: Long): Pair<AnnotatedString, AnnotatedString> {
+        if (ms <= 0L) {
+            val waiting = ctx.getString(R.string.waiting).waitingStyle()
+            return waiting to waiting
+        } else {
+            val remaining = AnnotatedString(ms.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
+            return remaining to formatTargetTime(ctx, ms, R.string._arrow_up_, arrowUp)
+        }
+    }
+
+    fun buildPrediction(ctx: Context, ms: Long, default: String): Pair<AnnotatedString, AnnotatedString> {
+        if (ms <= 0L) {
+            val issue = AnnotatedString(when (ms) {
+                -1L -> ctx.getString(R.string.unsupported)
+                -2L -> ctx.getString(R.string.undefined)
+                -3L -> default
+                0L -> ctx.getString(R.string.unavailable)
+                else -> ctx.getString(R.string.unknown)
+            })
+            val waiting = ctx.getString(R.string.waiting).waitingStyle()
+            return issue to waiting
+        } else {
+            val duration = AnnotatedString(ms.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
+            return duration to formatTargetTime(ctx, ms, R.string._arrow_down_, arrowDown)
+        }
+    }
+
+    fun buildBrightness(ctx: Context, display: DisplayInfo): String = if (display.brightness >= 0) display.brightness.toString() else ctx.getString(R.string.unknown)
+
+    fun buildAdaptiveMode(ctx: Context, display: DisplayInfo): AnnotatedString = AnnotatedString(ctx.getString(if (display.adaptive) R.string.yes else R.string.no))
+
+    fun buildNightMode(ctx: Context, display: DisplayInfo): AnnotatedString = AnnotatedString(ctx.getString(if (display.nightState) R.string.yes else R.string.no))
+
+    fun buildTouchScreen(ctx: Context, display: DisplayInfo) = AnnotatedString(ctx.getString(when (display.touchKind) {
+        Configuration.TOUCHSCREEN_FINGER -> R.string.finger
+        Configuration.TOUCHSCREEN_NOTOUCH -> R.string.notouch
+        Configuration.TOUCHSCREEN_UNDEFINED -> R.string.undefined
+        else -> R.string.unknown
+    }))
+
+    fun buildSmoothDisplay(ctx: Context, display: DisplayInfo) = AnnotatedString(if (display.refreshRate == 0f) ctx.getString(R.string.unsupported) else "${display.refreshRate.toInt()} Hz")
+
+    fun buildScreenTimeout(ctx: Context, display: DisplayInfo) = AnnotatedString(when {
+        display.screenTimeoutMs < 0L -> ctx.getString(R.string.unknown)
+        display.screenTimeoutMs == Int.MAX_VALUE.toLong() -> ctx.getString(R.string.never)
+        else -> display.screenTimeoutMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) ctx.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) ctx.getString(R.string.duration_m_s_str_format, m, s) else ctx.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
+    })
+
+    fun buildScreenSaver(ctx: Context, display: DisplayInfo) = AnnotatedString(ctx.getString(if (display.screenSaverEnabled == true) R.string.activated else R.string.deactivated))
+
+    fun buildLastScreenOffDuration(ctx: Context, ms: Long): AnnotatedString = if (ms == -1L) {
+        ctx.getString(R.string.waiting).waitingStyle()
+    } else {
+        AnnotatedString(ms.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) ctx.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) ctx.getString(R.string.duration_m_s_str_format, m, s) else ctx.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) })
+    }
+
     fun readBatteryInfo(context: Context, powerManager: PowerManager, timeTracker: TimeTracker): List<BatteryReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -400,15 +566,6 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         fun extra(key: String, default: Int = -1) =
             intent.getIntExtra(key, default)
 
-        fun property(id: Int): String {
-            val value = manager.getIntProperty(id)
-            return if (value == Int.MIN_VALUE) {
-                context.getString(R.string.unavailable)
-            } else {
-                value.toString()
-            }
-        }
-
         val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             extra(BatteryManager.EXTRA_CYCLE_COUNT)
         } else {
@@ -419,59 +576,24 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         val currentLocale = Locale.getDefault()
 
-        val cycle = AnnotatedString(if (count < 0) context.getString(R.string.unavailable) else count.toString())
-
-        val status = context.getString(when (batteryTrendMask and BatteryTrendMask.MASK_CHARGE) {
-            BatteryTrendMask.STATE_CHARGING -> R.string.charging
-            BatteryTrendMask.STATE_DISCHARGING -> R.string.discharging
-            BatteryTrendMask.STATE_FULL -> R.string.full
-            BatteryTrendMask.STATE_NOT_CHARGING -> R.string.not_charging
-            BatteryTrendMask.STATE_UNKNOWN -> R.string.unknown
-            else -> R.string.undefined
-        })
-
-        val health = AnnotatedString(context.getString(when (extra(BatteryManager.EXTRA_HEALTH)) {
-            BatteryManager.BATTERY_HEALTH_GOOD -> R.string.good
-            BatteryManager.BATTERY_HEALTH_OVERHEAT -> R.string.overheated
-            BatteryManager.BATTERY_HEALTH_DEAD -> R.string.dead
-            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> R.string.over_voltage
-            BatteryManager.BATTERY_HEALTH_COLD -> R.string.cold
-            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> R.string.failure
-            BatteryManager.BATTERY_HEALTH_UNKNOWN -> R.string.unknown
-            else -> R.string.undefined
-        }))
+        val cycle = buildCycle(context, count)
+        val status = buildStatus(context)
+        val health = buildHealth(context, intent)
 
         val energy = manager.getLongProperty(
             BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
         )
 
         val voltageMv = extra(BatteryManager.EXTRA_VOLTAGE)
-        val temperature = extra(BatteryManager.EXTRA_TEMPERATURE)
+        val batteryTemp = extra(BatteryManager.EXTRA_TEMPERATURE)
 
         val extraTech = intent.getStringExtra(
             BatteryManager.EXTRA_TECHNOLOGY
         ) ?: "Unknown"
 
-        val lowBatteryState = AnnotatedString(context.getString(if (intent.getBooleanExtra(BatteryManager.EXTRA_BATTERY_LOW, false) == true) {
-            R.string.yes
-        } else {
-            R.string.no
-        }))
-
-        val batteryPlugged = AnnotatedString(context.getString(when (extra(BatteryManager.EXTRA_PLUGGED)) {
-            0 -> R.string.on_battery
-            BatteryManager.BATTERY_PLUGGED_AC -> R.string.ac_charger
-            BatteryManager.BATTERY_PLUGGED_USB -> R.string.usb_plug
-            BatteryManager.BATTERY_PLUGGED_WIRELESS -> R.string.wireless
-            BatteryManager.BATTERY_PLUGGED_DOCK -> R.string.dock
-            else -> R.string.powered
-        }))
-
-        val batteryPresent = AnnotatedString(context.getString(if (intent.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true) {
-            R.string.yes
-        } else {
-            R.string.no
-        }))
+        val lowBatteryState = buildLowBattery(context, intent)
+        val batteryPlugged = buildBatteryPlug(context, intent)
+        val batteryPresent = buildBatteryPresent(context, intent)
 
         val technology = AnnotatedString(if (extraTech == "Unknown") {
             Build.MANUFACTURER
@@ -479,11 +601,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             extraTech
         })
 
-        val batterySaver = AnnotatedString(context.getString(if (powerManager.isPowerSaveMode == true) {
-            R.string.activated
-        } else {
-            R.string.deactivated
-        }))
+        val batterySaver = buildBatterySaver(context)
 
         predictionMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
@@ -496,110 +614,36 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
              -1L
         }
 
-        val thermalStatus = AnnotatedString(context.getString(if (Build.VERSION.SDK_INT >= 29) {
-            when (powerManager.currentThermalStatus) {
-                PowerManager.THERMAL_STATUS_NONE -> R.string.none
-                PowerManager.THERMAL_STATUS_LIGHT -> R.string.light
-                PowerManager.THERMAL_STATUS_MODERATE -> R.string.moderate
-                PowerManager.THERMAL_STATUS_SEVERE -> R.string.severe
-                PowerManager.THERMAL_STATUS_CRITICAL -> R.string.critical
-                PowerManager.THERMAL_STATUS_EMERGENCY -> R.string.emergency
-                PowerManager.THERMAL_STATUS_SHUTDOWN -> R.string.shutdown
-                else -> R.string.undefined
-            }
-        } else {
-            R.string.unsupported
-        }))
+        val thermalStatus = buildThermal(context)
+        val voltage = buildVoltage(context, currentLocale, voltageMv)
+        val temperature = buildTemperature(context, currentLocale, batteryTemp)
 
-        val voltage = AnnotatedString(if (voltageMv >= 0) {
-            "%.3f V".format(currentLocale, voltageMv / 1000.0)
-        } else {
-            context.getString(R.string.unavailable)
-        })
-
-        val tempFormat = AnnotatedString(if (temperature >= 0) {
-            val celsius = temperature / 10.0
-            val unit = LocalePreferences.getTemperatureUnit()
-            if (unit == LocalePreferences.TemperatureUnit.FAHRENHEIT) {
-                val fahrenheit = (celsius * 1.8) + 32.0
-                context.getString(R.string.fahrenheit_format).format(currentLocale, fahrenheit)
-            } else {
-                context.getString(R.string.celsius_format).format(currentLocale, celsius)
-            }
-        } else {
-            context.getString(R.string.unavailable)
-        })
-
-        val energyCounter = AnnotatedString(if (energy != Long.MIN_VALUE) {
-            "$energy nWh"
-        } else {
-            context.getString(R.string.unavailable)
-        })
-
-        val chargeCounter = AnnotatedString(property(
-            BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER
-        ) + " µAh")
-
-        val currentNow = AnnotatedString(property(
-            BatteryManager.BATTERY_PROPERTY_CURRENT_NOW
-        ) + " µA")
-
-        val currentAverage = AnnotatedString(property(
-            BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE
-        ) + " µA")
+        val energyCounter = buildEnergyCounter(context, energy)
+        val chargeCounter = buildChargeCounter(context, manager)
+        val currentNow = buildCurrentNow(context, manager)
+        val currentAverage = buildCurrentAverage(context, manager)
 
         timeRemainingMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             manager.computeChargeTimeRemaining()
         } else {
             -1L
         }
-        val (timeRemaining, fullyChargedAt) = if (timeRemainingMs <= 0L) {
-            val waiting = context.getString(R.string.waiting).waitingStyle()
-            waiting to waiting
-        } else {
-            val remaining = AnnotatedString(timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) })
-            remaining to formatTargetTime(context, timeRemainingMs, R.string._arrow_up_, arrowUp)
-        }
 
-        val (prediction, totallyEmptyAt) = if (predictionMs <= 0L) {
-            val issue = AnnotatedString(when (predictionMs) {
-                -1L -> context.getString(R.string.unsupported)
-                -2L -> context.getString(R.string.undefined)
-                -3L -> status
-                0L -> context.getString(R.string.unavailable)
-                else -> context.getString(R.string.unknown)
-            })
-            val waiting = context.getString(R.string.waiting).waitingStyle()
-            issue to waiting
-        } else {
-            val duration = AnnotatedString(predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) context.getString(R.string.duration_h_m_str_format, h, m) else context.getString(R.string.duration_m_str_format, m) })
-            duration to formatTargetTime(context, predictionMs, R.string._arrow_down_, arrowDown)
-        }
+        val (timeRemaining, fullyChargedAt) = buildRemaining(context, timeRemainingMs)
+        val (prediction, totallyEmptyAt) = buildPrediction(context, predictionMs, status)
 
         val display: DisplayInfo = readDisplayInfo(context)
 
-        val brightnessLevel = if (display.brightness >= 0) display.brightness.toString() else context.getString(R.string.unknown)
-        val adaptiveMode = AnnotatedString(context.getString(if (display.adaptive) R.string.yes else R.string.no))
-        val nightMode = AnnotatedString(context.getString(if (display.nightState) R.string.yes else R.string.no))
-        val touchScreen = AnnotatedString(context.getString(when (display.touchKind) {
-            Configuration.TOUCHSCREEN_FINGER -> R.string.finger
-            Configuration.TOUCHSCREEN_NOTOUCH -> R.string.notouch
-            Configuration.TOUCHSCREEN_UNDEFINED -> R.string.undefined
-            else -> R.string.unknown
-        }))
-        val smoothDisplay = AnnotatedString(if (display.refreshRate == 0f) context.getString(R.string.unsupported) else "${display.refreshRate.toInt()} Hz")
+        val brightnessLevel = buildBrightness(context, display)
+        val adaptiveMode = buildAdaptiveMode(context, display)
+        val nightMode = buildNightMode(context, display)
+        val touchScreen = buildTouchScreen(context, display)
+        val smoothDisplay = buildSmoothDisplay(context, display)
 
-        val screenTimeout = AnnotatedString(when {
-            display.screenTimeoutMs < 0L -> context.getString(R.string.unknown)
-            display.screenTimeoutMs == Int.MAX_VALUE.toLong() -> context.getString(R.string.never)
-            else -> display.screenTimeoutMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
-        })
-        val screenSaver = AnnotatedString(context.getString(if (display.screenSaverEnabled == true) R.string.activated else R.string.deactivated))
-        val lastScreenOffDurationMs: AnnotatedString = if (timeTracker.lastScreenOffDurationMs == -1L) {
-            context.getString(R.string.waiting).waitingStyle()
-        } else {
-            AnnotatedString(timeTracker.lastScreenOffDurationMs.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) context.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) context.getString(R.string.duration_m_s_str_format, m, s) else context.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) })
-        }
+        val screenTimeout = buildScreenTimeout(context, display)
+        val screenSaver = buildScreenSaver(context, display)
+
+        val lastScreenOffDuration = buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)
 
         fun row(labelId: Int, value: AnnotatedString) =
             BatteryReportRow(context.getString(labelId), value)
@@ -614,7 +658,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             BatteryReportRow(context.getString(R.string._zap_), AnnotatedString("")),    /* ⚡ */
 
             row(R.string.voltage, voltage),
-            row(R.string.temperature, tempFormat),
+            row(R.string.temperature, temperature),
             row(R.string.energy_counter, energyCounter),
             row(R.string.charge_counter, chargeCounter),
             row(R.string.current_now, currentNow),
@@ -647,7 +691,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
             row(R.string.screen_timeout, screenTimeout),
             row(R.string.screen_saver, screenSaver),
-            row(R.string.screen_off, lastScreenOffDurationMs)
+            row(R.string.screen_off, lastScreenOffDuration)
         )
     }
 }
