@@ -142,6 +142,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     }
     private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
 
+    var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
     data class TimeTracker(
         var screenOffStartedAt: Long = 0L,
         var lastScreenOffDurationMs: Long = -1L
@@ -217,6 +218,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         batteryAlertThreshold = prefs.getIntInBounds("batteryAlertThreshold", MIN_ALERT_THRESHOLD, MAX_ALERT_THRESHOLD, BATTERY_ALERT_THRESHOLD)
         maxAlerts = prefs.getIntInBounds("maxAlerts", MIN_MAX_ALERTS, MAX_MAX_ALERTS, DEFAULT_MAX_ALERTS)
         BatteryEventReceiver.maxAlerts = maxAlerts
+        tongue[CASE_FOCUS] = Locale.getDefault()
+        tongue[CASE_AWAY] = tongue[CASE_FOCUS]
         buildData()
         sysInfo = readSystemInfo()
 
@@ -301,6 +304,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         } else {
             BatteryAlertWorker.cancel(context)
         }
+        tongue[CASE_AWAY] = tongue[CASE_FOCUS]
     }
 
     fun onScreenResumed() {
@@ -314,7 +318,13 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             timeTracker.lastScreenOffDurationMs = System.currentTimeMillis() - timeTracker.screenOffStartedAt
             timeTracker.screenOffStartedAt = 0L
         }
-        refreshData()
+        tongue[CASE_FOCUS] = Locale.getDefault()
+        if (tongue[CASE_FOCUS] != tongue[CASE_AWAY]) {
+            buildData()
+            tongue[CASE_AWAY] = tongue[CASE_FOCUS]
+        } else {
+            refreshData()
+        }
     }
 
     private fun readSystemInfo(): String {
@@ -502,23 +512,23 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         R.string.unsupported
     }))
 
-    fun buildVoltage(ctx: Context, locale: Locale, voltageMv: Int) = AnnotatedString(
+    fun buildVoltage(ctx: Context, voltageMv: Int) = AnnotatedString(
         if (voltageMv >= 0) {
-            "%.3f V".format(locale, voltageMv / 1000.0)
+            "%.3f V".format(tongue[CASE_FOCUS], voltageMv / 1000.0)
         } else {
             ctx.getString(R.string.unavailable)
         }
     )
 
-    fun buildTemperature(ctx: Context, locale: Locale, temp: Int) = AnnotatedString(
+    fun buildTemperature(ctx: Context, temp: Int) = AnnotatedString(
         if (temp >= 0) {
             val celsius = temp / 10.0
             val unit = LocalePreferences.getTemperatureUnit()
             if (unit == LocalePreferences.TemperatureUnit.FAHRENHEIT) {
                 val fahrenheit = (celsius * 1.8) + 32.0
-                ctx.getString(R.string.fahrenheit_format).format(locale, fahrenheit)
+                ctx.getString(R.string.fahrenheit_format).format(tongue[CASE_FOCUS], fahrenheit)
             } else {
-                ctx.getString(R.string.celsius_format).format(locale, celsius)
+                ctx.getString(R.string.celsius_format).format(tongue[CASE_FOCUS], celsius)
             }
         } else {
             ctx.getString(R.string.unavailable)
@@ -611,7 +621,6 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         updateBatteryLevel(intent)
 
-        val currentLocale = Locale.getDefault()
         val status = buildStatus(context)
 
         val extraTech = intent.getStringExtra(
@@ -644,8 +653,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         deepRow[STATUS].value = buildStatus(context)
         deepRow[HEALTH].value = buildHealth(context, intent)
         deepRow[TECH].value = buildTechnology(extraTech)
-        deepRow[VOLTAGE].value = buildVoltage(context, currentLocale, extra(BatteryManager.EXTRA_VOLTAGE))
-        deepRow[TEMP].value = buildTemperature(context, currentLocale, extra(BatteryManager.EXTRA_TEMPERATURE))
+        deepRow[VOLTAGE].value = buildVoltage(context, extra(BatteryManager.EXTRA_VOLTAGE))
+        deepRow[TEMP].value = buildTemperature(context, extra(BatteryManager.EXTRA_TEMPERATURE))
         deepRow[ENERGY].value = buildEnergyCounter(context, batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER))
         deepRow[CHARGE].value = buildChargeCounter(context, batteryManager)
         deepRow[CURRENT].value = buildCurrentNow(context, batteryManager)
@@ -695,7 +704,6 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
         updateBatteryLevel(intent)
 
-        val currentLocale = Locale.getDefault()
         val status = buildStatus(context)
         val energy = batteryManager.getLongProperty(
             BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER
@@ -738,8 +746,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             /* STATUS   */  row(R.string.state, buildStatus(context)),
             /* HEALTH   */  row(R.string.health, buildHealth(context, intent)),
             /* TECH     */  row(R.string.technology, buildTechnology(extraTech)),
-            /* VOLTAGE  */  row(R.string.voltage, buildVoltage(context, currentLocale, voltageMv)),
-            /* TEMP     */  row(R.string.temperature, buildTemperature(context, currentLocale, batteryTemp)),
+            /* VOLTAGE  */  row(R.string.voltage, buildVoltage(context, voltageMv)),
+            /* TEMP     */  row(R.string.temperature, buildTemperature(context, batteryTemp)),
             /* ENERGY   */  row(R.string.energy_counter, buildEnergyCounter(context, energy)),
             /* CHARGE   */  row(R.string.charge_counter, buildChargeCounter(context, batteryManager)),
             /* CURRENT  */  row(R.string.current_now, buildCurrentNow(context, batteryManager)),
