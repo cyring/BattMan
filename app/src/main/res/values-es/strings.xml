@@ -104,4 +104,6 @@
     <string name="accessibility_desc">Ajusta el tamaño del texto del informe para mejorar la legibilidad</string>
     <string name="tomorrow">Mañana %1$s</string>
     <string name="in_days">En %1$d días %2$s</string>
+    <string name="reset">Reiniciar</string>
+    <string name="bye">Adiós</string>
 </resources>

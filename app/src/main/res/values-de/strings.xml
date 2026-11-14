@@ -102,4 +102,6 @@
     <string name="accessibility_desc">Passen Sie die Textgröße des Berichts für optimale Lesbarkeit an</string>
     <string name="tomorrow">Morgen %1$s</string>
     <string name="in_days">In %1$d Tagen %2$s</string>
+    <string name="reset">Zurücksetzen</string>
+    <string name="bye">Tschüss</string>
 </resources>

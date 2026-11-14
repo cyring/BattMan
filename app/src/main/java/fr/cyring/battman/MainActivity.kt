@@ -97,6 +97,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 const val FONT_SIZE_SYSTEM: Int = 0
 const val FONT_SIZE_SMALL: Int = FONT_SIZE_SYSTEM + 1
@@ -950,6 +951,7 @@ class MainActivity : ComponentActivity() {
                                                             BATTERY_ALERT_THRESHOLD
                                                         )
                                                         viewModel.updateMaxAlerts(DEFAULT_MAX_ALERTS)
+                                                        Toast.makeText(application, R.string.reset, Toast.LENGTH_SHORT).show()
                                                     }
                                                 ) {
                                                     Icon(
@@ -960,7 +962,11 @@ class MainActivity : ComponentActivity() {
                                                 }
                                                 IconButton(
                                                     onClick = {
-                                                        activity?.finishAndRemoveTask()
+                                                        coroutineScope.launch {
+                                                            Toast.makeText(application, R.string.bye, Toast.LENGTH_SHORT).show()
+                                                            kotlinx.coroutines.delay(1.seconds)
+                                                            activity?.finishAndRemoveTask()
+                                                        }
                                                     }
                                                 ) {
                                                     Icon(

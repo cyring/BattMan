@@ -113,4 +113,6 @@
     <string name="accessibility_desc">Adjust the report text size for optimal legibility</string>
     <string name="tomorrow">Tomorrow %1$s</string>
     <string name="in_days">In %1$d days %2$s</string>
+    <string name="reset">Reset</string>
+    <string name="bye">Bye</string>
 </resources>
