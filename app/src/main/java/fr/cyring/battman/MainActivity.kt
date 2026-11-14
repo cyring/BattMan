@@ -99,13 +99,13 @@ import fr.cyring.battman.ui.theme.BattManTheme
 import kotlin.time.Duration.Companion.milliseconds
 
 const val FONT_SIZE_SYSTEM: Int = 0
-const val FONT_SIZE_SMALL: Int = 1
-const val FONT_SIZE_MEDIUM: Int = 2
-const val FONT_SIZE_LARGE: Int = 3
+const val FONT_SIZE_SMALL: Int = FONT_SIZE_SYSTEM + 1
+const val FONT_SIZE_MEDIUM: Int = FONT_SIZE_SMALL + 1
+const val FONT_SIZE_LARGE: Int = FONT_SIZE_MEDIUM + 1
 
 const val THEME_SYSTEM: Int = 0
-const val THEME_LIGHT: Int = 1
-const val THEME_DARK: Int = 2
+const val THEME_LIGHT: Int = THEME_SYSTEM + 1
+const val THEME_DARK: Int = THEME_LIGHT + 1
 
 private val TIME_FORMATTERS: Array<(Int) -> String> = arrayOf(
     { sec -> "$sec s" },
@@ -189,10 +189,10 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
 
         val reportStyle = mapStyle(
             arrayOf(
-                typography.bodyMedium, // FONT_SIZE_SYSTEM (0)
-                typography.bodySmall,  // FONT_SIZE_SMALL (1)
-                typography.bodyMedium, // FONT_SIZE_MEDIUM (2)
-                typography.bodyLarge   // FONT_SIZE_LARGE (3)
+                /* FONT_SIZE_SYSTEM */  typography.bodyLarge,
+                /* FONT_SIZE_SMALL  */  typography.bodySmall,
+                /* FONT_SIZE_MEDIUM */  typography.bodyMedium,
+                /* FONT_SIZE_LARGE  */  typography.bodyLarge.copy(fontSize = (typography.bodyLarge.fontSize.value * 1.25f).sp)
             ),
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
         )
