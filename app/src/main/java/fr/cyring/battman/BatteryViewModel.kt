@@ -25,6 +25,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.core.text.util.LocalePreferences
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.toKotlinDuration
 
 const val BATTERY_ALERT_THRESHOLD = 10
 const val MIN_ALERT_THRESHOLD = 0
@@ -420,7 +421,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         val diffDays = ((targetCal.timeInMillis - nowCal.timeInMillis) / (24 * 60 * 60 * 1000L)).toInt()
 
         val timeContent = when (diffDays) {
-            0 -> timeString
+            0 -> context.getString(R.string.today, timeString)
             1 -> context.getString(R.string.tomorrow, timeString)
             else -> context.getString(R.string.in_days, diffDays, timeString)
         }
@@ -630,7 +631,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         predictionMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 val duration: java.time.Duration? = powerManager.batteryDischargePrediction
-                duration?.toMillis() ?: -3L
+                duration?.toKotlinDuration()?.inWholeMilliseconds ?: -3L
             } catch (_: Exception) {
                 -2L
             }
@@ -719,7 +720,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         predictionMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 val duration: java.time.Duration? = powerManager.batteryDischargePrediction
-                duration?.toMillis() ?: -3L
+                duration?.toKotlinDuration()?.inWholeMilliseconds ?: -3L
             } catch (_: Exception) {
                 -2L
             }

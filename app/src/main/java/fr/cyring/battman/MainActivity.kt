@@ -93,11 +93,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import fr.cyring.battman.CentralColor.AlertBattery
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import fr.cyring.battman.ui.theme.BattManTheme
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 const val FONT_SIZE_SYSTEM: Int = 0
 const val FONT_SIZE_SMALL: Int = FONT_SIZE_SYSTEM + 1
@@ -152,6 +156,30 @@ fun String.waitingStyle(): AnnotatedString = buildAnnotatedString {
 
 val arrowDown: SpanStyle = SpanStyle(color = Color.Yellow)
 val arrowUp: SpanStyle = SpanStyle(color = Color.Green)
+
+data class CentralColor (
+    val nominal: AlertBattery,
+    val issue: AlertBattery
+) {
+    data class AlertBattery (
+        val level: Color,
+        val sign: Color
+    )
+}
+
+@Composable
+fun centralColor(): CentralColor {
+    return CentralColor(
+        nominal = AlertBattery(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.tertiary
+        ),
+        issue = AlertBattery(
+            MaterialTheme.colorScheme.inversePrimary,
+            MaterialTheme.colorScheme.inversePrimary
+        )
+    )
+}
 
 data class CentralFont (
     val appStyle: AppStyle,
@@ -1043,26 +1071,27 @@ class MainActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.25f))
 
                             // Management rules
+                            val centralColor = centralColor()
                             val levelColor: Color
                             var signColor: Color
                             val signText: AnnotatedString
 
                             if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
-                                levelColor = MaterialTheme.colorScheme.primary
-                                signColor = MaterialTheme.colorScheme.primary
+                                levelColor = centralColor.nominal.level
+                                signColor = centralColor.nominal.sign
                             } else {
-                                levelColor = MaterialTheme.colorScheme.inversePrimary
-                                signColor = MaterialTheme.colorScheme.inversePrimary
+                                levelColor = centralColor.issue.level
+                                signColor = centralColor.issue.sign
                             }
                             if (BatteryViewModel.predictionMs > 0L) {
-                                val formattedDuration = BatteryViewModel.predictionMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                val formattedDuration = BatteryViewModel.predictionMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
                                     withStyle(arrowDown) { append(stringResource(R.string._arrow_down_) + " ") } /* ⬇ */
                                     append(formattedDuration)
                                 }
                             } else if (BatteryViewModel.timeRemainingMs > 0L) {
-                                signColor = MaterialTheme.colorScheme.outline
-                                val formattedDuration = BatteryViewModel.timeRemainingMs.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                signColor = MaterialTheme.colorScheme.secondary
+                                val formattedDuration = BatteryViewModel.timeRemainingMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
                                     withStyle(arrowUp) { append(stringResource(R.string._arrow_up_) + " ") } /* ⬆ */
                                     append(formattedDuration)

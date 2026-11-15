@@ -77,8 +77,9 @@
     </plurals>
     <string name="copyright">"Version %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s, %2$s</string>
-    <string name="duration_h_m_str_format">%1$d Std., %2$d Min.</string>
-    <string name="duration_m_str_format">%1$d Min.</string>
+    <string name="duration_d_h_str_format">%1$d T. %2$d Std.</string>
+    <string name="duration_h_m_str_format">%1$d Std., %2$d min</string>
+    <string name="duration_m_str_format">%1$d min</string>
     <string name="auto_refresh_settings">Aktualisierung</string>
     <string name="auto_refresh_help_text">Bildschirm an</string>
     <string name="agent_scheduler_settings">Datensammler</string>
@@ -100,6 +101,7 @@
     <string name="accessibility_medium">Mittel</string>
     <string name="accessibility_large">Groß</string>
     <string name="accessibility_desc">Passen Sie die Textgröße des Berichts für optimale Lesbarkeit an</string>
+    <string name="today">Heute %1$s</string>
     <string name="tomorrow">Morgen %1$s</string>
     <string name="in_days">In %1$d Tagen %2$s</string>
     <string name="reset">Zurücksetzen</string>

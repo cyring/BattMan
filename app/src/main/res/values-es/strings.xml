@@ -28,7 +28,7 @@
     <string name="not_charging">Sin carga</string>
     <string name="unknown">Ignoto</string>
     <string name="undefined">Indefinido</string>
-    <string name="good">Buen</string>
+    <string name="good">Buena</string>
     <string name="overheated">Sobrecalentado</string>
     <string name="dead">Fuera de servicio</string>
     <string name="over_voltage">Sobretensión</string>
@@ -79,6 +79,7 @@
     </plurals>
     <string name="copyright">"Versión %1$s\n© %2$d CYRIL COURTIAT"</string>
     <string name="duration_format">%1$s %2$s</string>
+    <string name="duration_d_h_str_format">%1$d d %2$d h</string>
     <string name="duration_h_m_str_format">%1$d h %2$d min</string>
     <string name="duration_m_str_format">%1$d min</string>
     <string name="auto_refresh_settings">Actualización</string>
@@ -102,6 +103,7 @@
     <string name="accessibility_medium">Mediano</string>
     <string name="accessibility_large">Grande</string>
     <string name="accessibility_desc">Ajusta el tamaño del texto del informe para mejorar la legibilidad</string>
+    <string name="today">Hoy %1$s</string>
     <string name="tomorrow">Mañana %1$s</string>
     <string name="in_days">En %1$d días %2$s</string>
     <string name="reset">Reiniciar</string>
