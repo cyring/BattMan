@@ -16,7 +16,7 @@
     <string name="battery_plugged">Fuente alimentación</string>
     <string name="battery_saver">Ahorro de batería</string>
     <string name="time_remaining">Tiempo para completar</string>
-    <string name="fully_charged">Completa a</string>
+    <string name="fully_charged">Completa</string>
     <string name="thermal_status">Estado térmico</string>
     <string name="battery_present">Batería presente</string>
     <string name="battery_low">Batería baja</string>
@@ -103,9 +103,9 @@
     <string name="accessibility_medium">Mediano</string>
     <string name="accessibility_large">Grande</string>
     <string name="accessibility_desc">Ajusta el tamaño del texto del informe para mejorar la legibilidad</string>
-    <string name="today">Hoy %1$s</string>
-    <string name="tomorrow">Mañana %1$s</string>
-    <string name="in_days">En %1$d días %2$s</string>
+    <string name="today">Hoy\u20</string>
+    <string name="tomorrow">Mañana\u20</string>
+    <string name="in_days">En %1$d días\u20</string>
     <string name="reset">Reiniciar</string>
     <string name="bye">Adiós</string>
 </resources>

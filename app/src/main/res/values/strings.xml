@@ -112,9 +112,9 @@
     <string name="accessibility_medium">Medium</string>
     <string name="accessibility_large">Large</string>
     <string name="accessibility_desc">Adjust the report text size for optimal legibility</string>
-    <string name="today">Today %1$s</string>
-    <string name="tomorrow">Tomorrow %1$s</string>
-    <string name="in_days">In %1$d days %2$s</string>
+    <string name="today">Today\u20</string>
+    <string name="tomorrow">Tomorrow\u20</string>
+    <string name="in_days">In %1$d days\u20</string>
     <string name="reset">Reset</string>
     <string name="bye">Bye</string>
 </resources>

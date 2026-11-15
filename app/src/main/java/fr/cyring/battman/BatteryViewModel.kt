@@ -23,6 +23,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.core.text.util.LocalePreferences
+import fr.cyring.battman.ui.theme.Typography
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.toKotlinDuration
@@ -397,7 +398,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         )
     }
 
-    private fun formatTargetTime(context: Context, durationMs: Long, id: Int, style: SpanStyle): AnnotatedString {
+    private fun formatTargetTime(context: Context, durationMs: Long, iconId: Int, iconStyle: SpanStyle): AnnotatedString {
         if (durationMs <= 0L) {
             return context.getString(R.string.waiting).waitingStyle()
         }
@@ -420,17 +421,21 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         }
         val diffDays = ((targetCal.timeInMillis - nowCal.timeInMillis) / (24 * 60 * 60 * 1000L)).toInt()
 
-        val timeContent = when (diffDays) {
-            0 -> context.getString(R.string.today, timeString)
-            1 -> context.getString(R.string.tomorrow, timeString)
-            else -> context.getString(R.string.in_days, diffDays, timeString)
+        val dayString = when (diffDays) {
+            0 -> context.getString(R.string.today)
+            1 -> context.getString(R.string.tomorrow)
+            else -> context.getString(R.string.in_days, diffDays)
         }
+        val dayStyle: SpanStyle = if ((dayString + timeString).length >= 14) SpanStyle(fontSize = Typography.labelSmall.fontSize) else SpanStyle()
 
         return buildAnnotatedString {
-            withStyle(style) {
-                append(context.getString(id))
+            withStyle(iconStyle) {
+                append(context.getString(iconId))
             }
-            append(timeContent)
+            withStyle(dayStyle) {
+                append(dayString)
+            }
+            append(timeString)
         }
     }
 
@@ -555,7 +560,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             val waiting = ctx.getString(R.string.waiting).waitingStyle()
             return waiting to waiting
         } else {
-            val remaining = AnnotatedString(ms.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
+            val remaining = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) ctx.getString(R.string.duration_d_h_str_format, d, h) else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
             return remaining to formatTargetTime(ctx, ms, R.string._arrow_up_, arrowUp)
         }
     }
@@ -572,7 +577,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             val waiting = ctx.getString(R.string.waiting).waitingStyle()
             return issue to waiting
         } else {
-            val duration = AnnotatedString(ms.milliseconds.toComponents { _, h, m, _, _ -> if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
+            val duration = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) ctx.getString(R.string.duration_d_h_str_format, d, h) else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
             return duration to formatTargetTime(ctx, ms, R.string._arrow_down_, arrowDown)
         }
     }

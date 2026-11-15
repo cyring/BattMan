@@ -15,7 +15,7 @@
     <string name="battery_plugged">Alimentation</string>
     <string name="battery_saver">Économie batterie</string>
     <string name="time_remaining">Temps de charge</string>
-    <string name="fully_charged">Charge pleine à</string>
+    <string name="fully_charged">Charge pleine</string>
     <string name="thermal_status">État thermique</string>
     <string name="battery_present">Batterie présente</string>
     <string name="battery_low">Batterie faible</string>
@@ -102,9 +102,9 @@
     <string name="accessibility_medium">Moyen</string>
     <string name="accessibility_large">Grand</string>
     <string name="accessibility_desc">Ajustez la taille du texte du rapport pour une meilleure lisibilité</string>
-    <string name="today">Aujourd\'hui %1$s</string>
-    <string name="tomorrow">Demain %1$s</string>
-    <string name="in_days">Dans %1$d jours %2$s</string>
+    <string name="today">Aujourd\'hui\u20</string>
+    <string name="tomorrow">Demain\u20</string>
+    <string name="in_days">Ds %1$d jours\u20</string>
     <string name="reset">Réinitialisation</string>
     <string name="bye">Salut</string>
 </resources>

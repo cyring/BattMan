@@ -16,7 +16,7 @@
     <string name="battery_plugged">Stromquelle</string>
     <string name="battery_saver">Energiesparmodus</string>
     <string name="time_remaining">Ladedauer</string>
-    <string name="fully_charged">Aufgeladen um</string>
+    <string name="fully_charged">Aufgeladen</string>
     <string name="thermal_status">Thermiestatus</string>
     <string name="battery_present">Akku vorhanden</string>
     <string name="battery_low">Akku schwach</string>
@@ -101,9 +101,9 @@
     <string name="accessibility_medium">Mittel</string>
     <string name="accessibility_large">Groß</string>
     <string name="accessibility_desc">Passen Sie die Textgröße des Berichts für optimale Lesbarkeit an</string>
-    <string name="today">Heute %1$s</string>
-    <string name="tomorrow">Morgen %1$s</string>
-    <string name="in_days">In %1$d Tagen %2$s</string>
+    <string name="today">Heute\u20</string>
+    <string name="tomorrow">Morgen\u20</string>
+    <string name="in_days">In %1$d Tagen\u20</string>
     <string name="reset">Zurücksetzen</string>
     <string name="bye">Tschüss</string>
 </resources>
