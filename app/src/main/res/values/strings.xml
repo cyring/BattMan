@@ -4,8 +4,10 @@
     <string name="_battery_" translatable="false">\uD83D\uDD0B</string>
     <string name="_mobile_phone_" translatable="false">\uD83D\uDCF1</string>
     <string name="_alarm_clock_" translatable="false">\u23F0</string>
-    <string name="_arrow_down_" translatable="false">\u2B07</string>"
+    <string name="_arrow_down_" translatable="false">\u2B07</string>
     <string name="_arrow_up_" translatable="false">\u2B06</string>
+    <string name="_calc_" translatable="false">\u2328</string>
+    <string name="_wait_" translatable="false">\uD83D\uDD50</string>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
     <string name="level">Level</string>
@@ -59,7 +61,8 @@
     <string name="shutdown">Shutdown</string>
     <string name="brightness">Brightness</string>
     <string name="adaptive">Adaptive</string>
-    <string name="mode_night">Dark theme</string>
+    <string name="mode_dark">Dark theme</string>
+    <string name="night_light">Night Light</string>
     <string name="touchscreen">Touch screen</string>
     <string name="finger">Finger</string>
     <string name="notouch">Non-touch</string>
@@ -112,9 +115,9 @@
     <string name="accessibility_medium">Medium</string>
     <string name="accessibility_large">Large</string>
     <string name="accessibility_desc">Adjust the report text size for optimal legibility</string>
-    <string name="today">Today\u20</string>
-    <string name="tomorrow">Tomorrow\u20</string>
-    <string name="in_days">In %1$d days\u20</string>
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+    <string name="in_days">In %1$d days</string>
     <string name="reset">Reset</string>
     <string name="bye">Bye</string>
 </resources>

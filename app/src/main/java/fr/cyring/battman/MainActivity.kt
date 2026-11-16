@@ -1095,14 +1095,14 @@ class MainActivity : ComponentActivity() {
                             if (BatteryViewModel.predictionMs > 0L) {
                                 val formattedDuration = BatteryViewModel.predictionMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
-                                    withStyle(arrowDown) { append(stringResource(R.string._arrow_down_) + " ") } /* ⬇ */
+                                    withStyle(arrowDown) { append(stringResource(R.string._arrow_down_) + ' ') } /* ⬇ */
                                     append(formattedDuration)
                                 }
                             } else if (BatteryViewModel.timeRemainingMs > 0L) {
                                 signColor = MaterialTheme.colorScheme.secondary
                                 val formattedDuration = BatteryViewModel.timeRemainingMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
-                                    withStyle(arrowUp) { append(stringResource(R.string._arrow_up_) + " ") } /* ⬆ */
+                                    withStyle(arrowUp) { append(stringResource(R.string._arrow_up_) + ' ') } /* ⬆ */
                                     append(formattedDuration)
                                 }
                             } else {

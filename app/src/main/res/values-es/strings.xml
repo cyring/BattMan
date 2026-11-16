@@ -53,7 +53,8 @@
     <string name="shutdown">Apagados</string>
     <string name="brightness">Brillo</string>
     <string name="adaptive">Adaptativo</string>
-    <string name="mode_night">Tema oscuro</string>
+    <string name="mode_dark">Tema oscuro</string>
+    <string name="night_light">Luz nocturna</string>
     <string name="touchscreen">Pantalla táctil</string>
     <string name="finger">Táctil</string>
     <string name="notouch">No táctil</string>
@@ -103,9 +104,9 @@
     <string name="accessibility_medium">Mediano</string>
     <string name="accessibility_large">Grande</string>
     <string name="accessibility_desc">Ajusta el tamaño del texto del informe para mejorar la legibilidad</string>
-    <string name="today">Hoy\u20</string>
-    <string name="tomorrow">Mañana\u20</string>
-    <string name="in_days">En %1$d días\u20</string>
+    <string name="today">Hoy</string>
+    <string name="tomorrow">Mañana</string>
+    <string name="in_days">En %1$d días</string>
     <string name="reset">Reiniciar</string>
     <string name="bye">Adiós</string>
 </resources>

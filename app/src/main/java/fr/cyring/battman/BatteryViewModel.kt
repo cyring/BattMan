@@ -27,6 +27,8 @@ import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.toKotlinDuration
 
+private const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
+
 const val BATTERY_ALERT_THRESHOLD = 10
 const val MIN_ALERT_THRESHOLD = 0
 const val MAX_ALERT_THRESHOLD = 100
@@ -64,7 +66,8 @@ const val EMPTY: Int = PREDICT + 1
 const val BRIGHT: Int = EMPTY + 1
 const val ADAPTIVE: Int = BRIGHT + 1
 const val DARK_MOD: Int = ADAPTIVE + 1
-const val TOUCH: Int = DARK_MOD + 1
+const val NIGHT_LT: Int = DARK_MOD + 1
+const val TOUCH: Int = NIGHT_LT + 1
 const val SMOOTH: Int = TOUCH + 1
 const val TIMEOUT: Int = SMOOTH + 1
 const val SCR_SAV: Int = TIMEOUT + 1
@@ -335,7 +338,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     data class DisplayInfo(
         val brightness: Int,
         val adaptive: Boolean,
-        val nightState: Boolean,
+        val darkState: Boolean,
+        val nightState: Boolean?,
         val touchKind: Int,
         val refreshRate: Float,
         val screenTimeoutMs: Long,
@@ -380,7 +384,16 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         return DisplayInfo(
             brightness = brightness,
             adaptive = adaptive,
-            nightState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
+            darkState = (sysConf.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES,
+            nightState = try {
+                Settings.Secure.getInt(
+                    ctx.contentResolver,
+                    "night_display_activated",
+                    0
+                ) == 1
+            } catch (_: Exception) {
+                null
+            },
             touchKind = sysConf.touchscreen,
             refreshRate = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 try {
@@ -399,28 +412,19 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     private fun formatTargetTime(context: Context, durationMs: Long, iconId: Int, iconStyle: SpanStyle): AnnotatedString {
         if (durationMs <= 0L) {
-            return context.getString(R.string.waiting).waitingStyle()
+            return buildAnnotatedString {
+                append(context.getString(R.string._wait_) + ' ')
+                append(context.getString(R.string.waiting).waitingStyle())
+            }
         }
         val targetMs = System.currentTimeMillis() + durationMs
-        val targetDate = java.util.Date(targetMs)
-        val timeString = android.text.format.DateFormat.getTimeFormat(context).format(targetDate)
+        val timeString = android.text.format.DateFormat.getTimeFormat(context).format(java.util.Date(targetMs))
 
-        val nowCal = java.util.Calendar.getInstance().apply {
-            set(java.util.Calendar.HOUR_OF_DAY, 0)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
-        }
-        val targetCal = java.util.Calendar.getInstance().apply {
-            timeInMillis = targetMs
-            set(java.util.Calendar.HOUR_OF_DAY, 0)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
-        }
-        val diffDays = ((targetCal.timeInMillis - nowCal.timeInMillis) / (24 * 60 * 60 * 1000L)).toInt()
-
-        val dayString = when (diffDays) {
+        val now = System.currentTimeMillis()
+        val tz = java.util.TimeZone.getDefault()
+        val nowDays = (now + tz.getOffset(now)) / MILLIS_PER_DAY
+        val targetDays = (targetMs + tz.getOffset(targetMs)) / MILLIS_PER_DAY
+        val dayString = when (val diffDays = (targetDays - nowDays).toInt()) {
             0 -> context.getString(R.string.today)
             1 -> context.getString(R.string.tomorrow)
             else -> context.getString(R.string.in_days, diffDays)
@@ -431,6 +435,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 append(context.getString(iconId))
             }
             append(dayString)
+            append(' ')
             append(timeString)
         }
     }
@@ -554,7 +559,9 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     fun buildRemaining(ctx: Context, ms: Long): Pair<AnnotatedString, AnnotatedString> {
         if (ms <= 0L) {
             val waiting = ctx.getString(R.string.waiting).waitingStyle()
-            return waiting to waiting
+            val firstPair = buildAnnotatedString { append(ctx.getString(R.string._wait_) + ' '); append(waiting) }
+            val secondPair = buildAnnotatedString { append(ctx.getString(R.string._wait_) + ' '); append(waiting) }
+            return firstPair to secondPair
         } else {
             val remaining = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) ctx.getString(R.string.duration_d_h_str_format, d, h) else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
             return remaining to formatTargetTime(ctx, ms, R.string._arrow_up_, arrowUp)
@@ -571,7 +578,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 else -> AnnotatedString(ctx.getString(R.string.unknown))
             }
             val waiting = ctx.getString(R.string.waiting).waitingStyle()
-            return issue to waiting
+            return issue to buildAnnotatedString { append(ctx.getString(R.string._wait_) + ' '); append(waiting) }
         } else {
             val duration = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) ctx.getString(R.string.duration_d_h_str_format, d, h) else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(R.string.duration_m_str_format, m) })
             return duration to formatTargetTime(ctx, ms, R.string._arrow_down_, arrowDown)
@@ -582,7 +589,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
 
     fun buildAdaptiveMode(ctx: Context, display: DisplayInfo): AnnotatedString = AnnotatedString(ctx.getString(if (display.adaptive) R.string.yes else R.string.no))
 
-    fun buildNightMode(ctx: Context, display: DisplayInfo): AnnotatedString = AnnotatedString(ctx.getString(if (display.nightState) R.string.yes else R.string.no))
+    fun buildDarkTheme(ctx: Context, display: DisplayInfo): AnnotatedString = AnnotatedString(ctx.getString(if (display.darkState) R.string.yes else R.string.no))
+    fun buildNightLight(ctx: Context, display: DisplayInfo): AnnotatedString = AnnotatedString(ctx.getString(if (display.nightState == true) R.string.activated else R.string.deactivated))
 
     fun buildTouchScreen(ctx: Context, display: DisplayInfo) = AnnotatedString(ctx.getString(when (display.touchKind) {
         Configuration.TOUCHSCREEN_FINGER -> R.string.finger
@@ -602,9 +610,16 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     fun buildScreenSaver(ctx: Context, display: DisplayInfo) = AnnotatedString(ctx.getString(if (display.screenSaverEnabled == true) R.string.activated else R.string.deactivated))
 
     fun buildLastScreenOffDuration(ctx: Context, ms: Long): AnnotatedString = if (ms == -1L) {
-        ctx.getString(R.string.waiting).waitingStyle()
+        buildAnnotatedString {
+            append(ctx.getString(R.string._wait_) + ' ')
+            append(ctx.getString(R.string.waiting).waitingStyle())
+        }
     } else {
-        AnnotatedString(ms.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) ctx.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) ctx.getString(R.string.duration_m_s_str_format, m, s) else ctx.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) })
+        val durationString = ms.milliseconds.toComponents { _, h, m, s, ns -> if (h > 0) ctx.getString(R.string.duration_h_m_s_str_format, h, m, s) else if (m > 0) ctx.getString(R.string.duration_m_s_str_format, m, s) else ctx.getString(R.string.duration_ms_str_format, s, ns / 1_000_000L) }
+        buildAnnotatedString{
+            append(ctx.getString(R.string._calc_) + ' ')
+            append(durationString)
+        }
     }
 
     fun refreshBatteryInfo(context: Context, powerManager: PowerManager, timeTracker: TimeTracker, intent: Intent) {
@@ -672,7 +687,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         deepRow[EMPTY].value = totallyEmptyAt
         deepRow[BRIGHT].value = buildBrightness(context, display)
         deepRow[ADAPTIVE].value = buildAdaptiveMode(context, display)
-        deepRow[DARK_MOD].value = buildNightMode(context, display)
+        deepRow[DARK_MOD].value = buildDarkTheme(context, display)
+        deepRow[NIGHT_LT].value = buildNightLight(context, display)
         deepRow[TOUCH].value = buildTouchScreen(context, display)
         deepRow[SMOOTH].value = buildSmoothDisplay(context, display)
         deepRow[TIMEOUT].value = buildScreenTimeout(context, display)
@@ -765,7 +781,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             /* EMPTY    */  row(R.string.totally_empty, totallyEmptyAt),
             /* BRIGHT   */  row(R.string.brightness, buildBrightness(context, display)),
             /* ADAPTIVE */  row(R.string.adaptive, buildAdaptiveMode(context, display)),
-            /* DARK_MOD */  row(R.string.mode_night, buildNightMode(context, display)),
+            /* DARK_MOD */  row(R.string.mode_dark, buildDarkTheme(context, display)),
+            /* NIGHT_LT */  row(R.string.night_light, buildNightLight(context, display)),
             /* TOUCH    */  row(R.string.touchscreen, buildTouchScreen(context, display)),
             /* SMOOTH   */  row(R.string.refresh_rate, buildSmoothDisplay(context, display)),
             /* TIMEOUT  */  row(R.string.screen_timeout, buildScreenTimeout(context, display)),
@@ -808,6 +825,7 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             deepRow[BRIGHT],
             deepRow[ADAPTIVE],
             deepRow[DARK_MOD],
+            deepRow[NIGHT_LT],
             deepRow[TOUCH],
             deepRow[SMOOTH],
 

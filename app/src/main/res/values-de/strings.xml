@@ -53,7 +53,8 @@
     <string name="shutdown">Herunterfahren</string>
     <string name="brightness">Helligkeit</string>
     <string name="adaptive">Adaptiv</string>
-    <string name="mode_night">Dunkles Design</string>
+    <string name="mode_dark">Dunkles Design</string>
+    <string name="night_light">Nachtlicht</string>
     <string name="touchscreen">Touchscreen</string>
     <string name="finger">Touch</string>
     <string name="notouch">Nicht-Touch</string>
@@ -101,9 +102,9 @@
     <string name="accessibility_medium">Mittel</string>
     <string name="accessibility_large">Groß</string>
     <string name="accessibility_desc">Passen Sie die Textgröße des Berichts für optimale Lesbarkeit an</string>
-    <string name="today">Heute\u20</string>
-    <string name="tomorrow">Morgen\u20</string>
-    <string name="in_days">In %1$d Tagen\u20</string>
+    <string name="today">Heute</string>
+    <string name="tomorrow">Morgen</string>
+    <string name="in_days">In %1$d Tagen</string>
     <string name="reset">Zurücksetzen</string>
     <string name="bye">Tschüss</string>
 </resources>
