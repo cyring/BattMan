@@ -82,6 +82,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
@@ -104,6 +105,9 @@ const val FONT_SIZE_SYSTEM: Int = 0
 const val FONT_SIZE_SMALL: Int = FONT_SIZE_SYSTEM + 1
 const val FONT_SIZE_MEDIUM: Int = FONT_SIZE_SMALL + 1
 const val FONT_SIZE_LARGE: Int = FONT_SIZE_MEDIUM + 1
+
+const val REPORT_LEFT: Int = 0
+const val REPORT_RIGHT: Int = 1
 
 const val THEME_SYSTEM: Int = 0
 const val THEME_LIGHT: Int = THEME_SYSTEM + 1
@@ -178,9 +182,11 @@ fun centralColor(): CentralColor {
     )
 }
 
+@Suppress("ArrayInDataClass")
 data class CentralFont (
     val appStyle: AppStyle,
     val reportStyle: TextStyle,
+    val minReportFontSize: Array<TextUnit>,
     val sysInfoStyle: TextStyle,
     val menuStyle: TextStyle,
     val captionStyle: TextStyle,
@@ -273,12 +279,18 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
             fontFamily = androidx.compose.ui.text.font.FontFamily.Default
         )
 
+        val minReportFontSize = arrayOf(
+            (reportStyle.fontSize.value * 0.65f).sp, /* REPORT_LEFT  */
+            (reportStyle.fontSize.value * 0.60f).sp  /* REPORT_RIGHT */
+        )
+
         CentralFont(
             appStyle = CentralFont.AppStyle(
                 title = typography.headlineMedium,
                 subTitle = typography.headlineSmall
             ),
             reportStyle = reportStyle,
+            minReportFontSize = minReportFontSize,
             sysInfoStyle = typography.bodySmall.copy(
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             ),
@@ -1251,6 +1263,10 @@ private fun BatteryReport(fontConfig: CentralFont, rows: List<BatteryReportRow>)
                             modifier = Modifier.weight(1.5f),
                             maxLines = 1,
                             softWrap = false,
+                            autoSize = TextAutoSize.StepBased(
+                                minFontSize = fontConfig.minReportFontSize[REPORT_LEFT],
+                                maxFontSize = fontConfig.reportStyle.fontSize
+                            ),
                             style = fontConfig.reportStyle
                         )
 
@@ -1260,7 +1276,10 @@ private fun BatteryReport(fontConfig: CentralFont, rows: List<BatteryReportRow>)
                             textAlign = TextAlign.Start,
                             maxLines = 1,
                             softWrap = false,
-                            overflow = TextOverflow.Clip,
+                            autoSize = TextAutoSize.StepBased(
+                                minFontSize = fontConfig.minReportFontSize[REPORT_RIGHT],
+                                maxFontSize = fontConfig.reportStyle.fontSize
+                            ),
                             style = fontConfig.reportStyle
                         )
                     }

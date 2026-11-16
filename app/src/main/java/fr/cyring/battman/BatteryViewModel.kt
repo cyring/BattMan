@@ -23,7 +23,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.core.text.util.LocalePreferences
-import fr.cyring.battman.ui.theme.Typography
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.toKotlinDuration
@@ -426,15 +425,12 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
             1 -> context.getString(R.string.tomorrow)
             else -> context.getString(R.string.in_days, diffDays)
         }
-        val dayStyle: SpanStyle = if ((dayString + timeString).length >= 14) SpanStyle(fontSize = Typography.labelSmall.fontSize) else SpanStyle()
 
         return buildAnnotatedString {
             withStyle(iconStyle) {
                 append(context.getString(iconId))
             }
-            withStyle(dayStyle) {
-                append(dayString)
-            }
+            append(dayString)
             append(timeString)
         }
     }
