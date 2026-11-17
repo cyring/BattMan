@@ -346,10 +346,13 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             Toast.makeText(this@MainActivity, "${e.message}", Toast.LENGTH_LONG).show()
         }
+
+        viewModel.stopTorchMonitoring()
     }
 
     override fun onResume() {
         super.onResume()
+
         viewModel.onScreenResumed()
 
         val filter = IntentFilter().apply {
@@ -357,6 +360,8 @@ class MainActivity : ComponentActivity() {
             addAction(Intent.ACTION_POWER_CONNECTED)
         }
         registerReceiver(batteryEventReceiver, filter)
+
+        viewModel.startTorchMonitoring()
     }
 
     @OptIn(ExperimentalMaterial3Api::class)

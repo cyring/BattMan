@@ -27,6 +27,7 @@ import fr.cyring.battman.R
 import fr.cyring.battman.waitingStyle
 import fr.cyring.battman.ReportRow
 import fr.cyring.battman.Diagnostics
+import fr.cyring.battman.camera.FlashlightMonitor
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -83,6 +84,8 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     )
 
     val timeTracker = TimeTracker()
+
+    val flashlightMonitor = FlashlightMonitor(application)
 
     companion object {
         var timeRemainingMs by mutableLongStateOf(-1L)
@@ -173,14 +176,14 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun buildData() {
-        report = Diagnostics.buildReport(getApplication(), powerManager, timeTracker, this)
+        report = Diagnostics.buildReport(getApplication(), powerManager, timeTracker, this, flashlightMonitor)
     }
     fun refreshData() {
         val context: Context = getApplication()
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         @Suppress("DEPRECATION")
         val intent = context.registerReceiver(null, filter)
-        if (intent != null) Diagnostics.updateReport(context, powerManager, timeTracker, intent, this)
+        if (intent != null) Diagnostics.updateReport(context, powerManager, timeTracker, intent, this, flashlightMonitor)
     }
 
     fun updateAutoRefresh(idx: Int, enabled: Boolean, time: Long) {
@@ -436,5 +439,13 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 R.string.duration_m_str_format, m) })
             return duration to formatTargetTime(ctx, ms, R.string._arrow_down_, M.arrowDown)
         }
+    }
+
+    fun startTorchMonitoring() {
+        flashlightMonitor.startListening()
+    }
+
+    fun stopTorchMonitoring() {
+        flashlightMonitor.stopListening()
     }
 }

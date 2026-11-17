@@ -16,6 +16,7 @@ import fr.cyring.battman.battery.BatteryViewModel.Companion.predictionMs
 import fr.cyring.battman.battery.BatteryViewModel.Companion.timeRemainingMs
 import fr.cyring.battman.battery.BatteryViewModel.Companion.updateBatteryLevel
 import fr.cyring.battman.battery.BatteryViewModel.TimeTracker
+import fr.cyring.battman.camera.FlashlightMonitor
 import fr.cyring.battman.display.DisplayInfo
 import fr.cyring.battman.display.Display
 import java.time.Duration
@@ -40,7 +41,8 @@ object Diagnostics {
         powerManager: PowerManager,
         timeTracker: TimeTracker,
         intent: Intent,
-        viewModel: BatteryViewModel
+        viewModel: BatteryViewModel,
+        flashLight: FlashlightMonitor
     ) {
         val batteryManager = context.getSystemService(
             Context.BATTERY_SERVICE
@@ -113,13 +115,15 @@ object Diagnostics {
         deepRow[C.TIMEOUT].value = Display.buildScreenTimeout(context, display)
         deepRow[C.SCR_SAV].value = Display.buildScreenSaver(context, display)
         deepRow[C.SCR_OFF].value = Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)
+        deepRow[C.TORCH].value = flashLight.buildTorchStatus(context)
     }
 
     fun buildReport(
         context: Context,
         powerManager: PowerManager,
         timeTracker: TimeTracker,
-        viewModel: BatteryViewModel
+        viewModel: BatteryViewModel,
+        flashLight: FlashlightMonitor
     ): List<ReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -209,7 +213,8 @@ object Diagnostics {
             /* SMOOTH   */  row(R.string.refresh_rate, Display.buildSmoothDisplay(context, display)),
             /* TIMEOUT  */  row(R.string.screen_timeout, Display.buildScreenTimeout(context, display)),
             /* SCR_SAV  */  row(R.string.screen_saver, Display.buildScreenSaver(context, display)),
-            /* SCR_OFF  */  row(R.string.screen_off, Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs))
+            /* SCR_OFF  */  row(R.string.screen_off, Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)),
+            /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context))
         )
         return listOf(
             row(R.string.level, AnnotatedString("$batteryPercent%")),
@@ -255,7 +260,11 @@ object Diagnostics {
 
             deepRow[C.TIMEOUT],
             deepRow[C.SCR_SAV],
-            deepRow[C.SCR_OFF]
+            deepRow[C.SCR_OFF],
+
+            ReportRow(context.getString(R.string._torch_), AnnotatedString("")),
+
+            deepRow[C.TORCH]
         )
     }
 }

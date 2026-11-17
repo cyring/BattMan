@@ -61,6 +61,7 @@
     <string name="screen_timeout">Délai d\'écran</string>
     <string name="screen_saver">Veille écran</string>
     <string name="screen_off">Chronomètre</string>
+    <string name="torch">Torche</string>
     <string name="off">Arrêt</string>
     <string name="cancel">Annuler</string>
     <string name="yes">Oui</string>
