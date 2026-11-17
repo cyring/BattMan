@@ -21,10 +21,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.DrawerValue
@@ -53,7 +51,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -72,8 +69,6 @@ import androidx.compose.material.icons.filled.ResetTv
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -84,34 +79,25 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import fr.cyring.battman.CentralColor.AlertBattery
+import fr.cyring.battman.battery.BatteryEventReceiver
+import fr.cyring.battman.battery.BatteryViewModel
+import fr.cyring.battman.ui.components.SelectionCell
+import fr.cyring.battman.ui.components.SelectionDialog
+import fr.cyring.battman.ui.theme.BattManTheme
+import fr.cyring.battman.ui.components.SelectionDialogPayload
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import fr.cyring.battman.ui.theme.BattManTheme
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-const val FONT_SIZE_SYSTEM: Int = 0
-const val FONT_SIZE_SMALL: Int = FONT_SIZE_SYSTEM + 1
-const val FONT_SIZE_MEDIUM: Int = FONT_SIZE_SMALL + 1
-const val FONT_SIZE_LARGE: Int = FONT_SIZE_MEDIUM + 1
-
 const val REPORT_LEFT: Int = 0
 const val REPORT_RIGHT: Int = 1
-
-const val THEME_SYSTEM: Int = 0
-const val THEME_LIGHT: Int = THEME_SYSTEM + 1
-const val THEME_DARK: Int = THEME_LIGHT + 1
 
 private val TIME_FORMATTERS: Array<(Int) -> String> = arrayOf(
     { sec -> "$sec s" },
@@ -132,31 +118,33 @@ private val icons = listOf(
 )
 
 private val maxValue = intArrayOf(
-        MAX_TIME_FOCUS.toInt() / 1000,
-        MAX_TIME_AWAY.toInt()
+        C.MAX_TIME_FOCUS.toInt() / 1000,
+        C.MAX_TIME_AWAY.toInt()
 )
 
-private val median = 10 + (maxValue[CASE_FOCUS] - 10) / 2
+private val median = 10 + (maxValue[C.CASE_FOCUS] - 10) / 2
 
 private val stepValuesList = arrayOf(
-    intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, median, maxValue[CASE_FOCUS]),
-    intArrayOf(0, 15, 30, 60, 90, 120, 240, maxValue[CASE_AWAY])
+    intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, median, maxValue[C.CASE_FOCUS]),
+    intArrayOf(0, 15, 30, 60, 90, 120, 240, maxValue[C.CASE_AWAY])
 )
 
 private val unitMultipliers = longArrayOf(1000L, 60_000L)
 
-val waitingStyle: SpanStyle = SpanStyle(
-    textDecoration = TextDecoration.None,
-    fontStyle = FontStyle.Italic,
-    fontWeight = FontWeight.ExtraLight
-)
+object M {
+    val waitingStyle: SpanStyle = SpanStyle(
+        textDecoration = TextDecoration.None,
+        fontStyle = FontStyle.Italic,
+        fontWeight = FontWeight.ExtraLight
+    )
 
-fun String.waitingStyle(): AnnotatedString = buildAnnotatedString {
-    withStyle(style = waitingStyle) { append(this@waitingStyle) }
+    val arrowDown: SpanStyle = SpanStyle(color = Color.Yellow)
+    val arrowUp: SpanStyle = SpanStyle(color = Color.Green)
 }
 
-val arrowDown: SpanStyle = SpanStyle(color = Color.Yellow)
-val arrowUp: SpanStyle = SpanStyle(color = Color.Green)
+fun String.waitingStyle(): AnnotatedString = buildAnnotatedString {
+    withStyle(style = M.waitingStyle) { append(this@waitingStyle) }
+}
 
 data class CentralColor (
     val nominal: AlertBattery,
@@ -205,7 +193,7 @@ data class CentralFont (
 }
 
 @Composable
-fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
+fun centralFont(fontSizeMode: Int = C.FONT_SIZE_SYSTEM): CentralFont {
     val typography = MaterialTheme.typography
     val density = LocalDensity.current
 
@@ -308,148 +296,6 @@ fun centralFont(fontSizeMode: Int = FONT_SIZE_SYSTEM): CentralFont {
     }
 }
 
-data class SelectionCell (
-    val resource: Int,
-    val value: Int
-)
-
-data class SelectionDialogPayload(
-    val titleRes: Int,
-    val cells: List<SelectionCell>,
-    val selectedVal: Int,
-    val descriptionRes: Int? = null,
-    val icon: ImageVector? = null,
-    val onItemSelected: (Int) -> Unit
-)
-
-@Composable
-fun SelectionDialog(
-    fontConfig: CentralFont,
-    titleRes: Int,
-    cells: List<SelectionCell>,
-    selectedVal: Int,
-    descriptionRes: Int? = null,
-    onDismissRequest: () -> Unit,
-    onItemSelected: (Int) -> Unit,
-    icon: ImageVector? = null
-) {
-    val windowSize = LocalWindowInfo.current.containerSize
-    val isLandscape = windowSize.width > windowSize.height
-    val widthFraction = if (isLandscape) 0.55f else 0.85f
-    val scrollState = rememberScrollState()
-
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(dismissOnBackPress = true, usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
-            modifier = Modifier.fillMaxWidth(widthFraction)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-                    .verticalScroll(scrollState)
-                    .drawWithContent {
-
-                        drawContent()
-
-                        if (scrollState.maxValue > 0) {
-                            val scrollStateMaxValue: Float = scrollState.maxValue.toFloat()
-                            val scrollStateValue: Float = scrollState.value.toFloat()
-
-                            val totalContentHeight = scrollStateMaxValue + size.height
-                            val scrollThumbHeight = 128f
-                            val thumbSize = Size(12f, scrollThumbHeight)
-                            val scrollProgress = scrollStateValue / scrollStateMaxValue
-                            val travelHeight = size.height - scrollThumbHeight
-                            val yOffset = (scrollProgress * travelHeight).coerceIn(0f, travelHeight)
-
-                            drawRect(
-                                color = Color.Gray.copy(alpha = 0.15f),
-                                size = Size(12f, totalContentHeight),
-                                topLeft = Offset(size.width + 24f, 0f)
-                            )
-                            drawRect(
-                                color = Color.Gray.copy(alpha = 0.45f),
-                                size = thumbSize,
-                                topLeft = Offset(size.width + 24f, yOffset)
-                            )
-                        }
-                    }
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (icon != null) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(end = 12.dp)
-                        )
-                    }
-                    Text(
-                        text = stringResource(titleRes),
-                        style = fontConfig.dialogStyle.title
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                cells.forEach { cell ->
-                    val isSelected = cell.value == selectedVal
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onItemSelected(cell.value)
-                                onDismissRequest()
-                            }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = isSelected,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = stringResource(cell.resource),
-                            style = fontConfig.dialogStyle.button
-                        )
-                    }
-                }
-
-                if (descriptionRes != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(descriptionRes),
-                        style = fontConfig.dialogStyle.description,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    FilledTonalButton(onClick = onDismissRequest) {
-                        Text(
-                            text = stringResource(R.string.cancel),
-                            style = fontConfig.dialogStyle.button
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 fun openThemeDialog(
     themeMode: Int,
     onItemSelected: (Int) -> Unit
@@ -457,9 +303,9 @@ fun openThemeDialog(
     return SelectionDialogPayload(
         titleRes = R.string.theme,
         cells = listOf(
-            SelectionCell(R.string.theme_light, THEME_LIGHT),
-            SelectionCell(R.string.theme_dark, THEME_DARK),
-            SelectionCell(R.string.theme_system, THEME_SYSTEM)
+            SelectionCell(R.string.theme_light, C.THEME_LIGHT),
+            SelectionCell(R.string.theme_dark, C.THEME_DARK),
+            SelectionCell(R.string.theme_system, C.THEME_SYSTEM)
         ),
         selectedVal = themeMode,
         descriptionRes = R.string.theme_desc,
@@ -475,10 +321,10 @@ fun openFontDialog(
     return SelectionDialogPayload(
         titleRes = R.string.accessibility,
         cells = listOf(
-            SelectionCell(R.string.accessibility_small, FONT_SIZE_SMALL),
-            SelectionCell(R.string.accessibility_medium, FONT_SIZE_MEDIUM),
-            SelectionCell(R.string.accessibility_large, FONT_SIZE_LARGE),
-            SelectionCell(R.string.theme_system, FONT_SIZE_SYSTEM)
+            SelectionCell(R.string.accessibility_small, C.FONT_SIZE_SMALL),
+            SelectionCell(R.string.accessibility_medium, C.FONT_SIZE_MEDIUM),
+            SelectionCell(R.string.accessibility_large, C.FONT_SIZE_LARGE),
+            SelectionCell(R.string.theme_system, C.FONT_SIZE_SYSTEM)
         ),
         selectedVal = fontSizeMode,
         descriptionRes = R.string.accessibility_desc,
@@ -530,14 +376,14 @@ class MainActivity : ComponentActivity() {
             val refreshTime = viewModel.refreshTime
             val report = viewModel.report
             val batteryPercent = BatteryViewModel.batteryPercent
-            val sysInfo = viewModel.sysInfo
+            val sysInfo = Diagnostics.buildSystemInfo()
             val themeMode = viewModel.themeMode
 
             var activeSelectionDialog by remember { mutableStateOf<SelectionDialogPayload?>(null) } /* Sentinel */
 
             val darkTheme = when (themeMode) {
-                THEME_LIGHT -> false
-                THEME_DARK -> true
+                C.THEME_LIGHT -> false
+                C.THEME_DARK -> true
                 else -> isSystemInDarkTheme()
             }
 
@@ -616,7 +462,7 @@ class MainActivity : ComponentActivity() {
                                             stringResource(R.string.agent_scheduler_help_text)
                                         )
 
-                                        listOf(CASE_FOCUS, CASE_AWAY).forEach { caseIdx ->
+                                        listOf(C.CASE_FOCUS, C.CASE_AWAY).forEach { caseIdx ->
                                             val steps = stepValuesList[caseIdx]
                                             val multiplier = unitMultipliers[caseIdx]
                                             val currentMs = refreshTime[caseIdx]
@@ -738,7 +584,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                         Slider(
                                             value = BatteryViewModel.batteryAlertThreshold.toFloat(),
-                                            valueRange = MIN_ALERT_THRESHOLD.toFloat()..MAX_ALERT_THRESHOLD.toFloat(),
+                                            valueRange = C.MIN_ALERT_THRESHOLD.toFloat()..C.MAX_ALERT_THRESHOLD.toFloat(),
                                             onValueChange = { newValue ->
                                                 viewModel.updateBatteryAlertThreshold(newValue.roundToInt())
                                             },
@@ -793,7 +639,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                         Slider(
                                             value = BatteryViewModel.maxAlerts.toFloat(),
-                                            valueRange = MIN_MAX_ALERTS.toFloat()..MAX_MAX_ALERTS.toFloat(),
+                                            valueRange = C.MIN_MAX_ALERTS.toFloat()..C.MAX_MAX_ALERTS.toFloat(),
                                             steps = 9,
                                             onValueChange = { newValue ->
                                                 viewModel.updateMaxAlerts(newValue.roundToInt())
@@ -864,8 +710,8 @@ class MainActivity : ComponentActivity() {
                                         HorizontalDivider()
 
                                         val themeText = when (themeMode) {
-                                            THEME_LIGHT -> stringResource(R.string.theme_light)
-                                            THEME_DARK -> stringResource(R.string.theme_dark)
+                                            C.THEME_LIGHT -> stringResource(R.string.theme_light)
+                                            C.THEME_DARK -> stringResource(R.string.theme_dark)
                                             else -> stringResource(R.string.theme_system)
                                         }
 
@@ -909,9 +755,9 @@ class MainActivity : ComponentActivity() {
 
                                         val fontSizeMode = viewModel.fontSizeMode
                                         val accessibilityText = when (fontSizeMode) {
-                                            FONT_SIZE_SMALL -> stringResource(R.string.accessibility_small)
-                                            FONT_SIZE_MEDIUM -> stringResource(R.string.accessibility_medium)
-                                            FONT_SIZE_LARGE -> stringResource(R.string.accessibility_large)
+                                            C.FONT_SIZE_SMALL -> stringResource(R.string.accessibility_small)
+                                            C.FONT_SIZE_MEDIUM -> stringResource(R.string.accessibility_medium)
+                                            C.FONT_SIZE_LARGE -> stringResource(R.string.accessibility_large)
                                             else -> stringResource(R.string.theme_system)
                                         }
 
@@ -975,19 +821,19 @@ class MainActivity : ComponentActivity() {
                                                 IconButton(
                                                     onClick = {
                                                         viewModel.updateAutoRefresh(
-                                                            CASE_FOCUS,
-                                                            DEFAULT_AUTO_FOCUS,
-                                                            DEFAULT_TIME_FOCUS
+                                                            C.CASE_FOCUS,
+                                                            C.DEFAULT_AUTO_FOCUS,
+                                                            C.DEFAULT_TIME_FOCUS
                                                         )
                                                         viewModel.updateAutoRefresh(
-                                                            CASE_AWAY,
-                                                            DEFAULT_AUTO_AWAY,
-                                                            DEFAULT_TIME_AWAY
+                                                            C.CASE_AWAY,
+                                                            C.DEFAULT_AUTO_AWAY,
+                                                            C.DEFAULT_TIME_AWAY
                                                         )
                                                         viewModel.updateBatteryAlertThreshold(
-                                                            BATTERY_ALERT_THRESHOLD
+                                                            C.BATTERY_ALERT_THRESHOLD
                                                         )
-                                                        viewModel.updateMaxAlerts(DEFAULT_MAX_ALERTS)
+                                                        viewModel.updateMaxAlerts(C.DEFAULT_MAX_ALERTS)
                                                         Toast.makeText(application, R.string.reset, Toast.LENGTH_SHORT).show()
                                                     }
                                                 ) {
@@ -1095,14 +941,14 @@ class MainActivity : ComponentActivity() {
                             if (BatteryViewModel.predictionMs > 0L) {
                                 val formattedDuration = BatteryViewModel.predictionMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
-                                    withStyle(arrowDown) { append(stringResource(R.string._arrow_down_) + ' ') } /* ⬇ */
+                                    withStyle(M.arrowDown) { append(stringResource(R.string._arrow_down_) + ' ') } /* ⬇ */
                                     append(formattedDuration)
                                 }
                             } else if (BatteryViewModel.timeRemainingMs > 0L) {
                                 signColor = MaterialTheme.colorScheme.secondary
                                 val formattedDuration = BatteryViewModel.timeRemainingMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
-                                    withStyle(arrowUp) { append(stringResource(R.string._arrow_up_) + ' ') } /* ⬆ */
+                                    withStyle(M.arrowUp) { append(stringResource(R.string._arrow_up_) + ' ') } /* ⬆ */
                                     append(formattedDuration)
                                 }
                             } else {
@@ -1194,7 +1040,7 @@ class MainActivity : ComponentActivity() {
                                         .fillMaxSize()
                                         .verticalScroll(rememberScrollState())
                                 ) {
-                                    BatteryReport(fontConfig, rows = report)
+                                    DiagnosticsReport(fontConfig, rows = report)
                                 }
                             }
                             Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.5f))
@@ -1230,7 +1076,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun BatteryReport(fontConfig: CentralFont, rows: List<BatteryReportRow>) {
+private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {

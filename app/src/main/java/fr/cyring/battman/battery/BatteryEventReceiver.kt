@@ -1,4 +1,4 @@
-package fr.cyring.battman
+package fr.cyring.battman.battery
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,6 +9,9 @@ import android.content.Intent
 import android.os.Build
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import fr.cyring.battman.MainActivity
+import fr.cyring.battman.C
+import fr.cyring.battman.R
 
 const val NOTIFICATION_BATTERY_ALERT_ID = 1001
 
@@ -57,7 +60,7 @@ class BatteryEventReceiver : BroadcastReceiver() {
     companion object {
         private var alertShown = false
         private var alertCount = 0
-        var maxAlerts = DEFAULT_MAX_ALERTS
+        var maxAlerts = C.DEFAULT_MAX_ALERTS
 
         fun resetAlertCount() {
             alertCount = 0

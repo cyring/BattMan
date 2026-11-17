@@ -1,4 +1,4 @@
-package fr.cyring.battman
+package fr.cyring.battman.battery
 
 import android.content.Context
 import android.content.Intent
@@ -9,7 +9,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
-import fr.cyring.battman.BatteryViewModel.Companion.updateBatteryLevel
+import fr.cyring.battman.battery.BatteryViewModel.Companion.updateBatteryLevel
 
 class BatteryAlertWorker(
     appContext: Context,
