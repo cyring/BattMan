@@ -10,12 +10,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
-import fr.cyring.battman.battery.BatteryViewModel
-import fr.cyring.battman.battery.BatteryViewModel.Companion.batteryPercent
-import fr.cyring.battman.battery.BatteryViewModel.Companion.predictionMs
-import fr.cyring.battman.battery.BatteryViewModel.Companion.timeRemainingMs
-import fr.cyring.battman.battery.BatteryViewModel.Companion.updateBatteryLevel
-import fr.cyring.battman.battery.BatteryViewModel.TimeTracker
+import fr.cyring.battman.battery.BatteryMonitor
+import fr.cyring.battman.battery.BatteryMonitor.Companion.batteryPercent
+import fr.cyring.battman.battery.BatteryMonitor.Companion.predictionMs
+import fr.cyring.battman.battery.BatteryMonitor.Companion.timeRemainingMs
+import fr.cyring.battman.battery.BatteryMonitor.Companion.updateBatteryLevel
+import fr.cyring.battman.Controller.TimeTracker
 import fr.cyring.battman.camera.FlashlightMonitor
 import fr.cyring.battman.display.DisplayInfo
 import fr.cyring.battman.display.Display
@@ -41,7 +41,7 @@ object Diagnostics {
         powerManager: PowerManager,
         timeTracker: TimeTracker,
         intent: Intent,
-        viewModel: BatteryViewModel,
+        batteryMonitor: BatteryMonitor,
         flashLight: FlashlightMonitor
     ) {
         val batteryManager = context.getSystemService(
@@ -59,7 +59,7 @@ object Diagnostics {
 
         updateBatteryLevel(intent)
 
-        val status = viewModel.buildStatus(context)
+        val status = batteryMonitor.buildStatus(context)
 
         val extraTech = intent.getStringExtra(
             BatteryManager.EXTRA_TECHNOLOGY
@@ -82,28 +82,28 @@ object Diagnostics {
             -1L
         }
 
-        val (timeRemaining, fullyChargedAt) = viewModel.buildRemaining(context, timeRemainingMs)
-        val (prediction, totallyEmptyAt) = viewModel.buildPrediction(context, predictionMs, status)
+        val (timeRemaining, fullyChargedAt) = batteryMonitor.buildRemaining(context, timeRemainingMs)
+        val (prediction, totallyEmptyAt) = batteryMonitor.buildPrediction(context, predictionMs, status)
 
         val display: DisplayInfo = Display.collect(context)
 
-        deepRow[C.CYCLE].value = viewModel.buildCycle(context, count)
-        deepRow[C.STATUS].value = viewModel.buildStatus(context)
-        deepRow[C.HEALTH].value = viewModel.buildHealth(context, intent)
-        deepRow[C.TECH].value = viewModel.buildTechnology(extraTech)
-        deepRow[C.VOLTAGE].value = viewModel.buildVoltage(context, extra(BatteryManager.EXTRA_VOLTAGE))
-        deepRow[C.TEMP].value = viewModel.buildTemperature(context, extra(BatteryManager.EXTRA_TEMPERATURE))
-        deepRow[C.ENERGY].value = viewModel.buildEnergyCounter(context, batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER))
-        deepRow[C.CHARGE].value = viewModel.buildChargeCounter(context, batteryManager)
-        deepRow[C.CURRENT].value = viewModel.buildCurrentNow(context, batteryManager)
-        deepRow[C.AVG].value = viewModel.buildCurrentAverage(context, batteryManager)
-        deepRow[C.PLUG].value = viewModel.buildBatteryPlug(context, intent)
+        deepRow[C.CYCLE].value = batteryMonitor.buildCycle(context, count)
+        deepRow[C.STATUS].value = batteryMonitor.buildStatus(context)
+        deepRow[C.HEALTH].value = batteryMonitor.buildHealth(context, intent)
+        deepRow[C.TECH].value = batteryMonitor.buildTechnology(extraTech)
+        deepRow[C.VOLTAGE].value = batteryMonitor.buildVoltage(context, extra(BatteryManager.EXTRA_VOLTAGE))
+        deepRow[C.TEMP].value = batteryMonitor.buildTemperature(context, extra(BatteryManager.EXTRA_TEMPERATURE))
+        deepRow[C.ENERGY].value = batteryMonitor.buildEnergyCounter(context, batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER))
+        deepRow[C.CHARGE].value = batteryMonitor.buildChargeCounter(context, batteryManager)
+        deepRow[C.CURRENT].value = batteryMonitor.buildCurrentNow(context, batteryManager)
+        deepRow[C.AVG].value = batteryMonitor.buildCurrentAverage(context, batteryManager)
+        deepRow[C.PLUG].value = batteryMonitor.buildBatteryPlug(context, intent)
         deepRow[C.REMAIN].value = timeRemaining
         deepRow[C.FULL].value = fullyChargedAt
-        deepRow[C.BAT_SAV].value = viewModel.buildBatterySaver(context)
-        deepRow[C.THERMAL].value = viewModel.buildThermal(context)
-        deepRow[C.PRESENT].value = viewModel.buildBatteryPresent(context, intent)
-        deepRow[C.BAT_LOW].value = viewModel.buildLowBattery(context, intent)
+        deepRow[C.BAT_SAV].value = batteryMonitor.buildBatterySaver(context)
+        deepRow[C.THERMAL].value = batteryMonitor.buildThermal(context)
+        deepRow[C.PRESENT].value = batteryMonitor.buildBatteryPresent(context, intent)
+        deepRow[C.BAT_LOW].value = batteryMonitor.buildLowBattery(context, intent)
         deepRow[C.PREDICT].value = prediction
         deepRow[C.EMPTY].value = totallyEmptyAt
         deepRow[C.BRIGHT].value = Display.buildBrightness(context, display)
@@ -122,7 +122,7 @@ object Diagnostics {
         context: Context,
         powerManager: PowerManager,
         timeTracker: TimeTracker,
-        viewModel: BatteryViewModel,
+        batteryMonitor: BatteryMonitor,
         flashLight: FlashlightMonitor
     ): List<ReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
@@ -151,7 +151,7 @@ object Diagnostics {
 
         updateBatteryLevel(intent)
 
-        val status = viewModel.buildStatus(context)
+        val status = batteryMonitor.buildStatus(context)
         val energy = batteryManager.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER)
 
         val voltageMv = extra(BatteryManager.EXTRA_VOLTAGE)
@@ -178,31 +178,31 @@ object Diagnostics {
             -1L
         }
 
-        val (timeRemaining, fullyChargedAt) = viewModel.buildRemaining(context, timeRemainingMs)
-        val (prediction, totallyEmptyAt) = viewModel.buildPrediction(context, predictionMs, status)
+        val (timeRemaining, fullyChargedAt) = batteryMonitor.buildRemaining(context, timeRemainingMs)
+        val (prediction, totallyEmptyAt) = batteryMonitor.buildPrediction(context, predictionMs, status)
 
         val display: DisplayInfo = Display.collect(context)
 
         fun row(labelId: Int, value: AnnotatedString) = ReportRow(context.getString(labelId), value)
 
         deepRow = arrayOf(
-            /* CYCLE    */  row(R.string.cycle, viewModel.buildCycle(context, count)),
-            /* STATUS   */  row(R.string.state, viewModel.buildStatus(context)),
-            /* HEALTH   */  row(R.string.health, viewModel.buildHealth(context, intent)),
-            /* TECH     */  row(R.string.technology, viewModel.buildTechnology(extraTech)),
-            /* VOLTAGE  */  row(R.string.voltage, viewModel.buildVoltage(context, voltageMv)),
-            /* TEMP     */  row(R.string.temperature, viewModel.buildTemperature(context, batteryTemp)),
-            /* ENERGY   */  row(R.string.energy_counter, viewModel.buildEnergyCounter(context, energy)),
-            /* CHARGE   */  row(R.string.charge_counter, viewModel.buildChargeCounter(context, batteryManager)),
-            /* CURRENT  */  row(R.string.current_now, viewModel.buildCurrentNow(context, batteryManager)),
-            /* AVG      */  row(R.string.current_average, viewModel.buildCurrentAverage(context, batteryManager)),
-            /* PLUG     */  row(R.string.battery_plugged, viewModel.buildBatteryPlug(context, intent)),
+            /* CYCLE    */  row(R.string.cycle, batteryMonitor.buildCycle(context, count)),
+            /* STATUS   */  row(R.string.state, batteryMonitor.buildStatus(context)),
+            /* HEALTH   */  row(R.string.health, batteryMonitor.buildHealth(context, intent)),
+            /* TECH     */  row(R.string.technology, batteryMonitor.buildTechnology(extraTech)),
+            /* VOLTAGE  */  row(R.string.voltage, batteryMonitor.buildVoltage(context, voltageMv)),
+            /* TEMP     */  row(R.string.temperature, batteryMonitor.buildTemperature(context, batteryTemp)),
+            /* ENERGY   */  row(R.string.energy_counter, batteryMonitor.buildEnergyCounter(context, energy)),
+            /* CHARGE   */  row(R.string.charge_counter, batteryMonitor.buildChargeCounter(context, batteryManager)),
+            /* CURRENT  */  row(R.string.current_now, batteryMonitor.buildCurrentNow(context, batteryManager)),
+            /* AVG      */  row(R.string.current_average, batteryMonitor.buildCurrentAverage(context, batteryManager)),
+            /* PLUG     */  row(R.string.battery_plugged, batteryMonitor.buildBatteryPlug(context, intent)),
             /* REMAIN   */  row(R.string.time_remaining, timeRemaining),
             /* FULL     */  row(R.string.fully_charged, fullyChargedAt),
-            /* BAT_SAV  */  row(R.string.battery_saver, viewModel.buildBatterySaver(context)),
-            /* THERMAL  */  row(R.string.thermal_status, viewModel.buildThermal(context)),
-            /* PRESENT  */  row(R.string.battery_present, viewModel.buildBatteryPresent(context, intent)),
-            /* BAT_LOW  */  row(R.string.battery_low, viewModel.buildLowBattery(context, intent)),
+            /* BAT_SAV  */  row(R.string.battery_saver, batteryMonitor.buildBatterySaver(context)),
+            /* THERMAL  */  row(R.string.thermal_status, batteryMonitor.buildThermal(context)),
+            /* PRESENT  */  row(R.string.battery_present, batteryMonitor.buildBatteryPresent(context, intent)),
+            /* BAT_LOW  */  row(R.string.battery_low, batteryMonitor.buildLowBattery(context, intent)),
             /* PREDICT  */  row(R.string.prediction, prediction),
             /* EMPTY    */  row(R.string.totally_empty, totallyEmptyAt),
             /* BRIGHT   */  row(R.string.brightness, Display.buildBrightness(context, display)),

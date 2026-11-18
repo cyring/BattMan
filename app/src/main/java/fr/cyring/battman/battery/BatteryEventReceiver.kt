@@ -12,6 +12,9 @@ import androidx.core.app.NotificationCompat
 import fr.cyring.battman.MainActivity
 import fr.cyring.battman.C
 import fr.cyring.battman.R
+import fr.cyring.battman.battery.BatteryMonitor.Companion.updateBatteryLevel
+import fr.cyring.battman.battery.BatteryMonitor.Companion.batteryAlertThreshold
+import fr.cyring.battman.battery.BatteryMonitor.Companion.batteryPercent
 
 const val NOTIFICATION_BATTERY_ALERT_ID = 1001
 
@@ -78,18 +81,18 @@ class BatteryEventReceiver : BroadcastReceiver() {
             intent: Intent,
             condition: (mask: Int) -> Boolean
         ) {
-            val mask = BatteryViewModel.updateBatteryLevel(intent)
+            val mask = updateBatteryLevel(intent)
 
-            val isAlertThresholdMet = BatteryViewModel.batteryAlertThreshold > 0
-                    && BatteryViewModel.batteryPercent <= BatteryViewModel.batteryAlertThreshold
+            val isAlertThresholdMet = batteryAlertThreshold > 0
+                    && batteryPercent <= batteryAlertThreshold
 
             if (isAlertThresholdMet && condition(mask)) {
                 if (maxAlerts == 0 || alertCount < maxAlerts) {
-                    showLowBatteryNotification(context, BatteryViewModel.batteryPercent, NOTIFICATION_BATTERY_ALERT_ID)
+                    showLowBatteryNotification(context, batteryPercent, NOTIFICATION_BATTERY_ALERT_ID)
                     alertShown = true
                     alertCount++
                 }
-            } else if (alertShown || BatteryViewModel.batteryPercent > BatteryViewModel.batteryAlertThreshold) {
+            } else if (alertShown || batteryPercent > batteryAlertThreshold) {
                 cancelNotification(context, NOTIFICATION_BATTERY_ALERT_ID)
             }
         }

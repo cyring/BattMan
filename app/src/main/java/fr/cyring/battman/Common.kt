@@ -1,5 +1,7 @@
 package fr.cyring.battman
 
+import android.content.SharedPreferences
+
 object C {
     const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
 
@@ -69,4 +71,14 @@ object C {
     const val SCR_SAV: Int = TIMEOUT + 1
     const val SCR_OFF: Int = SCR_SAV + 1
     const val TORCH: Int = SCR_OFF + 1
+}
+
+fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
+    val value = getLong(key, default)
+    return if (value in min..max) value else default
+}
+
+fun SharedPreferences.getIntInBounds(key: String, min: Int, max: Int, default: Int): Int {
+    val value = getInt(key, default)
+    return if (value in min..max) value else default
 }

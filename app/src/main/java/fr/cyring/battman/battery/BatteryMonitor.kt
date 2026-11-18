@@ -1,33 +1,24 @@
 package fr.cyring.battman.battery
 
-import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
 import androidx.compose.runtime.*
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import android.content.SharedPreferences
 import android.text.format.DateFormat
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.core.content.edit
 import androidx.core.text.util.LocalePreferences
 import fr.cyring.battman.C
 import fr.cyring.battman.M
 import fr.cyring.battman.R
 import fr.cyring.battman.waitingStyle
-import fr.cyring.battman.ReportRow
-import fr.cyring.battman.Diagnostics
-import fr.cyring.battman.camera.FlashlightMonitor
+import fr.cyring.battman.getIntInBounds
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -51,41 +42,11 @@ object BatteryTrendMask {
     const val STATE_RESUMED = 1 shl 9           // Bit 9  (0b00000000000000000000001000000000)
 }
 
-fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
-    val value = getLong(key, default)
-    return if (value in min..max) value else default
-}
-
-fun SharedPreferences.getIntInBounds(key: String, min: Int, max: Int, default: Int): Int {
-    val value = getInt(key, default)
-    return if (value in min..max) value else default
-}
-
-enum class RefreshCase(
-    val prefKey: String,
-    val prefTimeKey: String,
-    val minTimeMs: Long,
-    val maxTimeMs: Long,
-    val defaultTimeMs: Long,
-    val defaultAuto: Boolean = true
-) {
-    FOCUS(C.PREF_FOCUS, C.PREF_TIME_FOCUS, C.MIN_TIME_FOCUS, C.MAX_TIME_FOCUS, C.DEFAULT_TIME_FOCUS, C.DEFAULT_AUTO_FOCUS),
-    AWAY(C.PREF_AWAY, C.PREF_TIME_AWAY, C.MIN_TIME_AWAY * 60_000L, C.MAX_TIME_AWAY * 60_000L, C.DEFAULT_TIME_AWAY * 60_000L, C.DEFAULT_AUTO_AWAY)
-}
-
-class BatteryViewModel(application: Application) : AndroidViewModel(application) {
-    private val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
-    private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
+class BatteryMonitor(context: Context) {
+    private val prefs = context.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
+    private val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
     var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
-    data class TimeTracker(
-        var screenOffStartedAt: Long = 0L,
-        var lastScreenOffDurationMs: Long = -1L
-    )
-
-    val timeTracker = TimeTracker()
-
-    val flashlightMonitor = FlashlightMonitor(application)
 
     companion object {
         var timeRemainingMs by mutableLongStateOf(-1L)
@@ -136,130 +97,22 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    val autoRefresh = mutableStateListOf(
-        prefs.getBoolean(RefreshCase.FOCUS.prefKey, RefreshCase.FOCUS.defaultAuto),
-        prefs.getBoolean(RefreshCase.AWAY.prefKey, RefreshCase.AWAY.defaultAuto)
-    )
-
-    val refreshTime = mutableStateListOf(
-        prefs.getLongInBounds(RefreshCase.FOCUS.prefTimeKey, RefreshCase.FOCUS.minTimeMs, RefreshCase.FOCUS.maxTimeMs, prefs.getLong("refreshTime", RefreshCase.FOCUS.defaultTimeMs)),
-        prefs.getLongInBounds(RefreshCase.AWAY.prefTimeKey, RefreshCase.AWAY.minTimeMs, RefreshCase.AWAY.maxTimeMs, RefreshCase.AWAY.defaultTimeMs)
-    )
-
-    var report by mutableStateOf<List<ReportRow>>(emptyList())
-
-    private var refreshJob: Job? = null
-
     init {
         batteryAlertThreshold = prefs.getIntInBounds("batteryAlertThreshold", C.MIN_ALERT_THRESHOLD, C.MAX_ALERT_THRESHOLD, C.BATTERY_ALERT_THRESHOLD)
         maxAlerts = prefs.getIntInBounds("maxAlerts", C.MIN_MAX_ALERTS, C.MAX_MAX_ALERTS, C.DEFAULT_MAX_ALERTS)
         BatteryEventReceiver.maxAlerts = maxAlerts
-        tongue[C.CASE_FOCUS] = Locale.getDefault()
-        tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
-        buildData()
-
-        // Reactive observer: automatically manages the foreground loop when CASE_FOCUS settings change
-        viewModelScope.launch {
-            snapshotFlow { autoRefresh[C.CASE_FOCUS] to refreshTime[C.CASE_FOCUS] }
-                .collect { (enabled, time) ->
-                    refreshJob?.cancel()
-                    if (enabled) {
-                        refreshJob = viewModelScope.launch {
-                            while (true) {
-                                delay(time.milliseconds)
-                                refreshData()
-                            }
-                        }
-                    }
-                }
-        }
-    }
-
-    fun buildData() {
-        report = Diagnostics.buildReport(getApplication(), powerManager, timeTracker, this, flashlightMonitor)
-    }
-    fun refreshData() {
-        val context: Context = getApplication()
-        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        @Suppress("DEPRECATION")
-        val intent = context.registerReceiver(null, filter)
-        if (intent != null) Diagnostics.updateReport(context, powerManager, timeTracker, intent, this, flashlightMonitor)
-    }
-
-    fun updateAutoRefresh(idx: Int, enabled: Boolean, time: Long) {
-        val config = RefreshCase.entries[idx]
-        autoRefresh[idx] = enabled
-        refreshTime[idx] = time
-        prefs.edit()
-            .putBoolean(config.prefKey, enabled)
-            .putLong(config.prefTimeKey, time)
-            .apply()
-    }
-
-    // Function pointer callbacks table (C-style function pointer array)
-    val updateAutoRefreshHandlers: Array<(Boolean, Long) -> Unit> = arrayOf(
-        { enabled, time -> updateAutoRefresh(C.CASE_FOCUS, enabled, time) },
-        { enabled, time -> updateAutoRefresh(C.CASE_AWAY, enabled, time) }
-    )
-
-    var themeMode by mutableIntStateOf(prefs.getInt("themeMode", C.THEME_SYSTEM))
-
-    fun updateThemeMode(mode: Int) {
-        themeMode = mode
-        prefs.edit().putInt("themeMode", mode).apply()
-    }
-
-    var fontSizeMode by mutableIntStateOf(prefs.getInt("fontSizeMode", C.FONT_SIZE_SYSTEM))
-
-    fun updateFontSizeMode(mode: Int) {
-        fontSizeMode = mode
-        prefs.edit().putInt("fontSizeMode", mode).apply()
     }
 
     fun updateBatteryAlertThreshold(value: Int) {
         batteryAlertThreshold = value
-        prefs.edit().putInt("batteryAlertThreshold", value).apply()
+        prefs.edit { putInt("batteryAlertThreshold", value) }
     }
 
     fun updateMaxAlerts(value: Int) {
         maxAlerts = value
         BatteryEventReceiver.maxAlerts = value
         BatteryEventReceiver.resetAlertCount()
-        prefs.edit().putInt("maxAlerts", value).apply()
-    }
-
-    fun onScreenPaused() {
-        val context: Context = getApplication()
-        if (!powerManager.isInteractive && timeTracker.screenOffStartedAt == 0L) {
-            timeTracker.screenOffStartedAt = System.currentTimeMillis()
-        }
-        val awayMinutes = refreshTime[C.CASE_AWAY] / 60_000L
-        if (autoRefresh[C.CASE_AWAY] && awayMinutes > 0 && batteryAlertThreshold > 0) {
-            BatteryAlertWorker.schedule(context, awayMinutes)
-        } else {
-            BatteryAlertWorker.cancel(context)
-        }
-        tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
-    }
-
-    fun onScreenResumed() {
-        val context: Context = getApplication()
-        BatteryAlertWorker.cancel(context)
-        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        if (intent != null) {
-            updateBatteryLevel(intent, isResumedEvent = true)
-        }
-        if (powerManager.isInteractive && timeTracker.screenOffStartedAt > 0L) {
-            timeTracker.lastScreenOffDurationMs = System.currentTimeMillis() - timeTracker.screenOffStartedAt
-            timeTracker.screenOffStartedAt = 0L
-        }
-        tongue[C.CASE_FOCUS] = Locale.getDefault()
-        if (tongue[C.CASE_FOCUS] != tongue[C.CASE_AWAY]) {
-            buildData()
-            tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
-        } else {
-            refreshData()
-        }
+        prefs.edit { putInt("maxAlerts", value) }
     }
 
     private fun formatTargetTime(context: Context, durationMs: Long, iconId: Int, iconStyle: SpanStyle): AnnotatedString {
@@ -439,13 +292,5 @@ class BatteryViewModel(application: Application) : AndroidViewModel(application)
                 R.string.duration_m_str_format, m) })
             return duration to formatTargetTime(ctx, ms, R.string._arrow_down_, M.arrowDown)
         }
-    }
-
-    fun startTorchMonitoring() {
-        flashlightMonitor.startListening()
-    }
-
-    fun stopTorchMonitoring() {
-        flashlightMonitor.stopListening()
     }
 }

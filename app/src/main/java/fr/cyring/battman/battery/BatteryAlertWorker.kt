@@ -9,7 +9,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
-import fr.cyring.battman.battery.BatteryViewModel.Companion.updateBatteryLevel
+import fr.cyring.battman.battery.BatteryMonitor.Companion.updateBatteryLevel
 
 class BatteryAlertWorker(
     appContext: Context,

@@ -86,7 +86,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import fr.cyring.battman.CentralColor.AlertBattery
 import fr.cyring.battman.battery.BatteryEventReceiver
-import fr.cyring.battman.battery.BatteryViewModel
+import fr.cyring.battman.battery.BatteryMonitor
 import fr.cyring.battman.ui.components.SelectionCell
 import fr.cyring.battman.ui.components.SelectionDialog
 import fr.cyring.battman.ui.theme.BattManTheme
@@ -334,12 +334,13 @@ fun openFontDialog(
 }
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: BatteryViewModel by viewModels()
+    private val controller: Controller by viewModels()
+    private val batteryMonitor by lazy { BatteryMonitor(application) }
     private val batteryEventReceiver = BatteryEventReceiver()
 
     override fun onPause() {
         super.onPause()
-        viewModel.onScreenPaused()
+        controller.onScreenPaused()
 
         try {
             unregisterReceiver(batteryEventReceiver)
@@ -347,13 +348,13 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this@MainActivity, "${e.message}", Toast.LENGTH_LONG).show()
         }
 
-        viewModel.stopTorchMonitoring()
+        controller.stopTorchMonitoring()
     }
 
     override fun onResume() {
         super.onResume()
 
-        viewModel.onScreenResumed()
+        controller.onScreenResumed()
 
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_BATTERY_CHANGED)
@@ -361,13 +362,15 @@ class MainActivity : ComponentActivity() {
         }
         registerReceiver(batteryEventReceiver, filter)
 
-        viewModel.startTorchMonitoring()
+        controller.startTorchMonitoring()
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        controller.init()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -376,13 +379,13 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val fontConfig: CentralFont = centralFont(viewModel.fontSizeMode)
-            val autoRefresh = viewModel.autoRefresh
-            val refreshTime = viewModel.refreshTime
-            val report = viewModel.report
-            val batteryPercent = BatteryViewModel.batteryPercent
+            val fontConfig: CentralFont = centralFont(controller.fontSizeMode)
+            val autoRefresh = controller.autoRefresh
+            val refreshTime = controller.refreshTime
+            val report = controller.report
+            val batteryPercent = BatteryMonitor.batteryPercent
             val sysInfo = Diagnostics.buildSystemInfo()
-            val themeMode = viewModel.themeMode
+            val themeMode = controller.themeMode
 
             var activeSelectionDialog by remember { mutableStateOf<SelectionDialogPayload?>(null) } /* Sentinel */
 
@@ -538,9 +541,9 @@ class MainActivity : ComponentActivity() {
                                                     val index = newValue.roundToInt().coerceIn(0, steps.lastIndex)
                                                     val units = steps[index]
                                                     if (units == 0) {
-                                                        viewModel.updateAutoRefreshHandlers[caseIdx](false, currentMs)
+                                                        controller.updateAutoRefreshHandlers[caseIdx](false, currentMs)
                                                     } else {
-                                                        viewModel.updateAutoRefreshHandlers[caseIdx](true, units * multiplier)
+                                                        controller.updateAutoRefreshHandlers[caseIdx](true, units * multiplier)
                                                     }
                                                 },
                                                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp)
@@ -579,19 +582,19 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
                                             Text(
-                                                text = if (BatteryViewModel.batteryAlertThreshold == 0) {
+                                                text = if (BatteryMonitor.batteryAlertThreshold == 0) {
                                                     stringResource(R.string.off)
                                                 } else {
-                                                    BatteryViewModel.batteryAlertThreshold.toString() + " %"
+                                                    BatteryMonitor.batteryAlertThreshold.toString() + " %"
                                                 },
                                                 style = fontConfig.menuStyle
                                             )
                                         }
                                         Slider(
-                                            value = BatteryViewModel.batteryAlertThreshold.toFloat(),
+                                            value = BatteryMonitor.batteryAlertThreshold.toFloat(),
                                             valueRange = C.MIN_ALERT_THRESHOLD.toFloat()..C.MAX_ALERT_THRESHOLD.toFloat(),
                                             onValueChange = { newValue ->
-                                                viewModel.updateBatteryAlertThreshold(newValue.roundToInt())
+                                                batteryMonitor.updateBatteryAlertThreshold(newValue.roundToInt())
                                             },
                                             track = { sliderState ->
                                                 SliderDefaults.Track(
@@ -634,20 +637,20 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
                                             Text(
-                                                text = if (BatteryViewModel.maxAlerts == 0) {
+                                                text = if (BatteryMonitor.maxAlerts == 0) {
                                                     "∞"
                                                 } else {
-                                                    BatteryViewModel.maxAlerts.toString()
+                                                    BatteryMonitor.maxAlerts.toString()
                                                 },
                                                 style = fontConfig.menuStyle
                                             )
                                         }
                                         Slider(
-                                            value = BatteryViewModel.maxAlerts.toFloat(),
+                                            value = BatteryMonitor.maxAlerts.toFloat(),
                                             valueRange = C.MIN_MAX_ALERTS.toFloat()..C.MAX_MAX_ALERTS.toFloat(),
                                             steps = 9,
                                             onValueChange = { newValue ->
-                                                viewModel.updateMaxAlerts(newValue.roundToInt())
+                                                batteryMonitor.updateMaxAlerts(newValue.roundToInt())
                                             },
                                             track = { sliderState ->
                                                 SliderDefaults.Track(
@@ -728,7 +731,7 @@ class MainActivity : ComponentActivity() {
                                                     activeSelectionDialog = openThemeDialog(
                                                         themeMode = themeMode,
                                                         onItemSelected = { newValue ->
-                                                            viewModel.updateThemeMode(newValue)
+                                                            controller.updateThemeMode(newValue)
                                                         }
                                                     )
                                                 }
@@ -758,7 +761,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                         HorizontalDivider()
 
-                                        val fontSizeMode = viewModel.fontSizeMode
+                                        val fontSizeMode = controller.fontSizeMode
                                         val accessibilityText = when (fontSizeMode) {
                                             C.FONT_SIZE_SMALL -> stringResource(R.string.accessibility_small)
                                             C.FONT_SIZE_MEDIUM -> stringResource(R.string.accessibility_medium)
@@ -772,9 +775,9 @@ class MainActivity : ComponentActivity() {
                                                 .fillMaxWidth()
                                                 .clickable {
                                                     activeSelectionDialog = openFontDialog(
-                                                        fontSizeMode = viewModel.fontSizeMode,
+                                                        fontSizeMode = controller.fontSizeMode,
                                                         onItemSelected = { newValue ->
-                                                            viewModel.updateFontSizeMode(newValue)
+                                                            controller.updateFontSizeMode(newValue)
                                                         }
                                                     )
                                                 }
@@ -825,20 +828,20 @@ class MainActivity : ComponentActivity() {
                                             ) {
                                                 IconButton(
                                                     onClick = {
-                                                        viewModel.updateAutoRefresh(
+                                                        controller.updateAutoRefresh(
                                                             C.CASE_FOCUS,
                                                             C.DEFAULT_AUTO_FOCUS,
                                                             C.DEFAULT_TIME_FOCUS
                                                         )
-                                                        viewModel.updateAutoRefresh(
+                                                        controller.updateAutoRefresh(
                                                             C.CASE_AWAY,
                                                             C.DEFAULT_AUTO_AWAY,
                                                             C.DEFAULT_TIME_AWAY
                                                         )
-                                                        viewModel.updateBatteryAlertThreshold(
+                                                        batteryMonitor.updateBatteryAlertThreshold(
                                                             C.BATTERY_ALERT_THRESHOLD
                                                         )
-                                                        viewModel.updateMaxAlerts(C.DEFAULT_MAX_ALERTS)
+                                                        batteryMonitor.updateMaxAlerts(C.DEFAULT_MAX_ALERTS)
                                                         Toast.makeText(application, R.string.reset, Toast.LENGTH_SHORT).show()
                                                     }
                                                 ) {
@@ -918,7 +921,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 IconButton(
                                     onClick = {
-                                        viewModel.refreshData()
+                                        controller.refreshData()
                                     }
                                 ) {
                                     Icon(
@@ -936,22 +939,22 @@ class MainActivity : ComponentActivity() {
                             var signColor: Color
                             val signText: AnnotatedString
 
-                            if (batteryPercent > BatteryViewModel.batteryAlertThreshold) {
+                            if (batteryPercent > BatteryMonitor.batteryAlertThreshold) {
                                 levelColor = centralColor.nominal.level
                                 signColor = centralColor.nominal.sign
                             } else {
                                 levelColor = centralColor.issue.level
                                 signColor = centralColor.issue.sign
                             }
-                            if (BatteryViewModel.predictionMs > 0L) {
-                                val formattedDuration = BatteryViewModel.predictionMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                            if (BatteryMonitor.predictionMs > 0L) {
+                                val formattedDuration = BatteryMonitor.predictionMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
                                     withStyle(M.arrowDown) { append(stringResource(R.string._arrow_down_) + ' ') } /* ⬇ */
                                     append(formattedDuration)
                                 }
-                            } else if (BatteryViewModel.timeRemainingMs > 0L) {
+                            } else if (BatteryMonitor.timeRemainingMs > 0L) {
                                 signColor = MaterialTheme.colorScheme.secondary
-                                val formattedDuration = BatteryViewModel.timeRemainingMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
+                                val formattedDuration = BatteryMonitor.timeRemainingMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
                                     withStyle(M.arrowUp) { append(stringResource(R.string._arrow_up_) + ' ') } /* ⬆ */
                                     append(formattedDuration)
@@ -1006,9 +1009,9 @@ class MainActivity : ComponentActivity() {
                                         )
                                 )
 
-                                if (BatteryViewModel.batteryAlertThreshold > 0) {
+                                if (BatteryMonitor.batteryAlertThreshold > 0) {
                                     val markerSize = fontConfig.lineHeight * 0.4f
-                                    val fraction = BatteryViewModel.batteryAlertThreshold / 100f
+                                    val fraction = BatteryMonitor.batteryAlertThreshold / 100f
                                     val markerOffset = (maxWidth * fraction) - (markerSize / 2)
 
                                     Box(
@@ -1032,7 +1035,7 @@ class MainActivity : ComponentActivity() {
                                 onRefresh = {
                                     isRefreshing = true
                                     coroutineScope.launch {
-                                        viewModel.refreshData()
+                                        controller.refreshData()
                                         isRefreshing = false
                                     }
                                 },
