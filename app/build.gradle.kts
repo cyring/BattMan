@@ -13,8 +13,8 @@ android {
         applicationId = "fr.cyring.battman"
         minSdk = 24
         targetSdk = 37
-        versionCode = 18
-        versionName = "0.18"
+        versionCode = 19
+        versionName = "0.19"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

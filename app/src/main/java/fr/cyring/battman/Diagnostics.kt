@@ -10,15 +10,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
+import fr.cyring.battman.Controller.TimeTracker
+import fr.cyring.battman.audio.AudioMonitor
 import fr.cyring.battman.battery.BatteryMonitor
 import fr.cyring.battman.battery.BatteryMonitor.Companion.batteryPercent
 import fr.cyring.battman.battery.BatteryMonitor.Companion.predictionMs
 import fr.cyring.battman.battery.BatteryMonitor.Companion.timeRemainingMs
 import fr.cyring.battman.battery.BatteryMonitor.Companion.updateBatteryLevel
-import fr.cyring.battman.Controller.TimeTracker
+import fr.cyring.battman.bluetooth.BluetoothMonitor
 import fr.cyring.battman.camera.FlashlightMonitor
 import fr.cyring.battman.display.DisplayInfo
 import fr.cyring.battman.display.Display
+import fr.cyring.battman.location.LocationMonitor
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
@@ -42,7 +45,10 @@ object Diagnostics {
         timeTracker: TimeTracker,
         intent: Intent,
         batteryMonitor: BatteryMonitor,
-        flashLight: FlashlightMonitor
+        flashLight: FlashlightMonitor,
+        audioMonitor: AudioMonitor,
+        locationMonitor: LocationMonitor,
+        bluetoothMonitor: BluetoothMonitor
     ) {
         val batteryManager = context.getSystemService(
             Context.BATTERY_SERVICE
@@ -116,6 +122,9 @@ object Diagnostics {
         deepRow[C.SCR_SAV].value = Display.buildScreenSaver(context, display)
         deepRow[C.SCR_OFF].value = Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)
         deepRow[C.TORCH].value = flashLight.buildTorchStatus(context)
+        deepRow[C.AUDIO].value = audioMonitor.buildAudioStatus(context)
+        deepRow[C.LOCATION].value = locationMonitor.buildLocationStatus(context)
+        deepRow[C.BT_MOD].value = bluetoothMonitor.buildBluetoothStatus(context)
     }
 
     fun buildReport(
@@ -123,7 +132,10 @@ object Diagnostics {
         powerManager: PowerManager,
         timeTracker: TimeTracker,
         batteryMonitor: BatteryMonitor,
-        flashLight: FlashlightMonitor
+        flashLight: FlashlightMonitor,
+        audioMonitor: AudioMonitor,
+        locationMonitor: LocationMonitor,
+        bluetoothMonitor: BluetoothMonitor
     ): List<ReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -214,7 +226,10 @@ object Diagnostics {
             /* TIMEOUT  */  row(R.string.screen_timeout, Display.buildScreenTimeout(context, display)),
             /* SCR_SAV  */  row(R.string.screen_saver, Display.buildScreenSaver(context, display)),
             /* SCR_OFF  */  row(R.string.screen_off, Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)),
-            /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context))
+            /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context)),
+            /* AUDIO    */  row(R.string.microphone, audioMonitor.buildAudioStatus(context)),
+            /* LOCATION */  row(R.string.location, locationMonitor.buildLocationStatus(context)),
+            /* BT_MOD   */  row(R.string.bluetooth, bluetoothMonitor.buildBluetoothStatus(context))
         )
         return listOf(
             row(R.string.level, AnnotatedString("$batteryPercent%")),
@@ -262,9 +277,12 @@ object Diagnostics {
             deepRow[C.SCR_SAV],
             deepRow[C.SCR_OFF],
 
-            ReportRow(context.getString(R.string._torch_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._gear_), AnnotatedString("")),
 
-            deepRow[C.TORCH]
+            deepRow[C.TORCH],
+            deepRow[C.AUDIO],
+            deepRow[C.LOCATION],
+            deepRow[C.BT_MOD]
         )
     }
 }

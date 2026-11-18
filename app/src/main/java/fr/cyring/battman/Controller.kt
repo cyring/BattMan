@@ -14,11 +14,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.cyring.battman.audio.AudioMonitor
 import fr.cyring.battman.battery.BatteryAlertWorker
 import fr.cyring.battman.battery.BatteryMonitor
 import fr.cyring.battman.battery.BatteryMonitor.Companion.batteryAlertThreshold
 import fr.cyring.battman.battery.BatteryMonitor.Companion.updateBatteryLevel
+import fr.cyring.battman.bluetooth.BluetoothMonitor
 import fr.cyring.battman.camera.FlashlightMonitor
+import fr.cyring.battman.location.LocationMonitor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -41,6 +44,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
     private val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
     private val batteryMonitor = BatteryMonitor(application)
+    private val locationMonitor = LocationMonitor(application)
+    private val bluetoothMonitor = BluetoothMonitor(application)
 
     var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
     data class TimeTracker(
@@ -51,6 +56,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
     val timeTracker = TimeTracker()
 
     val flashlightMonitor = FlashlightMonitor(application)
+
+    val audioMonitor = AudioMonitor(application)
 
     val autoRefresh = mutableStateListOf(
         prefs.getBoolean(RefreshCase.FOCUS.prefKey, RefreshCase.FOCUS.defaultAuto),
@@ -89,14 +96,36 @@ class Controller(application: Application) : AndroidViewModel(application) {
     }
 
     fun buildData() {
-        report = Diagnostics.buildReport(getApplication(), powerManager, timeTracker, batteryMonitor, flashlightMonitor)
+        val context: Context = getApplication()
+        report = Diagnostics.buildReport(
+            context,
+            powerManager,
+            timeTracker,
+            batteryMonitor,
+            flashlightMonitor,
+            audioMonitor,
+            locationMonitor,
+            bluetoothMonitor
+        )
     }
     fun refreshData() {
         val context: Context = getApplication()
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         @Suppress("DEPRECATION")
-        val intent = context.registerReceiver(null, filter)
-        if (intent != null) Diagnostics.updateReport(context, powerManager, timeTracker, intent, batteryMonitor, flashlightMonitor)
+        val intent: Intent? = context.registerReceiver(null, filter)
+        if (intent != null) {
+            Diagnostics.updateReport(
+                context,
+                powerManager,
+                timeTracker,
+                intent,
+                batteryMonitor,
+                flashlightMonitor,
+                audioMonitor,
+                locationMonitor,
+                bluetoothMonitor
+            )
+        }
     }
 
     fun updateAutoRefresh(idx: Int, enabled: Boolean, time: Long) {
@@ -170,5 +199,29 @@ class Controller(application: Application) : AndroidViewModel(application) {
 
     fun stopTorchMonitoring() {
         flashlightMonitor.stopListening()
+    }
+
+    fun startAudioMonitoring() {
+        audioMonitor.startListening()
+    }
+
+    fun stopAudioMonitoring() {
+        audioMonitor.stopListening()
+    }
+
+    fun startGpsMonitoring() {
+        locationMonitor.startListening()
+    }
+
+    fun stopGpsMonitoring() {
+        locationMonitor.stopListening()
+    }
+
+    fun startBtMonitoring() {
+        bluetoothMonitor.startListening()
+    }
+
+    fun stopBtMonitoring() {
+        bluetoothMonitor.stopListening()
     }
 }

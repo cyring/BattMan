@@ -252,6 +252,9 @@ class MainActivity : ComponentActivity() {
         }
 
         controller.stopTorchMonitoring()
+        controller.stopAudioMonitoring()
+        controller.stopGpsMonitoring()
+        controller.stopBtMonitoring()
     }
 
     override fun onResume() {
@@ -266,6 +269,9 @@ class MainActivity : ComponentActivity() {
         registerReceiver(batteryEventReceiver, filter)
 
         controller.startTorchMonitoring()
+        controller.startAudioMonitoring()
+        controller.startGpsMonitoring()
+        controller.startBtMonitoring()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

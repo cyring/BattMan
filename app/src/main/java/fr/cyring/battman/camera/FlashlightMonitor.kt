@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import fr.cyring.battman.R
 
 class FlashlightMonitor(context: Context) {
@@ -46,7 +47,11 @@ class FlashlightMonitor(context: Context) {
     fun buildTorchStatus(ctx: Context): AnnotatedString {
         return when {
             torchUnavailable -> AnnotatedString(ctx.getString(R.string.unavailable))
-            isTorchOn -> AnnotatedString(ctx.getString(R.string.activated))
+            isTorchOn -> buildAnnotatedString {
+                append(ctx.getString(R.string._torch_))
+                append(' ')
+                append(ctx.getString(R.string.activated))
+            }
             else -> AnnotatedString(ctx.getString(R.string.deactivated))
         }
     }

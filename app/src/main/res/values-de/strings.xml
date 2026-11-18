@@ -63,6 +63,8 @@
     <string name="screen_saver">Bildschirmschoner</string>
     <string name="screen_off">Stoppuhr</string>
     <string name="torch">Taschenlampe</string>
+    <string name="microphone">Mikrofon</string>
+    <string name="location">Standort</string>
     <string name="off">Aus</string>
     <string name="cancel">Abbrechen</string>
     <string name="yes">Ja</string>

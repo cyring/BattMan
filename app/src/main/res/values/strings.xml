@@ -8,7 +8,11 @@
     <string name="_arrow_up_" translatable="false">\u2B06</string>
     <string name="_calc_" translatable="false">\u2328</string>
     <string name="_wait_" translatable="false">\uD83D\uDD50</string>
+    <string name="_gear_" translatable="false">\u2699\uFE0F</string>
     <string name="_torch_" translatable="false">\uD83D\uDD26</string>
+    <string name="_mic_" translatable="false">\uD83C\uDF99\uFE0F</string>
+    <string name="_gps_" translatable="false">🛰️</string>
+    <string name="_bt_" translatable="false">\uD83D\uDCF6</string>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
     <string name="level">Level</string>
@@ -71,7 +75,10 @@
     <string name="screen_timeout">Screen timeout</string>
     <string name="screen_saver">Screen Saver</string>
     <string name="screen_off">Stopwatch</string>
-    <string name="torch">torch</string>
+    <string name="torch">Torch</string>
+    <string name="microphone">Microphone</string>
+    <string name="location">Location</string>
+    <string name="bluetooth" translatable="false">Bluetooth</string>"
     <string name="off">Off</string>
     <string name="cancel">Cancel</string>
     <string name="yes">Yes</string>

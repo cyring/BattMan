@@ -71,6 +71,9 @@ object C {
     const val SCR_SAV: Int = TIMEOUT + 1
     const val SCR_OFF: Int = SCR_SAV + 1
     const val TORCH: Int = SCR_OFF + 1
+    const val AUDIO: Int = TORCH + 1
+    const val LOCATION: Int = AUDIO + 1
+    const val BT_MOD: Int = LOCATION + 1
 }
 
 fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
