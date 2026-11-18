@@ -103,7 +103,7 @@
     <string name="accessibility_small">Petit</string>
     <string name="accessibility_medium">Moyen</string>
     <string name="accessibility_large">Grand</string>
-    <string name="accessibility_desc">Ajustez la taille du texte du rapport pour une meilleure lisibilité</string>
+    <string name="accessibility_desc">Mettre à l\'échelle le texte et les éléments à l\'écran</string>
     <string name="today">Aujourd\'hui</string>
     <string name="tomorrow">Demain</string>
     <string name="in_days">Ds %1$d jours</string>

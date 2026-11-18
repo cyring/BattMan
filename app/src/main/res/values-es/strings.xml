@@ -104,7 +104,7 @@
     <string name="accessibility_small">Pequeño</string>
     <string name="accessibility_medium">Mediano</string>
     <string name="accessibility_large">Grande</string>
-    <string name="accessibility_desc">Ajusta el tamaño del texto del informe para mejorar la legibilidad</string>
+    <string name="accessibility_desc">Escalar texto y elementos en la pantalla</string>
     <string name="today">Hoy</string>
     <string name="tomorrow">Mañana</string>
     <string name="in_days">En %1$d días</string>

@@ -102,7 +102,7 @@
     <string name="accessibility_small">Klein</string>
     <string name="accessibility_medium">Mittel</string>
     <string name="accessibility_large">Groß</string>
-    <string name="accessibility_desc">Passen Sie die Textgröße des Berichts für optimale Lesbarkeit an</string>
+    <string name="accessibility_desc">Text und Elemente auf dem Bildschirm skalieren</string>
     <string name="today">Heute</string>
     <string name="tomorrow">Morgen</string>
     <string name="in_days">In %1$d Tagen</string>

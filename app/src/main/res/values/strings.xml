@@ -116,7 +116,7 @@
     <string name="accessibility_small">Small</string>
     <string name="accessibility_medium">Medium</string>
     <string name="accessibility_large">Large</string>
-    <string name="accessibility_desc">Adjust the report text size for optimal legibility</string>
+    <string name="accessibility_desc">Scale text and items on the screen</string>
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>
     <string name="in_days">In %1$d days</string>
