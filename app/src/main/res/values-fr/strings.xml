@@ -64,6 +64,7 @@
     <string name="torch">Torche</string>
     <string name="microphone">Microphone</string>
     <string name="location">Localisation</string>
+    <string name="airplane">Mode avion</string>
     <string name="off">Arrêt</string>
     <string name="cancel">Annuler</string>
     <string name="yes">Oui</string>

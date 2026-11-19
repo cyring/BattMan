@@ -13,6 +13,7 @@
     <string name="_mic_" translatable="false">\uD83C\uDF99\uFE0F</string>
     <string name="_gps_" translatable="false">🛰️</string>
     <string name="_bt_" translatable="false">\uD83D\uDCF6</string>
+    <string name="_airplane_" translatable="false">\u2708\uFE0F</string>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
     <string name="level">Level</string>
@@ -79,6 +80,7 @@
     <string name="microphone">Microphone</string>
     <string name="location">Location</string>
     <string name="bluetooth" translatable="false">Bluetooth</string>"
+    <string name="airplane">Airplane</string>
     <string name="off">Off</string>
     <string name="cancel">Cancel</string>
     <string name="yes">Yes</string>

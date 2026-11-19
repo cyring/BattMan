@@ -74,6 +74,7 @@ object C {
     const val AUDIO: Int = TORCH + 1
     const val LOCATION: Int = AUDIO + 1
     const val BT_MOD: Int = LOCATION + 1
+    const val AIRPLANE: Int = BT_MOD + 1
 }
 
 fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {

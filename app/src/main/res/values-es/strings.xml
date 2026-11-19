@@ -65,6 +65,7 @@
     <string name="torch">Linterna</string>
     <string name="microphone">Micrófono</string>
     <string name="location">Ubicación</string>
+    <string name="airplane">Modo avión</string>
     <string name="off">Detener</string>
     <string name="cancel">Cancelar</string>
     <string name="yes">Si</string>

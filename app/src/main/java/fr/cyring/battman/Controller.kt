@@ -14,6 +14,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.cyring.battman.airplane.AirplaneMonitor
 import fr.cyring.battman.audio.AudioMonitor
 import fr.cyring.battman.battery.BatteryAlertWorker
 import fr.cyring.battman.battery.BatteryMonitor
@@ -46,6 +47,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private val batteryMonitor = BatteryMonitor(application)
     private val locationMonitor = LocationMonitor(application)
     private val bluetoothMonitor = BluetoothMonitor(application)
+    private val airplaneMonitor = AirplaneMonitor(application)
 
     var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
     data class TimeTracker(
@@ -105,7 +107,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
             flashlightMonitor,
             audioMonitor,
             locationMonitor,
-            bluetoothMonitor
+            bluetoothMonitor,
+            airplaneMonitor
         )
     }
     fun refreshData() {
@@ -123,7 +126,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
                 flashlightMonitor,
                 audioMonitor,
                 locationMonitor,
-                bluetoothMonitor
+                bluetoothMonitor,
+                airplaneMonitor
             )
         }
     }
@@ -223,5 +227,13 @@ class Controller(application: Application) : AndroidViewModel(application) {
 
     fun stopBtMonitoring() {
         bluetoothMonitor.stopListening()
+    }
+
+    fun startAirplaneMonitoring() {
+        airplaneMonitor.startListening()
+    }
+
+    fun stopAirplaneMonitoring() {
+        airplaneMonitor.stopListening()
     }
 }

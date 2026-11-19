@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import fr.cyring.battman.Controller.TimeTracker
+import fr.cyring.battman.airplane.AirplaneMonitor
 import fr.cyring.battman.audio.AudioMonitor
 import fr.cyring.battman.battery.BatteryMonitor
 import fr.cyring.battman.battery.BatteryMonitor.Companion.batteryPercent
@@ -48,7 +49,8 @@ object Diagnostics {
         flashLight: FlashlightMonitor,
         audioMonitor: AudioMonitor,
         locationMonitor: LocationMonitor,
-        bluetoothMonitor: BluetoothMonitor
+        bluetoothMonitor: BluetoothMonitor,
+        airplaneMonitor: AirplaneMonitor
     ) {
         val batteryManager = context.getSystemService(
             Context.BATTERY_SERVICE
@@ -125,6 +127,7 @@ object Diagnostics {
         deepRow[C.AUDIO].value = audioMonitor.buildAudioStatus(context)
         deepRow[C.LOCATION].value = locationMonitor.buildLocationStatus(context)
         deepRow[C.BT_MOD].value = bluetoothMonitor.buildBluetoothStatus(context)
+        deepRow[C.AIRPLANE].value = airplaneMonitor.buildAirplaneStatus(context)
     }
 
     fun buildReport(
@@ -135,7 +138,8 @@ object Diagnostics {
         flashLight: FlashlightMonitor,
         audioMonitor: AudioMonitor,
         locationMonitor: LocationMonitor,
-        bluetoothMonitor: BluetoothMonitor
+        bluetoothMonitor: BluetoothMonitor,
+        airplaneMonitor: AirplaneMonitor
     ): List<ReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -229,7 +233,8 @@ object Diagnostics {
             /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context)),
             /* AUDIO    */  row(R.string.microphone, audioMonitor.buildAudioStatus(context)),
             /* LOCATION */  row(R.string.location, locationMonitor.buildLocationStatus(context)),
-            /* BT_MOD   */  row(R.string.bluetooth, bluetoothMonitor.buildBluetoothStatus(context))
+            /* BT_MOD   */  row(R.string.bluetooth, bluetoothMonitor.buildBluetoothStatus(context)),
+            /* AIRPLANE */  row(R.string.airplane, airplaneMonitor.buildAirplaneStatus(context))
         )
         return listOf(
             row(R.string.level, AnnotatedString("$batteryPercent%")),
@@ -282,7 +287,8 @@ object Diagnostics {
             deepRow[C.TORCH],
             deepRow[C.AUDIO],
             deepRow[C.LOCATION],
-            deepRow[C.BT_MOD]
+            deepRow[C.BT_MOD],
+            deepRow[C.AIRPLANE]
         )
     }
 }
