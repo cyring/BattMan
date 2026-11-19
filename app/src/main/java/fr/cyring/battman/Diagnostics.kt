@@ -23,6 +23,7 @@ import fr.cyring.battman.camera.FlashlightMonitor
 import fr.cyring.battman.display.DisplayInfo
 import fr.cyring.battman.display.Display
 import fr.cyring.battman.location.LocationMonitor
+import fr.cyring.battman.network.NetworkMonitor
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
@@ -50,7 +51,8 @@ object Diagnostics {
         audioMonitor: AudioMonitor,
         locationMonitor: LocationMonitor,
         bluetoothMonitor: BluetoothMonitor,
-        airplaneMonitor: AirplaneMonitor
+        airplaneMonitor: AirplaneMonitor,
+        networkMonitor: NetworkMonitor
     ) {
         val batteryManager = context.getSystemService(
             Context.BATTERY_SERVICE
@@ -127,6 +129,9 @@ object Diagnostics {
         deepRow[C.AUDIO].value = audioMonitor.buildAudioStatus(context)
         deepRow[C.LOCATION].value = locationMonitor.buildLocationStatus(context)
         deepRow[C.BT_MOD].value = bluetoothMonitor.buildBluetoothStatus(context)
+        deepRow[C.WIFI].value = networkMonitor.buildWiFiStatus(context)
+        deepRow[C.CELLULAR].value = networkMonitor.buildCellularStatus(context)
+        deepRow[C.INTERNET].value = networkMonitor.buildInternetStatus(context)
         deepRow[C.AIRPLANE].value = airplaneMonitor.buildAirplaneStatus(context)
     }
 
@@ -139,7 +144,8 @@ object Diagnostics {
         audioMonitor: AudioMonitor,
         locationMonitor: LocationMonitor,
         bluetoothMonitor: BluetoothMonitor,
-        airplaneMonitor: AirplaneMonitor
+        airplaneMonitor: AirplaneMonitor,
+        networkMonitor: NetworkMonitor
     ): List<ReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -234,6 +240,9 @@ object Diagnostics {
             /* AUDIO    */  row(R.string.microphone, audioMonitor.buildAudioStatus(context)),
             /* LOCATION */  row(R.string.location, locationMonitor.buildLocationStatus(context)),
             /* BT_MOD   */  row(R.string.bluetooth, bluetoothMonitor.buildBluetoothStatus(context)),
+            /* WIFI     */  row(R.string.wifi, networkMonitor.buildWiFiStatus(context)),
+            /* CELLULAR */  row(R.string.cellular, networkMonitor.buildCellularStatus(context)),
+            /* INTERNET */  row(R.string.internet, networkMonitor.buildInternetStatus(context)),
             /* AIRPLANE */  row(R.string.airplane, airplaneMonitor.buildAirplaneStatus(context))
         )
         return listOf(
@@ -267,7 +276,7 @@ object Diagnostics {
             deepRow[C.PREDICT],
             deepRow[C.EMPTY],
 
-            ReportRow(context.getString(R.string._mobile_phone_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._display_), AnnotatedString("")),
 
             deepRow[C.BRIGHT],
             deepRow[C.ADAPTIVE],
@@ -288,6 +297,9 @@ object Diagnostics {
             deepRow[C.AUDIO],
             deepRow[C.LOCATION],
             deepRow[C.BT_MOD],
+            deepRow[C.WIFI],
+            deepRow[C.CELLULAR],
+            deepRow[C.INTERNET],
             deepRow[C.AIRPLANE]
         )
     }

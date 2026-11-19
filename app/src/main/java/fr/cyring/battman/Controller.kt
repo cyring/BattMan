@@ -23,6 +23,7 @@ import fr.cyring.battman.battery.BatteryMonitor.Companion.updateBatteryLevel
 import fr.cyring.battman.bluetooth.BluetoothMonitor
 import fr.cyring.battman.camera.FlashlightMonitor
 import fr.cyring.battman.location.LocationMonitor
+import fr.cyring.battman.network.NetworkMonitor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,6 +49,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private val locationMonitor = LocationMonitor(application)
     private val bluetoothMonitor = BluetoothMonitor(application)
     private val airplaneMonitor = AirplaneMonitor(application)
+    private val networkMonitor = NetworkMonitor(application)
 
     var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
     data class TimeTracker(
@@ -108,7 +110,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
             audioMonitor,
             locationMonitor,
             bluetoothMonitor,
-            airplaneMonitor
+            airplaneMonitor,
+            networkMonitor
         )
     }
     fun refreshData() {
@@ -127,7 +130,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
                 audioMonitor,
                 locationMonitor,
                 bluetoothMonitor,
-                airplaneMonitor
+                airplaneMonitor,
+                networkMonitor
             )
         }
     }
@@ -235,5 +239,13 @@ class Controller(application: Application) : AndroidViewModel(application) {
 
     fun stopAirplaneMonitoring() {
         airplaneMonitor.stopListening()
+    }
+
+    fun startNetworkMonitoring() {
+        networkMonitor.startListening()
+    }
+
+    fun stopNetworkMonitoring() {
+        networkMonitor.stopListening()
     }
 }

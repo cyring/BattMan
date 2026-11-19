@@ -66,6 +66,7 @@
     <string name="microphone">Mikrofon</string>
     <string name="location">Standort</string>
     <string name="airplane">Flugmodus</string>
+    <string name="cellular">Mobilfunk</string>
     <string name="off">Aus</string>
     <string name="cancel">Abbrechen</string>
     <string name="yes">Ja</string>

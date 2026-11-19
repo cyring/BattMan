@@ -256,6 +256,7 @@ class MainActivity : ComponentActivity() {
         controller.stopGpsMonitoring()
         controller.stopBtMonitoring()
         controller.stopAirplaneMonitoring()
+        controller.stopNetworkMonitoring()
     }
 
     override fun onResume() {
@@ -274,6 +275,7 @@ class MainActivity : ComponentActivity() {
         controller.startGpsMonitoring()
         controller.startBtMonitoring()
         controller.startAirplaneMonitoring()
+        controller.startNetworkMonitoring()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

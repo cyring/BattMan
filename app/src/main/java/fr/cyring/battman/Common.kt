@@ -74,7 +74,10 @@ object C {
     const val AUDIO: Int = TORCH + 1
     const val LOCATION: Int = AUDIO + 1
     const val BT_MOD: Int = LOCATION + 1
-    const val AIRPLANE: Int = BT_MOD + 1
+    const val WIFI: Int = BT_MOD + 1
+    const val CELLULAR: Int = WIFI + 1
+    const val INTERNET: Int = CELLULAR + 1
+    const val AIRPLANE: Int = INTERNET + 1
 }
 
 fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
@@ -85,4 +88,10 @@ fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default
 fun SharedPreferences.getIntInBounds(key: String, min: Int, max: Int, default: Int): Int {
     val value = getInt(key, default)
     return if (value in min..max) value else default
+}
+
+enum class Net {
+    UNAVAILABLE,
+    DISCONNECTED,
+    CONNECTED
 }

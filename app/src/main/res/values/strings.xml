@@ -2,7 +2,7 @@
     <string name="_zap_" translatable="false">\u26A1</string>
     <string name="_electric_plug_" translatable="false">\uD83D\uDD0C</string>
     <string name="_battery_" translatable="false">\uD83D\uDD0B</string>
-    <string name="_mobile_phone_" translatable="false">\uD83D\uDCF1</string>
+    <string name="_display_" translatable="false">\uD83D\uDD06</string>
     <string name="_alarm_clock_" translatable="false">\u23F0</string>
     <string name="_arrow_down_" translatable="false">\u2B07</string>
     <string name="_arrow_up_" translatable="false">\u2B06</string>
@@ -14,6 +14,9 @@
     <string name="_gps_" translatable="false">🛰️</string>
     <string name="_bt_" translatable="false">\uD83D\uDCF6</string>
     <string name="_airplane_" translatable="false">\u2708\uFE0F</string>
+    <string name="_wifi_" translatable="false">🛜</string>
+    <string name="_cellular_" translatable="false">\uD83D\uDCF1</string>
+    <string name="_internet_" translatable="false">🌐</string>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
     <string name="level">Level</string>
@@ -81,6 +84,9 @@
     <string name="location">Location</string>
     <string name="bluetooth" translatable="false">Bluetooth</string>"
     <string name="airplane">Airplane</string>
+    <string name="internet" translatable="false">Internet</string>
+    <string name="wifi" translatable="false">Wi-Fi</string>
+    <string name="cellular">Cellular</string>
     <string name="off">Off</string>
     <string name="cancel">Cancel</string>
     <string name="yes">Yes</string>
