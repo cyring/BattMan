@@ -112,4 +112,6 @@
     <string name="in_days">In %1$d Tagen</string>
     <string name="reset">Zurücksetzen</string>
     <string name="bye">Tschüss</string>
+    <string name="ai_downloadable">Descargable</string>
+    <string name="ai_downloading">Descargando</string>
 </resources>

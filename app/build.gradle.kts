@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "fr.cyring.battman"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = 20
         versionName = "0.20"
@@ -57,4 +57,9 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    // ML Kit GenAI capabilities
+    implementation(libs.genai.prompt)
+    implementation(libs.genai.summarization)
+    // com.google.mlkit.genai.imagedescription
+    implementation(libs.mlkit.genai.image.description)
 }

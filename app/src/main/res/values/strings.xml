@@ -7,6 +7,7 @@
     <string name="_arrow_down_" translatable="false">\u2B07</string>
     <string name="_arrow_up_" translatable="false">\u2B06</string>
     <string name="_calc_" translatable="false">\u2328</string>
+    <string name="_info_" translatable="false">ℹ️</string>
     <string name="_wait_" translatable="false">\uD83D\uDD50</string>
     <string name="_gear_" translatable="false">\u2699\uFE0F</string>
     <string name="_torch_" translatable="false">\uD83D\uDD26</string>
@@ -17,6 +18,7 @@
     <string name="_wifi_" translatable="false">🛜</string>
     <string name="_cellular_" translatable="false">\uD83D\uDCF1</string>
     <string name="_internet_" translatable="false">🌐</string>
+    <string name="_ai_" translatable="false">\uD83E\uDD16</string>
     <string name="app_name">BattMan</string>
     <string name="subtitle">The Battery Manager</string>
     <string name="level">Level</string>
@@ -52,8 +54,8 @@
     <string name="cold">Cold</string>
     <string name="failure">Failure</string>
     <string name="unavailable">Unavailable</string>
-    <string name="activated">Activated</string>
-    <string name="deactivated">Deactivated</string>
+    <string name="activated">Enabled</string>
+    <string name="deactivated">Disabled</string>
     <string name="unsupported">Unsupported</string>
     <string name="on_battery">On battery</string>
     <string name="ac_charger">AC charger</string>
@@ -137,4 +139,12 @@
     <string name="in_days">In %1$d days</string>
     <string name="reset">Reset</string>
     <string name="bye">Bye</string>
+    <string name="ai_as" translatable="false">Android System</string>
+    <string name="ai_core" translatable="false">AI Core</string>
+    <string name="ai_prompt" translatable="false">AI Prompt</string>
+    <string name="ai_nlp" translatable="false">AI NLP</string>
+    <string name="ai_vlm" translatable="false">AI VLM</string>
+    <string name="ai_speech" translatable="false">AI Speech</string>
+    <string name="ai_downloadable">Downloadable</string>
+    <string name="ai_downloading">Downloading</string>
 </resources>

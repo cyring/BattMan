@@ -14,6 +14,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import fr.cyring.battman.ai.AiMonitor
 import fr.cyring.battman.airplane.AirplaneMonitor
 import fr.cyring.battman.audio.AudioMonitor
 import fr.cyring.battman.battery.BatteryAlertWorker
@@ -50,6 +51,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private val bluetoothMonitor = BluetoothMonitor(application)
     private val airplaneMonitor = AirplaneMonitor(application)
     private val networkMonitor = NetworkMonitor(application)
+    private val aiMonitor = AiMonitor(application)
 
     var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
     data class TimeTracker(
@@ -101,6 +103,11 @@ class Controller(application: Application) : AndroidViewModel(application) {
 
     fun buildData() {
         val context: Context = getApplication()
+
+        viewModelScope.launch {
+            aiMonitor.probeComponents()
+        }
+
         report = Diagnostics.buildReport(
             context,
             powerManager,
@@ -111,15 +118,22 @@ class Controller(application: Application) : AndroidViewModel(application) {
             locationMonitor,
             bluetoothMonitor,
             airplaneMonitor,
-            networkMonitor
+            networkMonitor,
+            aiMonitor
         )
     }
+
     fun refreshData() {
         val context: Context = getApplication()
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         @Suppress("DEPRECATION")
         val intent: Intent? = context.registerReceiver(null, filter)
         if (intent != null) {
+
+            viewModelScope.launch {
+                aiMonitor.probeComponents()
+            }
+
             Diagnostics.updateReport(
                 context,
                 powerManager,
@@ -131,7 +145,8 @@ class Controller(application: Application) : AndroidViewModel(application) {
                 locationMonitor,
                 bluetoothMonitor,
                 airplaneMonitor,
-                networkMonitor
+                networkMonitor,
+                aiMonitor
             )
         }
     }

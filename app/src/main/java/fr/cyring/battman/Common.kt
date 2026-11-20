@@ -78,6 +78,12 @@ object C {
     const val CELLULAR: Int = WIFI + 1
     const val INTERNET: Int = CELLULAR + 1
     const val AIRPLANE: Int = INTERNET + 1
+    const val AI_AS: Int = AIRPLANE + 1
+    const val AI_NPU: Int = AI_AS + 1
+    const val AI_INPUT: Int = AI_NPU + 1
+    const val AI_NLP: Int = AI_INPUT + 1
+    const val AI_VLM: Int = AI_NLP + 1
+    const val AI_VOICE: Int = AI_VLM + 1
 }
 
 fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default: Long): Long {
@@ -94,4 +100,13 @@ enum class Net {
     UNAVAILABLE,
     DISCONNECTED,
     CONNECTED
+}
+
+enum class AiCapability {
+    AI_SA_CAP,
+    AI_CORE_CAP,
+    AI_PROMPT_CAP,
+    AI_NLP_CAP,
+    AI_VLM_CAP,
+    AI_SPEECH_CAP
 }

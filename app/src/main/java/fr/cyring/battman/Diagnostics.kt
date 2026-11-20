@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import fr.cyring.battman.Controller.TimeTracker
+import fr.cyring.battman.ai.AiMonitor
 import fr.cyring.battman.airplane.AirplaneMonitor
 import fr.cyring.battman.audio.AudioMonitor
 import fr.cyring.battman.battery.BatteryMonitor
@@ -52,7 +53,8 @@ object Diagnostics {
         locationMonitor: LocationMonitor,
         bluetoothMonitor: BluetoothMonitor,
         airplaneMonitor: AirplaneMonitor,
-        networkMonitor: NetworkMonitor
+        networkMonitor: NetworkMonitor,
+        aiMonitor: AiMonitor
     ) {
         val batteryManager = context.getSystemService(
             Context.BATTERY_SERVICE
@@ -97,8 +99,15 @@ object Diagnostics {
 
         val display: DisplayInfo = Display.collect(context)
 
+        val aiAS = aiMonitor.buildComponent(context, AiCapability.AI_SA_CAP, showVersion = true)
+        val aiCore = aiMonitor.buildComponent(context, AiCapability.AI_CORE_CAP, showVersion = true)
+        val aiPrompt = aiMonitor.buildComponent(context, AiCapability.AI_PROMPT_CAP)
+        val aiNLP = aiMonitor.buildComponent(context, AiCapability.AI_NLP_CAP)
+        val aiVLM = aiMonitor.buildComponent(context, AiCapability.AI_VLM_CAP)
+        val aiSpeech = aiMonitor.buildComponent(context, AiCapability.AI_SPEECH_CAP)
+
         deepRow[C.CYCLE].value = batteryMonitor.buildCycle(context, count)
-        deepRow[C.STATUS].value = batteryMonitor.buildStatus(context)
+        deepRow[C.STATUS].value = status
         deepRow[C.HEALTH].value = batteryMonitor.buildHealth(context, intent)
         deepRow[C.TECH].value = batteryMonitor.buildTechnology(extraTech)
         deepRow[C.VOLTAGE].value = batteryMonitor.buildVoltage(context, extra(BatteryManager.EXTRA_VOLTAGE))
@@ -133,6 +142,12 @@ object Diagnostics {
         deepRow[C.CELLULAR].value = networkMonitor.buildCellularStatus(context)
         deepRow[C.INTERNET].value = networkMonitor.buildInternetStatus(context)
         deepRow[C.AIRPLANE].value = airplaneMonitor.buildAirplaneStatus(context)
+        deepRow[C.AI_AS].value = aiAS
+        deepRow[C.AI_NPU].value = aiCore
+        deepRow[C.AI_INPUT].value = aiPrompt
+        deepRow[C.AI_NLP].value = aiNLP
+        deepRow[C.AI_VLM].value = aiVLM
+        deepRow[C.AI_VOICE].value = aiSpeech
     }
 
     fun buildReport(
@@ -145,7 +160,8 @@ object Diagnostics {
         locationMonitor: LocationMonitor,
         bluetoothMonitor: BluetoothMonitor,
         airplaneMonitor: AirplaneMonitor,
-        networkMonitor: NetworkMonitor
+        networkMonitor: NetworkMonitor,
+        aiMonitor: AiMonitor
     ): List<ReportRow> {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
@@ -205,11 +221,18 @@ object Diagnostics {
 
         val display: DisplayInfo = Display.collect(context)
 
+        val aiAS = aiMonitor.buildComponent(context, AiCapability.AI_SA_CAP, showVersion = true)
+        val aiCore = aiMonitor.buildComponent(context, AiCapability.AI_CORE_CAP, showVersion = true)
+        val aiPrompt = aiMonitor.buildComponent(context, AiCapability.AI_PROMPT_CAP)
+        val aiNLP = aiMonitor.buildComponent(context, AiCapability.AI_NLP_CAP)
+        val aiVLM = aiMonitor.buildComponent(context, AiCapability.AI_VLM_CAP)
+        val aiSpeech = aiMonitor.buildComponent(context, AiCapability.AI_SPEECH_CAP)
+
         fun row(labelId: Int, value: AnnotatedString) = ReportRow(context.getString(labelId), value)
 
         deepRow = arrayOf(
             /* CYCLE    */  row(R.string.cycle, batteryMonitor.buildCycle(context, count)),
-            /* STATUS   */  row(R.string.state, batteryMonitor.buildStatus(context)),
+            /* STATUS   */  row(R.string.state, status),
             /* HEALTH   */  row(R.string.health, batteryMonitor.buildHealth(context, intent)),
             /* TECH     */  row(R.string.technology, batteryMonitor.buildTechnology(extraTech)),
             /* VOLTAGE  */  row(R.string.voltage, batteryMonitor.buildVoltage(context, voltageMv)),
@@ -243,7 +266,13 @@ object Diagnostics {
             /* WIFI     */  row(R.string.wifi, networkMonitor.buildWiFiStatus(context)),
             /* CELLULAR */  row(R.string.cellular, networkMonitor.buildCellularStatus(context)),
             /* INTERNET */  row(R.string.internet, networkMonitor.buildInternetStatus(context)),
-            /* AIRPLANE */  row(R.string.airplane, airplaneMonitor.buildAirplaneStatus(context))
+            /* AIRPLANE */  row(R.string.airplane, airplaneMonitor.buildAirplaneStatus(context)),
+            /* AI_AS    */  row(R.string.ai_as, aiAS),
+            /* AI_NPU   */  row(R.string.ai_core, aiCore),
+            /* AI_INPUT */  row(R.string.ai_prompt, aiPrompt),
+            /* AI_NLP   */  row(R.string.ai_nlp, aiNLP),
+            /* AI_VLM   */  row(R.string.ai_vlm, aiVLM),
+            /* AI_VOICE */  row(R.string.ai_speech, aiSpeech)
         )
         return listOf(
             row(R.string.level, AnnotatedString("$batteryPercent%")),
@@ -300,7 +329,17 @@ object Diagnostics {
             deepRow[C.WIFI],
             deepRow[C.CELLULAR],
             deepRow[C.INTERNET],
-            deepRow[C.AIRPLANE]
+            deepRow[C.AIRPLANE],
+
+            ReportRow(context.getString(R.string._ai_), AnnotatedString("")),
+
+            deepRow[C.AI_AS],
+            deepRow[C.AI_NPU],
+            deepRow[C.AI_INPUT],
+            deepRow[C.AI_NLP],
+            deepRow[C.AI_VLM],
+            deepRow[C.AI_VOICE]
+
         )
     }
 }

@@ -113,4 +113,6 @@
     <string name="in_days">Ds %1$d jours</string>
     <string name="reset">Réinitialisation</string>
     <string name="bye">Salut</string>
+    <string name="ai_downloadable">Téléchargeable</string>
+    <string name="ai_downloading">Téléchargement</string>
 </resources>

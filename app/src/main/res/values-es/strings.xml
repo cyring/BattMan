@@ -114,4 +114,6 @@
     <string name="in_days">En %1$d días</string>
     <string name="reset">Reiniciar</string>
     <string name="bye">Adiós</string>
+    <string name="ai_downloadable">Herunterladbar</string>
+    <string name="ai_downloading">Lädt herunter</string>
 </resources>
