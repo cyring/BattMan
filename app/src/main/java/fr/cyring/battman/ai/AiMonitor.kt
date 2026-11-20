@@ -205,6 +205,7 @@ class AiMonitor(context: Context) {
                     )
                 ) {
                     append(label)
+                    append(' ')
                     append(context.getString(R.string._info_))
                 }
             } else {
