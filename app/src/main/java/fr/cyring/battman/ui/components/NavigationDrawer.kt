@@ -58,6 +58,7 @@ import fr.cyring.battman.Controller
 import fr.cyring.battman.R
 import fr.cyring.battman.battery.BatteryMonitor
 import fr.cyring.battman.centralFont
+import fr.cyring.battman.currentLocale
 import kotlinx.coroutines.launch
 import kotlin.collections.indexOf
 import kotlin.collections.indexOfLast
@@ -398,7 +399,7 @@ fun NavigationDrawer(
                                     HorizontalDivider()
 
                                     val context = LocalContext.current
-                                    val currentLocale = LocalConfiguration.current.locales[0]
+                                    val currentLocale = currentLocale(LocalConfiguration.current)
                                     val currentLanguageName = currentLocale.getDisplayLanguage(currentLocale).replaceFirstChar { it.uppercase() }
 
                                     Row(

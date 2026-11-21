@@ -53,7 +53,6 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private val networkMonitor = NetworkMonitor(application)
     private val aiMonitor = AiMonitor(application)
 
-    var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
     data class TimeTracker(
         var screenOffStartedAt: Long = 0L,
         var lastScreenOffDurationMs: Long = -1L
@@ -80,8 +79,6 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private var refreshJob: Job? = null
 
     fun init() {
-        tongue[C.CASE_FOCUS] = Locale.getDefault()
-        tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
         buildData()
 
         // Reactive observer: automatically manages the foreground loop when CASE_FOCUS settings change
@@ -192,10 +189,9 @@ class Controller(application: Application) : AndroidViewModel(application) {
         } else {
             BatteryAlertWorker.cancel(context)
         }
-        tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
     }
 
-    fun onScreenResumed() {
+    fun onScreenResumed(tongue: Array<Locale>) {
         val context: Context = getApplication()
         BatteryAlertWorker.cancel(context)
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -207,10 +203,9 @@ class Controller(application: Application) : AndroidViewModel(application) {
                 System.currentTimeMillis() - timeTracker.screenOffStartedAt
             timeTracker.screenOffStartedAt = 0L
         }
-        tongue[C.CASE_FOCUS] = Locale.getDefault()
+
         if (tongue[C.CASE_FOCUS] != tongue[C.CASE_AWAY]) {
             buildData()
-            tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
         } else {
             refreshData()
         }

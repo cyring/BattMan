@@ -66,6 +66,7 @@ import fr.cyring.battman.ui.theme.BattManTheme
 import fr.cyring.battman.ui.components.SelectionDialogPayload
 import fr.cyring.battman.ui.components.NavigationDrawer
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
 const val REPORT_LEFT: Int = 0
@@ -237,12 +238,17 @@ fun centralFont(fontSizeMode: Int = C.FONT_SIZE_SYSTEM): CentralFont {
 }
 
 class MainActivity : ComponentActivity() {
+    var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
+
     private val controller: Controller by viewModels()
     private val batteryMonitor by lazy { BatteryMonitor(application) }
     private val batteryEventReceiver = BatteryEventReceiver()
 
     override fun onPause() {
         super.onPause()
+
+        tongue[C.CASE_AWAY] = currentLocale(resources.configuration)
+
         controller.onScreenPaused()
 
         try {
@@ -262,7 +268,11 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
-        controller.onScreenResumed()
+        tongue[C.CASE_FOCUS] = currentLocale(resources.configuration)
+
+        controller.onScreenResumed(tongue)
+
+        tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
 
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_BATTERY_CHANGED)
@@ -281,6 +291,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        tongue[C.CASE_FOCUS] = currentLocale(resources.configuration)
+        tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
 
         controller.init()
 

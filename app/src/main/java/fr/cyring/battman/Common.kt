@@ -1,6 +1,8 @@
 package fr.cyring.battman
 
 import android.content.SharedPreferences
+import android.content.res.Configuration
+import java.util.Locale
 
 object C {
     const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
@@ -94,6 +96,10 @@ fun SharedPreferences.getLongInBounds(key: String, min: Long, max: Long, default
 fun SharedPreferences.getIntInBounds(key: String, min: Int, max: Int, default: Int): Int {
     val value = getInt(key, default)
     return if (value in min..max) value else default
+}
+
+fun currentLocale(cfg: Configuration): Locale {
+    return cfg.locales[0] ?: Locale.getDefault()
 }
 
 enum class Net {
