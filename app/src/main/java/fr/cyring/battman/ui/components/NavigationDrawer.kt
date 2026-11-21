@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Accessibility
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
@@ -606,13 +608,23 @@ fun NavigationDrawer(
                                                     tint = MaterialTheme.colorScheme.primary
                                                 )
                                             }
+                                            // BEGIN(Firebase:Crashlytics)
+                                            IconButton(
+                                                onClick = { throw RuntimeException("Test Crash") }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.BugReport,
+                                                    contentDescription = "Crash",
+                                                    tint = MaterialTheme.colorScheme.primaryFixedDim
+                                                )
+                                            }
+                                            // END(Firebase:Crashlytics)
                                         }
                                     }
                                 }
                             }
                         }
                     }
-
         },
         content = content
     )

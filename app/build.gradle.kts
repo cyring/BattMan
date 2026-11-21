@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // BEGIN(Firebase:Crashlytics)
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    // END(Firebase:Crashlytics)
 }
 
 android {
@@ -62,4 +66,9 @@ dependencies {
     implementation(libs.genai.summarization)
     // com.google.mlkit.genai.imagedescription
     implementation(libs.mlkit.genai.image.description)
+    // BEGIN(Firebase:Crashlytics)
+    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-analytics")
+    // END(Firebase:Crashlytics)
 }
