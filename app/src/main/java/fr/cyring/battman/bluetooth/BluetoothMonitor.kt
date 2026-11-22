@@ -16,10 +16,23 @@ import fr.cyring.battman.R
 
 class BluetoothMonitor(private val context: Context) {
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-    private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager?.adapter
+    private val bluetoothAdapter: BluetoothAdapter?
+        get() = try {
+            bluetoothManager?.adapter
+        } catch (_: SecurityException) {
+            null
+        }
 
     var isBluetoothEnabled by mutableStateOf(false)
         private set
+
+    private fun updateBluetoothState() {
+        isBluetoothEnabled = try {
+            bluetoothAdapter?.isEnabled == true
+        } catch (_: SecurityException) {
+            false
+        }
+    }
 
     private val bluetoothReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
@@ -46,10 +59,6 @@ class BluetoothMonitor(private val context: Context) {
         } catch (_: Exception) {
             // TODO
         }
-    }
-
-    private fun updateBluetoothState() {
-        isBluetoothEnabled = bluetoothAdapter?.isEnabled == true
     }
 
     fun buildBluetoothStatus(context: Context): AnnotatedString {
