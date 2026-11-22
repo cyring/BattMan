@@ -409,25 +409,14 @@ fun NavigationDrawer(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                val intent =
-                                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                                        Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
-                                                            data = Uri.fromParts(
-                                                                "package",
-                                                                context.packageName,
-                                                                null
-                                                            )
-                                                        }
-                                                    } else {
-                                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                                            data = Uri.fromParts(
-                                                                "package",
-                                                                context.packageName,
-                                                                null
-                                                            )
-                                                        }
+                                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                    val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
+                                                        data = Uri.fromParts("package", context.packageName, null)
                                                     }
-                                                context.startActivity(intent)
+                                                    context.startActivity(intent)
+                                                } else {
+                                                    Toast.makeText(context, R.string.unsupported, Toast.LENGTH_SHORT).show()
+                                                }
                                             }
                                             .padding(
                                                 horizontal = 24.dp,

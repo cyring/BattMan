@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.os.Build
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -140,11 +141,13 @@ class NetworkMonitor(context: Context) {
         return internet
     }
 
-    fun buildGatewayStatus(context: Context, viaLinkState: Boolean, iconId: Int): AnnotatedString {
+    fun buildGatewayStatus(context: Context, viaLinkState: Boolean, iconId: Int?): AnnotatedString {
         val gateway = if (viaLinkState) {
             buildAnnotatedString {
-                append(context.getString(iconId))
-                append(' ')
+                if (iconId != null) {
+                    append(context.getString(iconId))
+                    append(' ')
+                }
                 append(context.getString(R.string.activated))
             }
         } else {
@@ -155,7 +158,11 @@ class NetworkMonitor(context: Context) {
 
     fun buildWiFiStatus(context: Context): AnnotatedString {
         return when (isNetworkConnected) {
-            Net.CONNECTED -> buildGatewayStatus(context, viaWiFiGateway, R.string._wifi_)
+            Net.CONNECTED -> buildGatewayStatus(
+                context,
+                viaWiFiGateway,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { R.string._wifi_ } else { null }
+            )
             Net.DISCONNECTED -> AnnotatedString(context.getString(R.string.none))
             else -> AnnotatedString(context.getString(R.string.unavailable))
         }
@@ -163,7 +170,11 @@ class NetworkMonitor(context: Context) {
 
     fun buildCellularStatus(context: Context): AnnotatedString {
         return when (isNetworkConnected) {
-            Net.CONNECTED -> buildGatewayStatus(context, viaCellularGateway, R.string._cellular_)
+            Net.CONNECTED -> buildGatewayStatus(
+                context,
+                viaCellularGateway,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) { R.string._cellular_ } else { null }
+            )
             Net.DISCONNECTED -> AnnotatedString(context.getString(R.string.none))
             else -> AnnotatedString(context.getString(R.string.unavailable))
         }
