@@ -17,8 +17,8 @@ android {
         applicationId = "fr.cyring.battman"
         minSdk = 26
         targetSdk = 37
-        versionCode = 21
-        versionName = "0.21"
+        versionCode = 22
+        versionName = "0.22"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -67,8 +67,8 @@ dependencies {
     // com.google.mlkit.genai.imagedescription
     implementation(libs.mlkit.genai.image.description)
     // BEGIN(Firebase:Crashlytics)
-    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
-    implementation("com.google.firebase:firebase-crashlytics")
-    implementation("com.google.firebase:firebase-analytics")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.google.firebase.crashlytics)
+    implementation(libs.google.firebase.analytics)
     // END(Firebase:Crashlytics)
 }

@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
@@ -146,6 +145,7 @@ fun NavigationDrawer(
     onSelectDialog: (SelectionDialogPayload?) -> Unit,
     content: @Composable () -> Unit
 ) {
+    val isDebuggable = BuildConfig.DEBUG
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val fontConfig: CentralFont = centralFont(controller.fontSizeMode)
@@ -609,14 +609,16 @@ fun NavigationDrawer(
                                                 )
                                             }
                                             // BEGIN(Firebase:Crashlytics)
-                                            IconButton(
-                                                onClick = { throw RuntimeException("Test Crash") }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.BugReport,
-                                                    contentDescription = "Crash",
-                                                    tint = MaterialTheme.colorScheme.primaryFixedDim
-                                                )
+                                            if (isDebuggable) {
+                                                IconButton(
+                                                    onClick = { throw RuntimeException("Test Crash") }
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.BugReport,
+                                                        contentDescription = "Crash",
+                                                        tint = MaterialTheme.colorScheme.primaryFixedDim
+                                                    )
+                                                }
                                             }
                                             // END(Firebase:Crashlytics)
                                         }
