@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -505,57 +506,59 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        rows.forEach { row ->
-            when {
-                // Case 1: ("", "") -> Blank line separator
-                row.label.isEmpty() && row.value.isEmpty() -> {
-                    Spacer(modifier = Modifier.height(fontConfig.lineHeight))
-                }
-                // Case 2: ("@", "") -> Unique pictogram only
-                row.value.isEmpty() -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = row.label,
-                            style = fontConfig.reportStyle
-                        )
+    SelectionContainer {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            rows.forEach { row ->
+                when {
+                    // Case 1: ("", "") -> Blank line separator
+                    row.label.isEmpty() && row.value.isEmpty() -> {
+                        Spacer(modifier = Modifier.height(fontConfig.lineHeight))
                     }
-                }
-                // Case 3: Standard data row (label & value)
-                else -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = row.label,
-                            modifier = Modifier.weight(1.5f),
-                            maxLines = 1,
-                            softWrap = false,
-                            autoSize = TextAutoSize.StepBased(
-                                minFontSize = fontConfig.minReportFontSize[REPORT_LEFT],
-                                maxFontSize = fontConfig.reportStyle.fontSize
-                            ),
-                            style = fontConfig.reportStyle
-                        )
+                    // Case 2: ("@", "") -> Unique pictogram only
+                    row.value.isEmpty() -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = row.label,
+                                style = fontConfig.reportStyle
+                            )
+                        }
+                    }
+                    // Case 3: Standard data row (label & value)
+                    else -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = row.label,
+                                modifier = Modifier.weight(1.5f),
+                                maxLines = 1,
+                                softWrap = false,
+                                autoSize = TextAutoSize.StepBased(
+                                    minFontSize = fontConfig.minReportFontSize[REPORT_LEFT],
+                                    maxFontSize = fontConfig.reportStyle.fontSize
+                                ),
+                                style = fontConfig.reportStyle
+                            )
 
-                        Text(
-                            text = row.value,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Start,
-                            maxLines = 1,
-                            softWrap = false,
-                            autoSize = TextAutoSize.StepBased(
-                                minFontSize = fontConfig.minReportFontSize[REPORT_RIGHT],
-                                maxFontSize = fontConfig.reportStyle.fontSize
-                            ),
-                            style = fontConfig.reportStyle
-                        )
+                            Text(
+                                text = row.value,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Start,
+                                maxLines = 1,
+                                softWrap = false,
+                                autoSize = TextAutoSize.StepBased(
+                                    minFontSize = fontConfig.minReportFontSize[REPORT_RIGHT],
+                                    maxFontSize = fontConfig.reportStyle.fontSize
+                                ),
+                                style = fontConfig.reportStyle
+                            )
+                        }
                     }
                 }
             }
