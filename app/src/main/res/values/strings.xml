@@ -90,7 +90,12 @@
     <string name="wifi" translatable="false">Wi-Fi</string>
     <string name="cellular">Cellular</string>
     <string name="off">Off</string>
+    <string name="quit_crash">Generate a Crash Report</string>
+    <string name="quit_desc">Terminate the application\'s execution</string>
+    <string name="quit_title">Terminate</string>
     <string name="cancel">Cancel</string>
+    <string name="quit">Quit</string>
+    <string name="extra">Leave</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="never">Never</string>

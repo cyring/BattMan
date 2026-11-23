@@ -68,7 +68,12 @@
     <string name="airplane">Modo avión</string>
     <string name="cellular">Celular</string>
     <string name="off">Detener</string>
+    <string name="quit_crash">Generate a Crash Report</string>
+    <string name="quit_desc">Terminate the application\'s execution</string>
+    <string name="quit_title">Terminate</string>
     <string name="cancel">Cancelar</string>
+    <string name="quit">Quit</string>
+    <string name="extra">Leave</string>
     <string name="yes">Si</string>
     <string name="no">No</string>
     <string name="never">Nunca</string>

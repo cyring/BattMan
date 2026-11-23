@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+//TODO: import com.google.android.datatransport.BuildConfig
 import fr.cyring.battman.BuildConfig
 import fr.cyring.battman.C
 import fr.cyring.battman.CentralFont
@@ -65,7 +66,6 @@ import kotlin.collections.indexOf
 import kotlin.collections.indexOfLast
 import kotlin.collections.lastIndex
 import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.seconds
 
 private val TIME_FORMATTERS: Array<(Int) -> String> = arrayOf(
     { sec -> "$sec s" },
@@ -102,8 +102,8 @@ private val unitMultipliers = longArrayOf(1000L, 60_000L)
 fun openThemeDialog(
     themeMode: Int,
     onItemSelected: (Int) -> Unit
-): SelectionDialogPayload {
-    return SelectionDialogPayload(
+): SelectionDialog {
+    return SelectionDialog(
         titleRes = R.string.theme,
         cells = listOf(
             SelectionCell(R.string.theme_light, C.THEME_LIGHT),
@@ -112,16 +112,17 @@ fun openThemeDialog(
         ),
         selectedVal = themeMode,
         descriptionRes = R.string.theme_desc,
-        icon = Icons.Default.Palette,
-        onItemSelected = onItemSelected
+        onDismissRequest = { },
+        onItemSelected = onItemSelected,
+        icon = Icons.Default.Palette
     )
 }
 
 fun openFontDialog(
     fontSizeMode: Int,
     onItemSelected: (Int) -> Unit
-): SelectionDialogPayload {
-    return SelectionDialogPayload(
+): SelectionDialog {
+    return SelectionDialog(
         titleRes = R.string.accessibility,
         cells = listOf(
             SelectionCell(R.string.accessibility_small, C.FONT_SIZE_SMALL),
@@ -131,8 +132,9 @@ fun openFontDialog(
         ),
         selectedVal = fontSizeMode,
         descriptionRes = R.string.accessibility_desc,
-        icon = Icons.Default.Accessibility,
-        onItemSelected = onItemSelected
+        onDismissRequest = { },
+        onItemSelected = onItemSelected,
+        icon = Icons.Default.Accessibility
     )
 }
 
@@ -142,7 +144,7 @@ fun NavigationDrawer(
     controller: Controller,
     drawerState: DrawerState,
     batteryMonitor: BatteryMonitor,
-    onSelectDialog: (SelectionDialogPayload?) -> Unit,
+    onPushDialog: (BasicDialog) -> Unit,
     content: @Composable () -> Unit
 ) {
     val isDebuggable = BuildConfig.DEBUG
@@ -410,12 +412,21 @@ fun NavigationDrawer(
                                             .fillMaxWidth()
                                             .clickable {
                                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                                    val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
-                                                        data = Uri.fromParts("package", context.packageName, null)
-                                                    }
+                                                    val intent =
+                                                        Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
+                                                            data = Uri.fromParts(
+                                                                "package",
+                                                                context.packageName,
+                                                                null
+                                                            )
+                                                        }
                                                     context.startActivity(intent)
                                                 } else {
-                                                    Toast.makeText(context, R.string.unsupported, Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(
+                                                        context,
+                                                        R.string.unsupported,
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                 }
                                             }
                                             .padding(
@@ -455,7 +466,7 @@ fun NavigationDrawer(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                onSelectDialog(
+                                                onPushDialog(
                                                     openThemeDialog(
                                                         themeMode = themeMode,
                                                         onItemSelected = { newValue ->
@@ -503,7 +514,7 @@ fun NavigationDrawer(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable {
-                                                onSelectDialog(
+                                                onPushDialog(
                                                     openFontDialog(
                                                         fontSizeMode = controller.fontSizeMode,
                                                         onItemSelected = { newValue ->
@@ -584,11 +595,14 @@ fun NavigationDrawer(
                                             }
                                             IconButton(
                                                 onClick = {
-                                                    coroutineScope.launch {
-                                                        Toast.makeText(context, R.string.bye, Toast.LENGTH_SHORT).show()
-                                                        kotlinx.coroutines.delay(1.seconds)
-                                                        activity?.finishAndRemoveTask()
-                                                    }
+                                                    onPushDialog(
+                                                        QuitDialog(
+                                                            titleRes = R.string.quit_title,
+                                                            messageRes = R.string.quit_desc,
+                                                            activity = activity,
+                                                            icon = Icons.Default.PowerSettingsNew
+                                                        )
+                                                    )
                                                 }
                                             ) {
                                                 Icon(
@@ -600,7 +614,36 @@ fun NavigationDrawer(
                                             // BEGIN(Firebase:Crashlytics)
                                             if (isDebuggable) {
                                                 IconButton(
-                                                    onClick = { throw RuntimeException("Test Crash") }
+                                                    onClick = {
+                                                        onPushDialog(
+                                                            object : QuitDialog(
+                                                                titleRes = R.string.quit_title,
+                                                                messageRes = R.string.quit_crash,
+                                                                activity = activity,
+                                                                icon = Icons.Default.BugReport
+                                                            ) {
+                                                                @Composable
+                                                                override fun QuitButton(
+                                                                    fontConfig: CentralFont,
+                                                                    onDismiss: () -> Unit,
+                                                                    label: String,
+                                                                    onQuitDismiss: () -> Unit
+                                                                ) = super.QuitButton(
+                                                                    fontConfig,
+                                                                    onDismiss,
+                                                                    label = "Crash",
+                                                                ) {
+                                                                    throw RuntimeException("Test Crash")
+                                                                }
+                                                                @Composable
+                                                                override fun ExtraButton(
+                                                                    fontConfig: CentralFont,
+                                                                    onDismiss: () -> Unit,
+                                                                    label: String,
+                                                                    onExtraDismiss: () -> Unit) {}
+                                                            }
+                                                        )
+                                                    }
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Default.BugReport,

@@ -60,14 +60,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import fr.cyring.battman.CentralColor.AlertBattery
 import fr.cyring.battman.battery.BatteryEventReceiver
 import fr.cyring.battman.battery.BatteryMonitor
+import fr.cyring.battman.ui.components.BasicDialog
 import fr.cyring.battman.ui.components.BatteryHeader
-import fr.cyring.battman.ui.components.SelectionDialog
-import fr.cyring.battman.ui.theme.BattManTheme
-import fr.cyring.battman.ui.components.SelectionDialogPayload
 import fr.cyring.battman.ui.components.NavigationDrawer
+import fr.cyring.battman.ui.theme.BattManTheme
 import kotlinx.coroutines.launch
-import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
+import java.util.Locale
 
 const val REPORT_LEFT: Int = 0
 const val REPORT_RIGHT: Int = 1
@@ -310,28 +309,19 @@ class MainActivity : ComponentActivity() {
             val sysInfo = Diagnostics.buildSystemInfo()
             val themeMode = controller.themeMode
 
-            var activeSelectionDialog by remember { mutableStateOf<SelectionDialogPayload?>(null) } /* Sentinel */
-
             val darkTheme = when (themeMode) {
                 C.THEME_LIGHT -> false
                 C.THEME_DARK -> true
                 else -> isSystemInDarkTheme()
             }
 
+            val dialogStack = remember { mutableStateListOf<BasicDialog>() }
+
             BattManTheme(darkTheme = darkTheme) {
-                activeSelectionDialog?.let { payload ->
-                    SelectionDialog(
+                dialogStack.forEach { dialog ->
+                    dialog.Render(
                         fontConfig = fontConfig,
-                        titleRes = payload.titleRes,
-                        cells = payload.cells,
-                        selectedVal = payload.selectedVal,
-                        descriptionRes = payload.descriptionRes,
-                        onDismissRequest = { activeSelectionDialog = null /* Sentinel */ },
-                        onItemSelected = { newValue ->
-                            payload.onItemSelected(newValue)
-                            activeSelectionDialog = null /* Sentinel */
-                        },
-                        icon = payload.icon
+                        onDismiss = { dialogStack.remove(dialog) }
                     )
                 }
 
@@ -342,7 +332,7 @@ class MainActivity : ComponentActivity() {
                     controller = controller,
                     drawerState = drawerState,
                     batteryMonitor = batteryMonitor,
-                    onSelectDialog = { payload -> activeSelectionDialog = payload }
+                    onPushDialog = { dialog -> dialogStack.add(dialog) }
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize()

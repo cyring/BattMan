@@ -68,7 +68,12 @@
     <string name="airplane">Flugmodus</string>
     <string name="cellular">Mobilfunk</string>
     <string name="off">Aus</string>
+    <string name="quit_crash">Generate a Crash Report</string>
+    <string name="quit_desc">Terminate the application\'s execution</string>
+    <string name="quit_title">Terminate</string>
     <string name="cancel">Abbrechen</string>
+    <string name="quit">Quit</string>
+    <string name="extra">Leave</string>
     <string name="yes">Ja</string>
     <string name="no">Nein</string>
     <string name="never">Nie</string>
