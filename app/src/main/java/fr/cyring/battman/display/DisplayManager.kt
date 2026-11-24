@@ -10,6 +10,8 @@ import android.provider.Settings.System.getInt
 import android.view.Display
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import fr.cyring.battman.M
 import fr.cyring.battman.R
 import fr.cyring.battman.waitingStyle
 import kotlin.time.Duration.Companion.milliseconds
@@ -192,10 +194,12 @@ object Display {
             -1 -> append(ctx.getString(R.string.unsupported))
             0 -> append(ctx.getString(R.string.off))
             else -> {
-                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_AC == BatteryManager.BATTERY_PLUGGED_AC) append("[AC]") else append("AC")
-                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_USB == BatteryManager.BATTERY_PLUGGED_USB) append("[USB]") else append( " USB")
-                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_WIRELESS == BatteryManager.BATTERY_PLUGGED_WIRELESS) append("[WLS]") else append(" WLS")
-                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_DOCK == BatteryManager.BATTERY_PLUGGED_DOCK) append("[DOCK]") else append(" DOCK")
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_AC == BatteryManager.BATTERY_PLUGGED_AC) append("[AC]") else withStyle(M.labelOff) { append("AC") }
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_USB == BatteryManager.BATTERY_PLUGGED_USB) append("[USB]") else withStyle(M.labelOff) { append( " USB") }
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_WIRELESS == BatteryManager.BATTERY_PLUGGED_WIRELESS) append("[WLS]") else withStyle(M.labelOff) { append(" WLS") }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_DOCK == BatteryManager.BATTERY_PLUGGED_DOCK) append("[DOCK]") else withStyle(M.labelOff) { append(" DOCK") }
+                }
                 if (display.stayAwake and allMASK.inv() != 0) append("[?]")
             }
         }

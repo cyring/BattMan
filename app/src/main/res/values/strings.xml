@@ -96,7 +96,7 @@
     <string name="quit_title">Terminate</string>
     <string name="cancel">Cancel</string>
     <string name="quit">Quit</string>
-    <string name="extra">Leave</string>
+    <string name="extra">Finish</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="never">Never</string>
@@ -145,7 +145,7 @@
     <string name="in_days">In %1$d days</string>
     <string name="reset">Reset</string>
     <string name="bye">Bye</string>
-    <string name="ai_as" translatable="false">Android System</string>
+    <string name="ai_as" translatable="false">Intelligence</string>
     <string name="ai_core" translatable="false">AI Core</string>
     <string name="ai_prompt" translatable="false">AI Prompt</string>
     <string name="ai_nlp" translatable="false">AI NLP</string>

@@ -73,8 +73,8 @@
     <string name="quit_desc">Terminate the application\'s execution</string>
     <string name="quit_title">Terminate</string>
     <string name="cancel">Cancelar</string>
-    <string name="quit">Quit</string>
-    <string name="extra">Leave</string>
+    <string name="quit">Salir</string>
+    <string name="extra">Cerrar</string>
     <string name="yes">Si</string>
     <string name="no">No</string>
     <string name="never">Nunca</string>

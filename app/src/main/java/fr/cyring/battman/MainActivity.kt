@@ -81,6 +81,7 @@ object M {
 
     val arrowDown: SpanStyle = SpanStyle(color = Color.Yellow)
     val arrowUp: SpanStyle = SpanStyle(color = Color.Green)
+    val labelOff: SpanStyle = SpanStyle(color = Color.LightGray)
 }
 
 fun String.waitingStyle(): AnnotatedString = buildAnnotatedString {

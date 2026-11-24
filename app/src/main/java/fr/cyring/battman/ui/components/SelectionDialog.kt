@@ -36,6 +36,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import fr.cyring.battman.CentralFont
 import fr.cyring.battman.R
+import fr.cyring.battman.battery.BatteryAlertWorker
 
 data class SelectionCell (
     val resource: Int,
@@ -306,14 +307,17 @@ open class QuitDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            confirmButton = {
-                ExtraButton(fontConfig, onDismiss) { activity?.finish() }
-            },
             dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    QuitButton(fontConfig, onDismiss) { activity?.finishAndRemoveTask() }
-                    CancelButton(fontConfig, onDismiss)
+                QuitButton(fontConfig, onDismiss) {
+                    activity?.applicationContext?.let { BatteryAlertWorker.cancel(it) }
+                    activity?.finishAndRemoveTask()
                 }
+                ExtraButton(fontConfig, onDismiss) {
+                    activity?.finish()
+                }
+            },
+            confirmButton = {
+                CancelButton(fontConfig, onDismiss)
             }
         )
     }
