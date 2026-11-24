@@ -62,6 +62,7 @@
     <string name="screen_timeout">Pantalla apagada</string>
     <string name="screen_saver">Pantalla retraso</string>
     <string name="screen_off">Cronógrafo</string>
+    <string name="stay_awake">Permanecer activo</string>
     <string name="torch">Linterna</string>
     <string name="microphone">Micrófono</string>
     <string name="location">Ubicación</string>

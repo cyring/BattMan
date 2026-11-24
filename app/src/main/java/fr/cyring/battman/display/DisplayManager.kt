@@ -3,6 +3,7 @@ package fr.cyring.battman.display
 import android.content.Context
 import android.content.res.Configuration
 import android.hardware.display.DisplayManager
+import android.os.BatteryManager
 import android.os.Build
 import android.provider.Settings
 import android.provider.Settings.System.getInt
@@ -21,7 +22,8 @@ data class DisplayInfo(
     val touchKind: Int,
     val refreshRate: Float,
     val screenTimeoutMs: Long,
-    val screenSaverEnabled: Boolean?
+    val screenSaverEnabled: Boolean?,
+    val stayAwake: Int
 )
 
 object Display {
@@ -66,6 +68,12 @@ object Display {
             null
         }
 
+        val stayAwake = try {
+            Settings.Global.getInt(ctx.contentResolver, Settings.Global.STAY_ON_WHILE_PLUGGED_IN)
+        } catch (_: Exception) {
+            -1
+        }
+
         return DisplayInfo(
             brightness = brightness,
             adaptive = adaptive,
@@ -91,7 +99,8 @@ object Display {
                 0f
             },
             screenTimeoutMs = screenTimeoutMs,
-            screenSaverEnabled = screenSaverEnabled
+            screenSaverEnabled = screenSaverEnabled,
+            stayAwake = stayAwake
         )
     }
 
@@ -171,6 +180,24 @@ object Display {
         buildAnnotatedString {
             append(ctx.getString(R.string._calc_) + ' ')
             append(durationString)
+        }
+    }
+
+    fun buildStayAwake(ctx: Context, display: DisplayInfo) = buildAnnotatedString {
+        var allMASK: Int = BatteryManager.BATTERY_PLUGGED_AC or BatteryManager.BATTERY_PLUGGED_USB or BatteryManager.BATTERY_PLUGGED_WIRELESS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            allMASK = allMASK or BatteryManager.BATTERY_PLUGGED_DOCK
+        }
+        when (display.stayAwake) {
+            -1 -> append(ctx.getString(R.string.unsupported))
+            0 -> append(ctx.getString(R.string.off))
+            else -> {
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_AC == BatteryManager.BATTERY_PLUGGED_AC) append("[AC]") else append("AC")
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_USB == BatteryManager.BATTERY_PLUGGED_USB) append("[USB]") else append( " USB")
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_WIRELESS == BatteryManager.BATTERY_PLUGGED_WIRELESS) append("[WLS]") else append(" WLS")
+                if (display.stayAwake and BatteryManager.BATTERY_PLUGGED_DOCK == BatteryManager.BATTERY_PLUGGED_DOCK) append("[DOCK]") else append(" DOCK")
+                if (display.stayAwake and allMASK.inv() != 0) append("[?]")
+            }
         }
     }
 }

@@ -61,6 +61,7 @@
     <string name="screen_timeout">Délai d\'écran</string>
     <string name="screen_saver">Veille écran</string>
     <string name="screen_off">Chronomètre</string>
+    <string name="stay_awake">Rester activé</string>
     <string name="torch">Torche</string>
     <string name="microphone">Microphone</string>
     <string name="location">Localisation</string>

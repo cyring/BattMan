@@ -81,6 +81,7 @@
     <string name="screen_timeout">Screen timeout</string>
     <string name="screen_saver">Screen Saver</string>
     <string name="screen_off">Stopwatch</string>
+    <string name="stay_awake">Stay awake</string>
     <string name="torch">Torch</string>
     <string name="microphone">Microphone</string>
     <string name="location">Location</string>

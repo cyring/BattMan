@@ -27,6 +27,7 @@ import fr.cyring.battman.location.LocationMonitor
 import fr.cyring.battman.network.NetworkMonitor
 import java.time.Duration
 import kotlin.time.toKotlinDuration
+import androidx.compose.ui.text.buildAnnotatedString
 
 data class ReportRow(
     val label: String,
@@ -134,6 +135,7 @@ object Diagnostics {
         deepRow[C.TIMEOUT].value = Display.buildScreenTimeout(context, display)
         deepRow[C.SCR_SAV].value = Display.buildScreenSaver(context, display)
         deepRow[C.SCR_OFF].value = Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)
+        deepRow[C.AWAKE].value = Display.buildStayAwake(context, display)
         deepRow[C.TORCH].value = flashLight.buildTorchStatus(context)
         deepRow[C.AUDIO].value = audioMonitor.buildAudioStatus(context)
         deepRow[C.LOCATION].value = locationMonitor.buildLocationStatus(context)
@@ -259,6 +261,7 @@ object Diagnostics {
             /* TIMEOUT  */  row(R.string.screen_timeout, Display.buildScreenTimeout(context, display)),
             /* SCR_SAV  */  row(R.string.screen_saver, Display.buildScreenSaver(context, display)),
             /* SCR_OFF  */  row(R.string.screen_off, Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)),
+            /* AWAKE    */  row(R.string.stay_awake, Display.buildStayAwake(context, display)),
             /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context)),
             /* AUDIO    */  row(R.string.microphone, audioMonitor.buildAudioStatus(context)),
             /* LOCATION */  row(R.string.location, locationMonitor.buildLocationStatus(context)),
@@ -319,6 +322,7 @@ object Diagnostics {
             deepRow[C.TIMEOUT],
             deepRow[C.SCR_SAV],
             deepRow[C.SCR_OFF],
+            deepRow[C.AWAKE],
 
             ReportRow(context.getString(R.string._gear_), AnnotatedString("")),
 
