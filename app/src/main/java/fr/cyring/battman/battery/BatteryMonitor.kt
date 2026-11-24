@@ -42,11 +42,9 @@ object BatteryTrendMask {
     const val STATE_RESUMED = 1 shl 9           // Bit 9  (0b00000000000000000000001000000000)
 }
 
-class BatteryMonitor(context: Context) {
+class BatteryMonitor(context: Context, private val tongue: Array<Locale>) {
     private val prefs = context.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
     private val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-    var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
 
     companion object {
         var timeRemainingMs by mutableLongStateOf(-1L)

@@ -46,7 +46,7 @@ enum class RefreshCase(
 class Controller(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("BattMan", Context.MODE_PRIVATE)
     private val powerManager = application.getSystemService(Context.POWER_SERVICE) as PowerManager
-    private val batteryMonitor = BatteryMonitor(application)
+    private lateinit var batteryMonitor: BatteryMonitor
     private val locationMonitor = LocationMonitor(application)
     private val bluetoothMonitor = BluetoothMonitor(application)
     private val airplaneMonitor = AirplaneMonitor(application)
@@ -78,7 +78,9 @@ class Controller(application: Application) : AndroidViewModel(application) {
 
     private var refreshJob: Job? = null
 
-    fun init() {
+    fun init(tongue: Array<Locale>) {
+        batteryMonitor = BatteryMonitor(getApplication(), tongue)
+
         buildData()
 
         // Reactive observer: automatically manages the foreground loop when CASE_FOCUS settings change

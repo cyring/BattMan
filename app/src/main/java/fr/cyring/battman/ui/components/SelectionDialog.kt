@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,7 +54,10 @@ open class BasicDialog(
         onDismiss: () -> Unit,
         color: Color = Color.Unspecified
     ) {
-        TextButton(onClick = onDismiss) {
+        TextButton(
+            contentPadding = PaddingValues(horizontal = 6.dp),
+            onClick = onDismiss
+        ) {
             Text(
                 text = stringResource(R.string.cancel),
                 style = fontConfig.dialogStyle.button,
@@ -252,6 +256,7 @@ open class QuitDialog(
                         onQuitDismiss: () -> Unit)
     {
         TextButton(
+            contentPadding = PaddingValues(horizontal = 6.dp),
             onClick = {
                 onDismiss()
                 onQuitDismiss()
@@ -270,6 +275,7 @@ open class QuitDialog(
                          onExtraDismiss: () -> Unit)
     {
         TextButton(
+            contentPadding = PaddingValues(horizontal = 6.dp),
             onClick = {
                 onDismiss()
                 onExtraDismiss()

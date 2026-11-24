@@ -242,7 +242,7 @@ class MainActivity : ComponentActivity() {
     var tongue: Array<Locale> = arrayOf(Locale.ENGLISH, Locale.ENGLISH)
 
     private val controller: Controller by viewModels()
-    private val batteryMonitor by lazy { BatteryMonitor(application) }
+    private val batteryMonitor by lazy { BatteryMonitor(application, tongue) }
     private val batteryEventReceiver = BatteryEventReceiver()
 
     override fun onPause() {
@@ -296,7 +296,7 @@ class MainActivity : ComponentActivity() {
         tongue[C.CASE_FOCUS] = currentLocale(resources.configuration)
         tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
 
-        controller.init()
+        controller.init(tongue)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
