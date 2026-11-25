@@ -81,10 +81,10 @@ class Controller(application: Application) : AndroidViewModel(application) {
 
     private var refreshJob: Job? = null
 
-    fun init(tongue: Array<Locale>) {
+    fun init(context: Context, tongue: Array<Locale>) {
         batteryMonitor = BatteryMonitor(getApplication(), tongue)
 
-        buildData()
+        buildData(context)
 
         // Reactive observer: automatically manages the foreground loop when CASE_FOCUS settings change
         viewModelScope.launch {
@@ -95,7 +95,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
                         refreshJob = viewModelScope.launch {
                             while (true) {
                                 delay(time.milliseconds)
-                                refreshData()
+                                refreshData(context)
                             }
                         }
                     }
@@ -103,8 +103,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun buildData() {
-        val context: Context = getApplication()
+    fun buildData(context: Context) {
 
         viewModelScope.launch {
             aiMonitor.probeComponents()
@@ -125,8 +124,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    fun refreshData() {
-        val context: Context = getApplication()
+    fun refreshData(context: Context) {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         @Suppress("DEPRECATION")
         val intent: Intent? = context.registerReceiver(null, filter)
@@ -183,8 +181,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
         prefs.edit { putInt("fontSizeMode", mode) }
     }
 
-    fun onScreenPaused() {
-        val context: Context = getApplication()
+    fun onScreenPaused(context: Context) {
         if (!powerManager.isInteractive && timeTracker.screenOffStartedAt == 0L) {
             timeTracker.screenOffStartedAt = System.currentTimeMillis()
         }
@@ -198,9 +195,9 @@ class Controller(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onScreenResumed(tongue: Array<Locale>) {
-        val context: Context = getApplication()
+    fun onScreenResumed(context: Context) {
         BatteryAlertWorker.cancel(context)
+
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         if (intent != null) {
             updateBatteryLevel(intent, isResumedEvent = true)
@@ -211,11 +208,7 @@ class Controller(application: Application) : AndroidViewModel(application) {
             timeTracker.screenOffStartedAt = 0L
         }
 
-        if (tongue[C.CASE_FOCUS] != tongue[C.CASE_AWAY]) {
-            buildData()
-        } else {
-            refreshData()
-        }
+        refreshData(context)
     }
 
     fun startTorchMonitoring() {

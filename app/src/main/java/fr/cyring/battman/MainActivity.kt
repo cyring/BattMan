@@ -250,7 +250,7 @@ class MainActivity : ComponentActivity() {
 
         tongue[C.CASE_AWAY] = currentLocale(resources.configuration)
 
-        controller.onScreenPaused()
+        controller.onScreenPaused(this)
 
         try {
             unregisterReceiver(batteryEventReceiver)
@@ -271,7 +271,7 @@ class MainActivity : ComponentActivity() {
 
         tongue[C.CASE_FOCUS] = currentLocale(resources.configuration)
 
-        controller.onScreenResumed(tongue)
+        controller.onScreenResumed(this)
 
         tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
 
@@ -296,7 +296,7 @@ class MainActivity : ComponentActivity() {
         tongue[C.CASE_FOCUS] = currentLocale(resources.configuration)
         tongue[C.CASE_AWAY] = tongue[C.CASE_FOCUS]
 
-        controller.init(tongue)
+        controller.init(this, tongue)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -346,6 +346,7 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp, 0.dp)
                         ) {
                             BatteryHeader(
+                                this@MainActivity,
                                 controller = controller,
                                 fontConfig = fontConfig,
                                 onOpenDrawer = {
@@ -457,7 +458,7 @@ class MainActivity : ComponentActivity() {
                                 onRefresh = {
                                     isRefreshing = true
                                     coroutineScope.launch {
-                                        controller.refreshData()
+                                        controller.refreshData(this@MainActivity)
                                         isRefreshing = false
                                     }
                                 },

@@ -1,5 +1,6 @@
 package fr.cyring.battman.ui.components
 
+import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import fr.cyring.battman.Controller
 
 @Composable
 fun BatteryHeader(
+    context: Context,
     controller: Controller,
     fontConfig: CentralFont,
     onOpenDrawer: () -> Unit
@@ -62,7 +64,7 @@ fun BatteryHeader(
         }
         IconButton(
             onClick = {
-                controller.refreshData()
+                controller.refreshData(context)
             }
         ) {
             Icon(

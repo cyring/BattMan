@@ -27,7 +27,6 @@ import fr.cyring.battman.location.LocationMonitor
 import fr.cyring.battman.network.NetworkMonitor
 import java.time.Duration
 import kotlin.time.toKotlinDuration
-import androidx.compose.ui.text.buildAnnotatedString
 
 data class ReportRow(
     val label: String,
