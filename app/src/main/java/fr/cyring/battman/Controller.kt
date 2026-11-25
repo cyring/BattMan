@@ -53,6 +53,9 @@ class Controller(application: Application) : AndroidViewModel(application) {
     private val networkMonitor = NetworkMonitor(application)
     private val aiMonitor = AiMonitor(application)
 
+    companion object {
+        var userShutdown = false
+    }
     data class TimeTracker(
         var screenOffStartedAt: Long = 0L,
         var lastScreenOffDurationMs: Long = -1L
@@ -186,7 +189,9 @@ class Controller(application: Application) : AndroidViewModel(application) {
             timeTracker.screenOffStartedAt = System.currentTimeMillis()
         }
         val awayMinutes = refreshTime[C.CASE_AWAY] / 60_000L
-        if (autoRefresh[C.CASE_AWAY] && awayMinutes > 0 && batteryAlertThreshold > 0) {
+        if ((autoRefresh[C.CASE_AWAY] && awayMinutes > 0 && batteryAlertThreshold > 0)
+            && (userShutdown == false))
+        {
             BatteryAlertWorker.schedule(context, awayMinutes)
         } else {
             BatteryAlertWorker.cancel(context)
