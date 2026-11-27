@@ -6,6 +6,8 @@
     <string name="_alarm_clock_" translatable="false">\u23F0</string>
     <string name="_arrow_down_" translatable="false">\u2B07</string>
     <string name="_arrow_up_" translatable="false">\u2B06</string>
+    <string name="_fold_" translatable="false">↖️</string>
+    <string name="_unfold_" translatable="false">↘️</string>
     <string name="_calc_" translatable="false">\u2328</string>
     <string name="_info_" translatable="false">ℹ️</string>
     <string name="_wait_" translatable="false">\uD83D\uDD50</string>

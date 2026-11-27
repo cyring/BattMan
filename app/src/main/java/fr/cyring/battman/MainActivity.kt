@@ -543,11 +543,16 @@ private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>, mo
                                 }
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(fontConfig.lineHeight * 1.75f),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = row.label,
+                                    text = if (row.expr.isNotEmpty()) {
+                                        stringResource(
+                                            if (isSelected) {R.string._fold_} else {R.string._unfold_}
+                                        ) } else {
+                                            "  "
+                                        } + row.label,
                                     modifier = Modifier.weight(1.5f),
                                     maxLines = 1,
                                     softWrap = false,
