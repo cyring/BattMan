@@ -44,7 +44,8 @@ object C {
     const val DEFAULT_AUTO_FOCUS = true
     const val DEFAULT_AUTO_AWAY = false
 
-    const val CYCLE: Int = 0
+    const val LEVEL: Int = 0
+    const val CYCLE: Int = LEVEL + 1
     const val STATUS: Int = CYCLE + 1
     const val HEALTH: Int = STATUS + 1
     const val TECH: Int = HEALTH + 1

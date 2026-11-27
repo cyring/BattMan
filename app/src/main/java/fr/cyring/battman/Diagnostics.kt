@@ -30,9 +30,11 @@ import kotlin.time.toKotlinDuration
 
 data class ReportRow(
     val label: String,
-    val store: AnnotatedString
+    val store: AnnotatedString,
+    var expression: String
 ) {
     var value by mutableStateOf(store)
+    var expr by mutableStateOf(expression)
 }
 
 lateinit var deepRow: Array<ReportRow>
@@ -106,6 +108,7 @@ object Diagnostics {
         val aiVLM = aiMonitor.buildComponent(context, AiCapability.AI_VLM_CAP)
         val aiSpeech = aiMonitor.buildComponent(context, AiCapability.AI_SPEECH_CAP)
 
+        deepRow[C.LEVEL].expr = "${context.getString(R.string.level)} <= ${BatteryMonitor.batteryAlertThreshold}%"
         deepRow[C.CYCLE].value = batteryMonitor.buildCycle(context, count)
         deepRow[C.STATUS].value = status
         deepRow[C.HEALTH].value = batteryMonitor.buildHealth(context, intent)
@@ -169,10 +172,7 @@ object Diagnostics {
         @Suppress("DEPRECATION")
         val intent = context.registerReceiver(null, filter)
             ?: return listOf(
-                ReportRow(
-                    context.getString(R.string.unavailable),
-                    AnnotatedString("")
-                )
+                ReportRow(context.getString(R.string.unavailable), AnnotatedString(""), "")
             )
 
         val batteryManager = context.getSystemService(
@@ -229,61 +229,62 @@ object Diagnostics {
         val aiVLM = aiMonitor.buildComponent(context, AiCapability.AI_VLM_CAP)
         val aiSpeech = aiMonitor.buildComponent(context, AiCapability.AI_SPEECH_CAP)
 
-        fun row(labelId: Int, value: AnnotatedString) = ReportRow(context.getString(labelId), value)
+        fun row(labelId: Int, value: AnnotatedString, expr: String) = ReportRow(context.getString(labelId), value, expr)
 
         deepRow = arrayOf(
-            /* CYCLE    */  row(R.string.cycle, batteryMonitor.buildCycle(context, count)),
-            /* STATUS   */  row(R.string.state, status),
-            /* HEALTH   */  row(R.string.health, batteryMonitor.buildHealth(context, intent)),
-            /* TECH     */  row(R.string.technology, batteryMonitor.buildTechnology(extraTech)),
-            /* VOLTAGE  */  row(R.string.voltage, batteryMonitor.buildVoltage(context, voltageMv)),
-            /* TEMP     */  row(R.string.temperature, batteryMonitor.buildTemperature(context, batteryTemp)),
-            /* ENERGY   */  row(R.string.energy_counter, batteryMonitor.buildEnergyCounter(context, energy)),
-            /* CHARGE   */  row(R.string.charge_counter, batteryMonitor.buildChargeCounter(context, batteryManager)),
-            /* CURRENT  */  row(R.string.current_now, batteryMonitor.buildCurrentNow(context, batteryManager)),
-            /* AVG      */  row(R.string.current_average, batteryMonitor.buildCurrentAverage(context, batteryManager)),
-            /* PLUG     */  row(R.string.battery_plugged, batteryMonitor.buildBatteryPlug(context, intent)),
-            /* REMAIN   */  row(R.string.time_remaining, timeRemaining),
-            /* FULL     */  row(R.string.fully_charged, fullyChargedAt),
-            /* BAT_SAV  */  row(R.string.battery_saver, batteryMonitor.buildBatterySaver(context)),
-            /* THERMAL  */  row(R.string.thermal_status, batteryMonitor.buildThermal(context)),
-            /* PRESENT  */  row(R.string.battery_present, batteryMonitor.buildBatteryPresent(context, intent)),
-            /* BAT_LOW  */  row(R.string.battery_low, batteryMonitor.buildLowBattery(context, intent)),
-            /* PREDICT  */  row(R.string.prediction, prediction),
-            /* EMPTY    */  row(R.string.totally_empty, totallyEmptyAt),
-            /* BRIGHT   */  row(R.string.brightness, Display.buildBrightness(context, display)),
-            /* ADAPTIVE */  row(R.string.adaptive, Display.buildAdaptiveMode(context, display)),
-            /* DARK_MOD */  row(R.string.mode_dark, Display.buildDarkTheme(context, display)),
-            /* NIGHT_LT */  row(R.string.night_light, Display.buildNightLight(context, display)),
-            /* TOUCH    */  row(R.string.touchscreen, Display.buildTouchScreen(context, display)),
-            /* SMOOTH   */  row(R.string.refresh_rate, Display.buildSmoothDisplay(context, display)),
-            /* TIMEOUT  */  row(R.string.screen_timeout, Display.buildScreenTimeout(context, display)),
-            /* SCR_SAV  */  row(R.string.screen_saver, Display.buildScreenSaver(context, display)),
-            /* SCR_OFF  */  row(R.string.screen_off, Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs)),
-            /* AWAKE    */  row(R.string.stay_awake, Display.buildStayAwake(context, display)),
-            /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context)),
-            /* AUDIO    */  row(R.string.microphone, audioMonitor.buildAudioStatus(context)),
-            /* LOCATION */  row(R.string.location, locationMonitor.buildLocationStatus(context)),
-            /* BT_MOD   */  row(R.string.bluetooth, bluetoothMonitor.buildBluetoothStatus(context)),
-            /* WIFI     */  row(R.string.wifi, networkMonitor.buildWiFiStatus(context)),
-            /* CELLULAR */  row(R.string.cellular, networkMonitor.buildCellularStatus(context)),
-            /* INTERNET */  row(R.string.internet, networkMonitor.buildInternetStatus(context)),
-            /* AIRPLANE */  row(R.string.airplane, airplaneMonitor.buildAirplaneStatus(context)),
-            /* AI_AS    */  row(R.string.ai_as, aiAS),
-            /* AI_NPU   */  row(R.string.ai_core, aiCore),
-            /* AI_INPUT */  row(R.string.ai_prompt, aiPrompt),
-            /* AI_NLP   */  row(R.string.ai_nlp, aiNLP),
-            /* AI_VLM   */  row(R.string.ai_vlm, aiVLM),
-            /* AI_VOICE */  row(R.string.ai_speech, aiSpeech)
+            /* LEVEL    */  row(R.string.level, AnnotatedString("$batteryPercent%"), "${context.getString(R.string.level)} <= ${BatteryMonitor.batteryAlertThreshold}%"),
+            /* CYCLE    */  row(R.string.cycle, batteryMonitor.buildCycle(context, count), ""),
+            /* STATUS   */  row(R.string.state, status, ""),
+            /* HEALTH   */  row(R.string.health, batteryMonitor.buildHealth(context, intent), ""),
+            /* TECH     */  row(R.string.technology, batteryMonitor.buildTechnology(extraTech), ""),
+            /* VOLTAGE  */  row(R.string.voltage, batteryMonitor.buildVoltage(context, voltageMv), ""),
+            /* TEMP     */  row(R.string.temperature, batteryMonitor.buildTemperature(context, batteryTemp), ""),
+            /* ENERGY   */  row(R.string.energy_counter, batteryMonitor.buildEnergyCounter(context, energy), ""),
+            /* CHARGE   */  row(R.string.charge_counter, batteryMonitor.buildChargeCounter(context, batteryManager), ""),
+            /* CURRENT  */  row(R.string.current_now, batteryMonitor.buildCurrentNow(context, batteryManager), ""),
+            /* AVG      */  row(R.string.current_average, batteryMonitor.buildCurrentAverage(context, batteryManager), ""),
+            /* PLUG     */  row(R.string.battery_plugged, batteryMonitor.buildBatteryPlug(context, intent), ""),
+            /* REMAIN   */  row(R.string.time_remaining, timeRemaining, ""),
+            /* FULL     */  row(R.string.fully_charged, fullyChargedAt, ""),
+            /* BAT_SAV  */  row(R.string.battery_saver, batteryMonitor.buildBatterySaver(context), ""),
+            /* THERMAL  */  row(R.string.thermal_status, batteryMonitor.buildThermal(context), ""),
+            /* PRESENT  */  row(R.string.battery_present, batteryMonitor.buildBatteryPresent(context, intent), ""),
+            /* BAT_LOW  */  row(R.string.battery_low, batteryMonitor.buildLowBattery(context, intent), ""),
+            /* PREDICT  */  row(R.string.prediction, prediction, ""),
+            /* EMPTY    */  row(R.string.totally_empty, totallyEmptyAt, ""),
+            /* BRIGHT   */  row(R.string.brightness, Display.buildBrightness(context, display), ""),
+            /* ADAPTIVE */  row(R.string.adaptive, Display.buildAdaptiveMode(context, display), ""),
+            /* DARK_MOD */  row(R.string.mode_dark, Display.buildDarkTheme(context, display), ""),
+            /* NIGHT_LT */  row(R.string.night_light, Display.buildNightLight(context, display), ""),
+            /* TOUCH    */  row(R.string.touchscreen, Display.buildTouchScreen(context, display), ""),
+            /* SMOOTH   */  row(R.string.refresh_rate, Display.buildSmoothDisplay(context, display), ""),
+            /* TIMEOUT  */  row(R.string.screen_timeout, Display.buildScreenTimeout(context, display), ""),
+            /* SCR_SAV  */  row(R.string.screen_saver, Display.buildScreenSaver(context, display), ""),
+            /* SCR_OFF  */  row(R.string.screen_off, Display.buildLastScreenOffDuration(context, timeTracker.lastScreenOffDurationMs), ""),
+            /* AWAKE    */  row(R.string.stay_awake, Display.buildStayAwake(context, display), ""),
+            /* TORCH    */  row(R.string.torch, flashLight.buildTorchStatus(context), ""),
+            /* AUDIO    */  row(R.string.microphone, audioMonitor.buildAudioStatus(context), ""),
+            /* LOCATION */  row(R.string.location, locationMonitor.buildLocationStatus(context), ""),
+            /* BT_MOD   */  row(R.string.bluetooth, bluetoothMonitor.buildBluetoothStatus(context), ""),
+            /* WIFI     */  row(R.string.wifi, networkMonitor.buildWiFiStatus(context), ""),
+            /* CELLULAR */  row(R.string.cellular, networkMonitor.buildCellularStatus(context), ""),
+            /* INTERNET */  row(R.string.internet, networkMonitor.buildInternetStatus(context), ""),
+            /* AIRPLANE */  row(R.string.airplane, airplaneMonitor.buildAirplaneStatus(context), ""),
+            /* AI_AS    */  row(R.string.ai_as, aiAS, ""),
+            /* AI_NPU   */  row(R.string.ai_core, aiCore, ""),
+            /* AI_INPUT */  row(R.string.ai_prompt, aiPrompt, ""),
+            /* AI_NLP   */  row(R.string.ai_nlp, aiNLP, ""),
+            /* AI_VLM   */  row(R.string.ai_vlm, aiVLM, ""),
+            /* AI_VOICE */  row(R.string.ai_speech, aiSpeech, "")
         )
         return listOf(
-            row(R.string.level, AnnotatedString("$batteryPercent%")),
+            deepRow[C.LEVEL],
             deepRow[C.CYCLE],
             deepRow[C.STATUS],
             deepRow[C.HEALTH],
             deepRow[C.TECH],
 
-            ReportRow(context.getString(R.string._zap_), AnnotatedString("")),    /* ⚡ */
+            ReportRow(context.getString(R.string._zap_), AnnotatedString(""), ""),    /* ⚡ */
 
             deepRow[C.VOLTAGE],
             deepRow[C.TEMP],
@@ -292,14 +293,14 @@ object Diagnostics {
             deepRow[C.CURRENT],
             deepRow[C.AVG],
 
-            ReportRow(context.getString(R.string._electric_plug_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._electric_plug_), AnnotatedString(""), ""),
 
             deepRow[C.PLUG],
             deepRow[C.REMAIN],
             deepRow[C.FULL],
             deepRow[C.BAT_SAV],
 
-            ReportRow(context.getString(R.string._battery_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._battery_), AnnotatedString(""), ""),
 
             deepRow[C.THERMAL],
             deepRow[C.PRESENT],
@@ -307,7 +308,7 @@ object Diagnostics {
             deepRow[C.PREDICT],
             deepRow[C.EMPTY],
 
-            ReportRow(context.getString(R.string._display_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._display_), AnnotatedString(""), ""),
 
             deepRow[C.BRIGHT],
             deepRow[C.ADAPTIVE],
@@ -316,14 +317,14 @@ object Diagnostics {
             deepRow[C.TOUCH],
             deepRow[C.SMOOTH],
 
-            ReportRow(context.getString(R.string._alarm_clock_), AnnotatedString("")), /* ⏰ */
+            ReportRow(context.getString(R.string._alarm_clock_), AnnotatedString(""), ""), /* ⏰ */
 
             deepRow[C.TIMEOUT],
             deepRow[C.SCR_SAV],
             deepRow[C.SCR_OFF],
             deepRow[C.AWAKE],
 
-            ReportRow(context.getString(R.string._gear_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._gear_), AnnotatedString(""), ""),
 
             deepRow[C.TORCH],
             deepRow[C.AUDIO],
@@ -334,7 +335,7 @@ object Diagnostics {
             deepRow[C.INTERNET],
             deepRow[C.AIRPLANE],
 
-            ReportRow(context.getString(R.string._ai_), AnnotatedString("")),
+            ReportRow(context.getString(R.string._ai_), AnnotatedString(""), ""),
 
             deepRow[C.AI_AS],
             deepRow[C.AI_NPU],

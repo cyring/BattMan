@@ -9,6 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,14 +36,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -117,6 +121,7 @@ data class CentralFont (
     val appStyle: AppStyle,
     val reportStyle: TextStyle,
     val minReportFontSize: Array<TextUnit>,
+    val expressionStyle: TextStyle,
     val sysInfoStyle: TextStyle,
     val menuStyle: TextStyle,
     val captionStyle: TextStyle,
@@ -221,6 +226,7 @@ fun centralFont(fontSizeMode: Int = C.FONT_SIZE_SYSTEM): CentralFont {
             ),
             reportStyle = reportStyle,
             minReportFontSize = minReportFontSize,
+            expressionStyle = reportStyle.copy(fontSize = reportStyle.fontSize * 0.75f),
             sysInfoStyle = typography.bodySmall.copy(
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             ),
@@ -466,13 +472,7 @@ class MainActivity : ComponentActivity() {
                                     .weight(1f)
                                     .fillMaxWidth()
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .verticalScroll(rememberScrollState())
-                                ) {
-                                    DiagnosticsReport(fontConfig, rows = report)
-                                }
+                                DiagnosticsReport(fontConfig, rows = report, modifier = Modifier.fillMaxWidth())
                             }
                             Spacer(modifier = Modifier.height(fontConfig.lineHeight * 0.5f))
 
@@ -507,12 +507,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>) {
-    SelectionContainer {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            rows.forEach { row ->
+private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>, modifier: Modifier = Modifier) {
+    var indexForSelectedRow by remember { mutableStateOf<Int?>(null) }
+
+    SelectionContainer(modifier = modifier) {
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            itemsIndexed(rows) { index, row ->
                 when {
                     // Case 1: ("", "") -> Blank line separator
                     row.label.isEmpty() && row.value.isEmpty() -> {
@@ -532,34 +532,64 @@ private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>) {
                     }
                     // Case 3: Standard data row (label & value)
                     else -> {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = row.label,
-                                modifier = Modifier.weight(1.5f),
-                                maxLines = 1,
-                                softWrap = false,
-                                autoSize = TextAutoSize.StepBased(
-                                    minFontSize = fontConfig.minReportFontSize[REPORT_LEFT],
-                                    maxFontSize = fontConfig.reportStyle.fontSize
-                                ),
-                                style = fontConfig.reportStyle
-                            )
+                        val isSelected = indexForSelectedRow == index
 
-                            Text(
-                                text = row.value,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Start,
-                                maxLines = 1,
-                                softWrap = false,
-                                autoSize = TextAutoSize.StepBased(
-                                    minFontSize = fontConfig.minReportFontSize[REPORT_RIGHT],
-                                    maxFontSize = fontConfig.reportStyle.fontSize
-                                ),
-                                style = fontConfig.reportStyle
-                            )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateContentSize()
+                                .clickable {
+                                    indexForSelectedRow = if (isSelected) null else index
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = row.label,
+                                    modifier = Modifier.weight(1.5f),
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    autoSize = TextAutoSize.StepBased(
+                                        minFontSize = fontConfig.minReportFontSize[REPORT_LEFT],
+                                        maxFontSize = fontConfig.reportStyle.fontSize
+                                    ),
+                                    style = fontConfig.reportStyle
+                                )
+
+                                Text(
+                                    text = row.value,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Start,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    autoSize = TextAutoSize.StepBased(
+                                        minFontSize = fontConfig.minReportFontSize[REPORT_RIGHT],
+                                        maxFontSize = fontConfig.reportStyle.fontSize
+                                    ),
+                                    style = fontConfig.reportStyle
+                                )
+                            }
+
+                            if ((isSelected == true) && row.expr.isNotEmpty()) {
+                                Text(
+                                    text = row.expr,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(start = 24.dp)
+                                        .basicMarquee(
+                                            animationMode = MarqueeAnimationMode.Immediately,
+                                            iterations = Int.MAX_VALUE,
+                                            initialDelayMillis = 400
+                                        ),
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Clip,
+                                    style = fontConfig.expressionStyle,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
                         }
                     }
                 }
