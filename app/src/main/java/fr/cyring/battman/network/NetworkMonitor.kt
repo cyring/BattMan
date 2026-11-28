@@ -12,6 +12,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import fr.cyring.battman.Net
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 
 class NetworkMonitor(context: Context) {
     private val connectivityManager =
@@ -131,7 +133,7 @@ class NetworkMonitor(context: Context) {
     fun buildInternetStatus(context: Context): AnnotatedString {
         val internet = if (isInternetValidated) {
             buildAnnotatedString {
-                append(context.getString(R.string._internet_))
+                appendInlineIcon(IG.INTERNET, context.getString(R.string._internet_))
                 append(' ')
                 append(context.getString(R.string.yes))
             }
@@ -141,13 +143,15 @@ class NetworkMonitor(context: Context) {
         return internet
     }
 
-    fun buildGatewayStatus(context: Context, viaLinkState: Boolean, iconId: Int?): AnnotatedString {
+    fun buildGatewayStatus(context: Context, viaLinkState: Boolean, glyphId: String, iconId: Int?): AnnotatedString {
         val gateway = if (viaLinkState) {
             buildAnnotatedString {
                 if (iconId != null) {
-                    append(context.getString(iconId))
-                    append(' ')
+                    appendInlineIcon(glyphId, context.getString(iconId))
+                } else {
+                    appendInlineIcon(glyphId)
                 }
+                append(' ')
                 append(context.getString(R.string.activated))
             }
         } else {
@@ -161,6 +165,7 @@ class NetworkMonitor(context: Context) {
             Net.CONNECTED -> buildGatewayStatus(
                 context,
                 viaWiFiGateway,
+                IG.WIFI,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { R.string._wifi_ } else { null }
             )
             Net.DISCONNECTED -> AnnotatedString(context.getString(R.string.none))
@@ -173,6 +178,7 @@ class NetworkMonitor(context: Context) {
             Net.CONNECTED -> buildGatewayStatus(
                 context,
                 viaCellularGateway,
+                IG.CELLULAR,
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) { R.string._cellular_ } else { null }
             )
             Net.DISCONNECTED -> AnnotatedString(context.getString(R.string.none))

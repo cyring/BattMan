@@ -9,16 +9,14 @@ import androidx.compose.runtime.*
 import android.text.format.DateFormat
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.core.content.edit
 import androidx.core.text.util.LocalePreferences
 import fr.cyring.battman.C
-import fr.cyring.battman.M
 import fr.cyring.battman.R
 import fr.cyring.battman.waitingStyle
 import fr.cyring.battman.getIntInBounds
+import fr.cyring.battman.ui.*
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -113,12 +111,15 @@ class BatteryMonitor(context: Context, private val tongue: Array<Locale>) {
         prefs.edit { putInt("maxAlerts", value) }
     }
 
-    private fun formatTargetTime(context: Context, durationMs: Long, iconId: Int, iconStyle: SpanStyle): AnnotatedString {
+    fun buildWaitingText(context: Context): AnnotatedString = buildAnnotatedString {
+        appendInlineIcon(IG.WAIT, context.getString(R.string._wait_))
+        append(' ')
+        append(context.getString(R.string.waiting).waitingStyle())
+    }
+
+    private fun formatTargetTime(context: Context, durationMs: Long, iconId: String, altText: String = " "): AnnotatedString {
         if (durationMs <= 0L) {
-            return buildAnnotatedString {
-                append(context.getString(R.string._wait_) + ' ')
-                append(context.getString(R.string.waiting).waitingStyle())
-            }
+            return buildWaitingText(context)
         }
         val targetMs = System.currentTimeMillis() + durationMs
         val timeString = DateFormat.getTimeFormat(context).format(Date(targetMs))
@@ -134,9 +135,8 @@ class BatteryMonitor(context: Context, private val tongue: Array<Locale>) {
         }
 
         return buildAnnotatedString {
-            withStyle(iconStyle) {
-                append(context.getString(iconId))
-            }
+            appendInlineIcon(iconId, altText)
+            append(' ')
             append(dayString)
             append(' ')
             append(timeString)
@@ -261,15 +261,15 @@ class BatteryMonitor(context: Context, private val tongue: Array<Locale>) {
 
     fun buildRemaining(ctx: Context, ms: Long): Pair<AnnotatedString, AnnotatedString> {
         if (ms <= 0L) {
-            val waiting = ctx.getString(R.string.waiting).waitingStyle()
-            val firstPair = buildAnnotatedString { append(ctx.getString(R.string._wait_) + ' '); append(waiting) }
-            val secondPair = buildAnnotatedString { append(ctx.getString(R.string._wait_) + ' '); append(waiting) }
-            return firstPair to secondPair
+            val waitingLabel = buildWaitingText(ctx)
+            return waitingLabel to waitingLabel
         } else {
-            val remaining = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) ctx.getString(
-                R.string.duration_d_h_str_format, d, h) else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(
-                R.string.duration_m_str_format, m) })
-            return remaining to formatTargetTime(ctx, ms, R.string._arrow_up_, M.arrowUp)
+            val remaining = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ ->
+                if (d > 0) ctx.getString(R.string.duration_d_h_str_format, d, h)
+                else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m)
+                else ctx.getString(R.string.duration_m_str_format, m)
+            })
+            return remaining to formatTargetTime(ctx, ms, IG.ARROW_UP, ctx.getString(R.string._arrow_up_))
         }
     }
 
@@ -282,13 +282,13 @@ class BatteryMonitor(context: Context, private val tongue: Array<Locale>) {
                 0L -> AnnotatedString(ctx.getString(R.string.unavailable))
                 else -> AnnotatedString(ctx.getString(R.string.unknown))
             }
-            val waiting = ctx.getString(R.string.waiting).waitingStyle()
-            return issue to buildAnnotatedString { append(ctx.getString(R.string._wait_) + ' '); append(waiting) }
+            val waiting = buildWaitingText(ctx)
+            return issue to waiting
         } else {
             val duration = AnnotatedString(ms.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) ctx.getString(
                 R.string.duration_d_h_str_format, d, h) else if (h > 0) ctx.getString(R.string.duration_h_m_str_format, h, m) else ctx.getString(
                 R.string.duration_m_str_format, m) })
-            return duration to formatTargetTime(ctx, ms, R.string._arrow_down_, M.arrowDown)
+            return duration to formatTargetTime(ctx, ms, IG.ARROW_DOWN, ctx.getString(R.string._arrow_down_))
         }
     }
 }

@@ -12,6 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 
 class AirplaneMonitor(context: Context) {
     private val contentResolver = context.contentResolver
@@ -46,7 +48,7 @@ class AirplaneMonitor(context: Context) {
     fun buildAirplaneStatus(context: Context): AnnotatedString {
         val airplane = if (isAirplaneModeEnabled) {
             buildAnnotatedString {
-                append(context.getString(R.string._airplane_))
+                appendInlineIcon(IG.AIRPLANE, context.getString(R.string._airplane_))
                 append(' ')
                 append(context.getString(R.string.activated))
             }

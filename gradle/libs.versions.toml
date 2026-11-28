@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.2"
+agp = "9.5.3"
 coreKtx = "1.19.1"
 genaiImageDescriptionVersion = "1.0.0-beta1"
 genaiPrompt = "1.0.0-beta5"

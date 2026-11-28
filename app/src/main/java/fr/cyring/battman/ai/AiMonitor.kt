@@ -22,6 +22,8 @@ import com.google.mlkit.genai.summarization.SummarizerOptions
 import fr.cyring.battman.AiCapability
 import fr.cyring.battman.AiCapability.*
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 import kotlinx.coroutines.guava.await
 
 enum class AiFeatureState {
@@ -206,7 +208,7 @@ class AiMonitor(context: Context) {
                 ) {
                     append(label)
                     append(' ')
-                    append(context.getString(R.string._info_))
+                    appendInlineIcon(IG.INFO, context.getString(R.string._info_))
                 }
             } else {
                 append(label)

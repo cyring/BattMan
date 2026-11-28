@@ -87,7 +87,7 @@
     <string name="torch">Torch</string>
     <string name="microphone">Microphone</string>
     <string name="location">Location</string>
-    <string name="bluetooth" translatable="false">Bluetooth</string>"
+    <string name="bluetooth" translatable="false">Bluetooth</string>
     <string name="airplane">Airplane</string>
     <string name="internet" translatable="false">Internet</string>
     <string name="wifi" translatable="false">Wi-Fi</string>

@@ -12,6 +12,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.core.content.ContextCompat
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 
 class LocationMonitor(private val context: Context) {
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -53,7 +55,7 @@ class LocationMonitor(private val context: Context) {
     fun buildLocationStatus(context: Context): AnnotatedString {
         val gps = if (isGpsEnabled) {
             buildAnnotatedString {
-                append(context.getString(R.string._gps_))
+                appendInlineIcon(IG.GPS, context.getString(R.string._gps_))
                 append(' ')
                 append(context.getString(R.string.activated))
             }

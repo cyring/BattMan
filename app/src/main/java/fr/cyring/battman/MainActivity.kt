@@ -65,13 +65,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import fr.cyring.battman.CentralColor.AlertBattery
 import fr.cyring.battman.battery.BatteryEventReceiver
 import fr.cyring.battman.battery.BatteryMonitor
+import fr.cyring.battman.ui.buildSingleGlyphLabel
+import fr.cyring.battman.ui.buildCollapsibleLabel
 import fr.cyring.battman.ui.components.BasicDialog
 import fr.cyring.battman.ui.components.BatteryHeader
 import fr.cyring.battman.ui.components.NavigationDrawer
+import fr.cyring.battman.ui.glyphVectorFor
 import fr.cyring.battman.ui.theme.BattManTheme
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import java.util.Locale
+import fr.cyring.battman.ui.*
 
 const val REPORT_LEFT: Int = 0
 const val REPORT_RIGHT: Int = 1
@@ -82,9 +86,6 @@ object M {
         fontStyle = FontStyle.Italic,
         fontWeight = FontWeight.ExtraLight
     )
-
-    val arrowDown: SpanStyle = SpanStyle(color = Color.Yellow)
-    val arrowUp: SpanStyle = SpanStyle(color = Color.Green)
     val labelOff: SpanStyle = SpanStyle(color = Color.LightGray)
 }
 
@@ -378,14 +379,16 @@ class MainActivity : ComponentActivity() {
                             if (BatteryMonitor.predictionMs > 0L) {
                                 val formattedDuration = BatteryMonitor.predictionMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
-                                    withStyle(M.arrowDown) { append(stringResource(R.string._arrow_down_) + ' ') } /* ⬇ */
+                                    appendInlineIcon(IG.ARROW_DOWN, alternateText = "v")
+                                    append(' ')
                                     append(formattedDuration)
                                 }
                             } else if (BatteryMonitor.timeRemainingMs > 0L) {
                                 signColor = MaterialTheme.colorScheme.secondary
                                 val formattedDuration = BatteryMonitor.timeRemainingMs.milliseconds.toComponents { d, h, m, _, _ -> if (d > 0) stringResource(R.string.duration_d_h_str_format, d, h) else if (h > 0) stringResource(R.string.duration_h_m_str_format, h, m) else stringResource(R.string.duration_m_str_format, m) }
                                 signText = buildAnnotatedString {
-                                    withStyle(M.arrowUp) { append(stringResource(R.string._arrow_up_) + ' ') } /* ⬆ */
+                                    appendInlineIcon(IG.ARROW_UP, alternateText = "^")
+                                    append(' ')
                                     append(formattedDuration)
                                 }
                             } else {
@@ -399,6 +402,7 @@ class MainActivity : ComponentActivity() {
                             {
                                 Text(
                                     text = signText,
+                                    inlineContent = rememberInlineGlyphContent(tint = signColor),
                                     color = signColor,
                                     style = TextStyle(fontSize = 24.sp),
                                     modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
@@ -520,12 +524,18 @@ private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>, mo
                     }
                     // Case 2: ("@", "") -> Unique pictogram only
                     row.value.isEmpty() -> {
+                        val glyphLabel = buildSingleGlyphLabel(
+                            glyphId = row.label,
+                            altId = row.altId?.let { stringResource(it) } ?: " ",
+                            icon = glyphVectorFor(row.label)
+                        )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = row.label,
+                                text = glyphLabel.text,
+                                inlineContent = glyphLabel.inlineContent,
                                 style = fontConfig.reportStyle
                             )
                         }
@@ -533,7 +543,11 @@ private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>, mo
                     // Case 3: Standard data row (label & value)
                     else -> {
                         val isSelected = indexForSelectedRow == index
-
+                        val collapsibleLabel = buildCollapsibleLabel(
+                            label = row.label,
+                            hasExpr = row.expr.isNotEmpty(),
+                            isExpanded = isSelected
+                        )
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -547,12 +561,8 @@ private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>, mo
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (row.expr.isNotEmpty()) {
-                                        stringResource(
-                                            if (isSelected) {R.string._fold_} else {R.string._unfold_}
-                                        ) } else {
-                                            "  "
-                                        } + row.label,
+                                    text = collapsibleLabel.text,
+                                    inlineContent = collapsibleLabel.inlineContent,
                                     modifier = Modifier.weight(1.5f),
                                     maxLines = 1,
                                     softWrap = false,
@@ -565,6 +575,7 @@ private fun DiagnosticsReport(fontConfig: CentralFont, rows: List<ReportRow>, mo
 
                                 Text(
                                     text = row.value,
+                                    inlineContent = rememberInlineGlyphContent(),
                                     modifier = Modifier.weight(1f),
                                     textAlign = TextAlign.Start,
                                     maxLines = 1,

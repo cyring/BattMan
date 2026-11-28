@@ -25,16 +25,18 @@ import fr.cyring.battman.display.DisplayInfo
 import fr.cyring.battman.display.Display
 import fr.cyring.battman.location.LocationMonitor
 import fr.cyring.battman.network.NetworkMonitor
+import fr.cyring.battman.ui.IG
 import java.time.Duration
 import kotlin.time.toKotlinDuration
 
 data class ReportRow(
     val label: String,
     val store: AnnotatedString,
-    var expression: String
+    var rule: String,
+    val altId: Int? = null
 ) {
     var value by mutableStateOf(store)
-    var expr by mutableStateOf(expression)
+    var expr by mutableStateOf(rule)
 }
 
 lateinit var deepRow: Array<ReportRow>
@@ -284,7 +286,7 @@ object Diagnostics {
             deepRow[C.HEALTH],
             deepRow[C.TECH],
 
-            ReportRow(context.getString(R.string._zap_), AnnotatedString(""), ""),    /* ⚡ */
+            ReportRow(IG.ZAP, AnnotatedString(""), "", R.string._zap_),    /* ⚡ */
 
             deepRow[C.VOLTAGE],
             deepRow[C.TEMP],
@@ -293,14 +295,14 @@ object Diagnostics {
             deepRow[C.CURRENT],
             deepRow[C.AVG],
 
-            ReportRow(context.getString(R.string._electric_plug_), AnnotatedString(""), ""),
+            ReportRow(IG.ELECTRIC_PLUG, AnnotatedString(""), "", R.string._electric_plug_),
 
             deepRow[C.PLUG],
             deepRow[C.REMAIN],
             deepRow[C.FULL],
             deepRow[C.BAT_SAV],
 
-            ReportRow(context.getString(R.string._battery_), AnnotatedString(""), ""),
+            ReportRow(IG.BATTERY, AnnotatedString(""), "", R.string._battery_),
 
             deepRow[C.THERMAL],
             deepRow[C.PRESENT],
@@ -308,7 +310,7 @@ object Diagnostics {
             deepRow[C.PREDICT],
             deepRow[C.EMPTY],
 
-            ReportRow(context.getString(R.string._display_), AnnotatedString(""), ""),
+            ReportRow(IG.DISPLAY, AnnotatedString(""), "", R.string._display_),
 
             deepRow[C.BRIGHT],
             deepRow[C.ADAPTIVE],
@@ -317,14 +319,14 @@ object Diagnostics {
             deepRow[C.TOUCH],
             deepRow[C.SMOOTH],
 
-            ReportRow(context.getString(R.string._alarm_clock_), AnnotatedString(""), ""), /* ⏰ */
+            ReportRow(IG.ALARM_CLOCK, AnnotatedString(""), "", R.string._alarm_clock_), /* ⏰ */
 
             deepRow[C.TIMEOUT],
             deepRow[C.SCR_SAV],
             deepRow[C.SCR_OFF],
             deepRow[C.AWAKE],
 
-            ReportRow(context.getString(R.string._gear_), AnnotatedString(""), ""),
+            ReportRow(IG.GEAR, AnnotatedString(""), "", R.string._gear_),
 
             deepRow[C.TORCH],
             deepRow[C.AUDIO],
@@ -335,7 +337,7 @@ object Diagnostics {
             deepRow[C.INTERNET],
             deepRow[C.AIRPLANE],
 
-            ReportRow(context.getString(R.string._ai_), AnnotatedString(""), ""),
+            ReportRow(IG.AI, AnnotatedString(""), "", R.string._ai_),
 
             deepRow[C.AI_AS],
             deepRow[C.AI_NPU],

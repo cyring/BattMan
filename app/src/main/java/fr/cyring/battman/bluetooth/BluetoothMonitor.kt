@@ -13,6 +13,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.core.content.ContextCompat
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 
 class BluetoothMonitor(private val context: Context) {
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
@@ -64,7 +66,7 @@ class BluetoothMonitor(private val context: Context) {
     fun buildBluetoothStatus(context: Context): AnnotatedString {
         val bt = if (isBluetoothEnabled) {
             buildAnnotatedString {
-                append(context.getString(R.string._bt_))
+                appendInlineIcon(IG.BT, context.getString(R.string._bt_))
                 append(' ')
                 append(context.getString(R.string.activated))
             }

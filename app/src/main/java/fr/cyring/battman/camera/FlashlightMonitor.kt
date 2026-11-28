@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 
 class FlashlightMonitor(context: Context) {
     private val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -48,7 +50,7 @@ class FlashlightMonitor(context: Context) {
         return when {
             torchUnavailable -> AnnotatedString(ctx.getString(R.string.unavailable))
             isTorchOn -> buildAnnotatedString {
-                append(ctx.getString(R.string._torch_))
+                appendInlineIcon(IG.TORCH, ctx.getString(R.string._torch_))
                 append(' ')
                 append(ctx.getString(R.string.activated))
             }

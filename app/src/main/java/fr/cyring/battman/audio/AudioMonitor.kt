@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.buildAnnotatedString
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 
 class AudioMonitor(context: Context) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -44,7 +46,7 @@ class AudioMonitor(context: Context) {
     fun buildAudioStatus(context: Context): AnnotatedString {
         val microphone = if (isRecordingActive) {
             buildAnnotatedString {
-                append(context.getString(R.string._mic_))
+                appendInlineIcon(IG.MIC, context.getString(R.string._mic_))
                 append(' ')
                 append(context.getString(R.string.activated))
             }

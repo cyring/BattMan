@@ -13,6 +13,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import fr.cyring.battman.M
 import fr.cyring.battman.R
+import fr.cyring.battman.ui.IG
+import fr.cyring.battman.ui.appendInlineIcon
 import fr.cyring.battman.waitingStyle
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -164,7 +166,9 @@ object Display {
 
     fun buildLastScreenOffDuration(ctx: Context, ms: Long): AnnotatedString = if (ms == -1L) {
         buildAnnotatedString {
-            append(ctx.getString(R.string._wait_) + ' ')
+            //append(ctx.getString(R.string._wait_) + ' ')
+            appendInlineIcon(IG.WAIT, ctx.getString(R.string._wait_))
+            append(' ')
             append(ctx.getString(R.string.waiting).waitingStyle())
         }
     } else {
@@ -180,7 +184,9 @@ object Display {
             )
         }
         buildAnnotatedString {
-            append(ctx.getString(R.string._calc_) + ' ')
+            //append(ctx.getString(R.string._calc_) + ' ')
+            appendInlineIcon(IG.CALC, ctx.getString(R.string._calc_))
+            append(' ')
             append(durationString)
         }
     }
